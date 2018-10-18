@@ -1,0 +1,128 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.5 [de] (Macintosh; I; PPC) [Netscape]">
+   <title>clasm-tutorial.wml</title>
+</head>
+<body>
+
+<center>
+<h1>
+The Clasm Tutorial</h1></center>
+
+<center>
+<h2>
+<i>Very much a work-in-progress.</i></h2></center>
+<i></i>
+<p><br>
+<hr WIDTH="100%">
+<br>&nbsp;
+<br>&nbsp;
+<em>XXX Change dimension names also in pictures
+<h3>
+1. Simple expression</h3>
+&nbsp;
+<p>&nbsp;
+<p><img SRC="clasm-1.gif" BORDER=0 height=264 width=315>
+<br>&nbsp;
+<p>Parameters are listed on <tt>d.clasm-parameter</tt>. If they are a literal, they are
+simply put there. If they are the result of a call, an expression representing
+that call is connected to the <tt>d.clasm-parameter</tt> cell on <tt>d.clasm-call</tt>.
+<p>In this example, the callables themselves are specified as literals.
+<p>
+<hr WIDTH="100%">
+<br>&nbsp;
+<br>&nbsp;
+<h3>
+2. References to variables</h3>
+&nbsp;
+<p>&nbsp;
+<p><img SRC="clasm-2.gif" BORDER=0 height=246 width=319>
+<br>&nbsp;
+<p>In clasm, a variable is a callable entity. Calling without parameters,
+like here, returns the current value of the variable. If the variable were
+placed on the rank down from the "*" cell on <tt>d.clasm-parameter</tt>, like the "2"
+literal, we would get not the variable's value, but the callable that is
+the variable-- which would make the program crash with an exception, because
+the "*" primitive expects two integers, not a callable and an integer.
+<p>Note that all callables are first-class citizens in Clasm, i.e. can
+be passed to and returned by a callable, and thus stored in a variable,
+etc.
+<br>&nbsp;
+<br>&nbsp;
+<p>
+<hr WIDTH="100%">
+<br>&nbsp;
+<br>&nbsp;
+<h3>
+3. Control structures</h3>
+&nbsp;
+<p>&nbsp;
+<p><img SRC="clasm-3.gif" BORDER=0 height=231 width=315>
+<br>&nbsp;
+<p>This is what a while-loop looks like in Clasm. Note that before, we
+expected the parameters to a callable (if there were any) to be evaluated
+before that callable is executed-- that is, in the first example, first
+2+2=4 was evaluated, then 4*7=28. Here, we see that callables have the
+power to evaluate their parameters in a different way. <i>while</i> first
+evaluates the condition, then, iff the condition held true, evaluates the
+loop body and starts from the beginning.
+<p>What Clasm does here is passing the two parameters as <i>expression</i>
+callables. That is, the <i>while</i> primitive gets two callables which
+do not accept parameters. It then calls the "condition" expression callable;
+if it returns false, it stops, if it returns true, it calls the loop body
+and starts all over again. (If we put a literal there instead of a call,
+Clasm wraps that literal up in an expression callable that just returns
+the value of that literal.)
+<p>Actually, Clasm <i>always</i> passes values as expression callables
+returning that value (conceptually, that is), but when we build functions
+or primitives, there are convenience wrappers that allow us to access the
+values already evaluated.
+<br>&nbsp;
+<p>
+<hr WIDTH="100%">
+<br>&nbsp;
+<br>&nbsp;
+<h3>
+4. Function definitions</h3>
+&nbsp;
+<p>&nbsp;
+<p><img SRC="clasm-4.gif" BORDER=0 height=335 width=472>
+<br>&nbsp;
+<p>A function with two parameters. This behaves like the "+" primitive.
+The two parameters are already evaluated.
+<p>Note that the body of the function is simply an expression connected
+to the function's maincell on <tt>d.clasm-function-definition</tt>. The "par
+1" and "par 2" cells are variables initialized to the values passed to
+"my func."
+<br>&nbsp;
+<p>
+<hr WIDTH="100%">
+<br>&nbsp;
+<br>&nbsp;
+<h3>
+5. Writing control abstractions inside Clasm</h3>
+&nbsp;
+<p>&nbsp;
+<br>&nbsp;
+<p><img SRC="clasm-5.gif" BORDER=0 height=560 width=525>
+<br>&nbsp;
+<p>Now here we see how to get the parameters in the unevaluated form <i>while</i>
+gets them: simply put the parameter cells one step poswards on <tt>d.clasm-call</tt>
+from the <tt>d.clasm-parameter</tt> cell. The cell on the <tt>d.clasm-parameter</tt> rank is ignored!
+<p>Note that the <i>values</i> of the parameters are <i>expressions,</i>
+i.e. <i>callables.</i> That means that in order to evaluate those values,
+and get the appropriate side effects, we must first evaluate the parameter,
+to get the expression, and then evaluate that expression, to get both the
+side-effects and the final result of that expression.
+</body>
+</html>
+
+
+
+
+
+
+
+

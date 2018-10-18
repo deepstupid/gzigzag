@@ -1,0 +1,3 @@
+A demo of interpolated Swing components.
+Run org.gzigzag.vob.ComponentVob without arguments. Resize to see animation.
+Not terribly fast.

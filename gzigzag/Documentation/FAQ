@@ -1,0 +1,262 @@
+Frequently Asked Questions about GZigZag, with answers.
+$Id: FAQ,v 1.7 2001/02/09 05:59:36 ajk Exp $
+
+All trademarks are the trademarks of their respective owners.
+
+Note that the 'I' in this document is Tuomas Lukka.
+
+=============================================================
+Section I: General questions
+
+
+1. Where to get the latest version of this FAQ?
+
+The source code for all versions of this FAQ is kept as a part of the
+GZigZag CVS repository. See the GZigZag sourceforge page at 
+	
+	http://gzigzag.sourceforge.net
+
+for accessing the source. The FAQ is in the directory Documentation/
+
+-----
+2. What is ZigZag?
+
+ZigZag, an invention of Ted Nelson, is a new type of data structure.
+
+For mathematicians, the key words would be
+
+ 	- discrete
+	- multidimensional
+	- locally euclidean
+	- with global directions (coordinate axes)
+
+and for non-mathematicians, these are explained below:
+
+	Discrete:
+		the information is stored in cells, kind of like a 
+		spreadsheet.
+
+	Multidimensional:
+		instead of two dimensions, X and Y, that a spreadsheet 
+		has, a ZigZag space can have any number of dimensions
+		which are distinguished by strings.
+
+	Locally Euclidean:
+		a spreadsheet is globally euclidean, i.e. it is a lattice.
+		ZigZag is only locally euclidean, so the neighborhood of
+		(i.e. the cells next to) a given cell looks euclidean:
+		if you go up and come down, you are back where you were before.
+
+		But if you start from location 1, and go up, left, down and
+		right, you might not get back to where you were, let's
+		say you are at location 2. But if you then go left, up, down
+		and right from location 2, you get back to location 1.
+
+		The connections in ZigZag are user-alterable so you can
+		connect any two cells along any given dimension, but
+		because of the local euclidean constraint, each cell
+		can be connected to only one cell in the positive and one
+		cell in the negative direction on each dimension.
+
+Computer scientists might note that ZigZag is an interesting special
+case of graphs.
+
+-----
+3. What is GZigZag?
+
+GZigZag is an implementation of ZigZag developed by a research group led
+by Tuomas Lukka at the university of Jyvaskyla.
+
+It is licensed under the LGPL (and XPL, the Xanadu Public License which
+is still under works).
+
+-----
+4. Who is the maintainer of GZigZag?
+
+Tuomas Lukka, <lukka@iki.fi>. He has written most of the code in GZigZag (and
+most of it while traveling on trains).
+
+This maintainership is by proxy from Ted Nelson, who has the official
+maintainership but who does not program.
+
+-----
+5. How complete/stable is GZigZag?
+
+It's pre-alpha. It is already usable for many things but it is nowhere
+near feature complete yet. 
+
+As for stability, crashes are quite rare but the development speed is high.
+
+-----
+6. What are some planned features?
+
+See Java/TODO in the distribution.
+
+-----
+7. Are there any mailing lists associated with ZigZag/GZigZag?
+
+See http://www.xanadu.com/zigzag
+
+-----
+8. How can I help?
+
+Email Tuomas Lukka <lukka@iki.fi> and ask.
+
+
+=============================================================
+Section II: Using (G)ZigZag
+
+1. How can I learn to create my own structures so that they work well?
+
+There are some ideas in the document "A Gentle Introduction to ZigZag",
+available under the 
+
+	Documentation/Gentle_Introduction
+
+directory on the CVS, or as a postscript file from the web page.
+
+=============================================================
+Section III: Questions specific to the Java version
+
+1. Why Java?
+
+Portability, garbage collection, SPEED (with JIT: for linux, IBM's
+JDK-1.1.8 is GREAT), portable graphics, easy C interface, available APIs
+(e.g. JMF), etc.
+
+You will note that I did not mention the language itself above:
+I don't like the language itself that much: I'd prefer to work in
+Perl. Unfortunately it does not provide all of these other features and
+the ones it does it does not provide as easily and conveniently as Java.
+
+-----
+1.1 Where do I get Java sources for GZigZag?
+
+If you know CVS, you can checkout module GZigZag in
+:pserver:anonymous@cvs.gzigzag.sourceforge.net:/cvsroot/gzigzag .
+Otherwise, you can use our nightly-generated source snapshots
+available at ftp://gzigzag.sourceforge.net/pub/gzigzag/snapshots/ .
+They are packaged in GNU-Zipped tar archives and in ZIP archives,
+choose whichever is best for you.
+
+The Java sources are located in the Java/ subdirectory of the full
+source tree.
+
+-----
+1.2 Where do I get precompiled class files for GZigZag?
+
+We have a build daemon that builds the current CVS version nighly and
+puts two JAR archives of it in
+ftp://gzigzag.sourceforge.net/pub/gzigzag/snapshots/ .  The
+-without-modules version contains the core GZigZag.  The -with-modules
+version is much larger and contains some additional functionality.
+
+-----
+1.5. It's WAY too slow! Are you out of your mind?
+
+No. For me, it's quite comfortable on my 233MHz Pentium 80Mb laptop.
+There are several possible reasons for this: 
+
+* You are using a Java interpreter without a JIT (Just-In-Time)
+  compiler. As mentioned in the answer to the previous question, for
+  Linux, I recommend IBM's JDK 1.1.8. Do NOT ask me about proprietary
+  operating systems - GZigZag works there but over there you're on
+  your own for platform-specific questions.  Another quite fast JVM is
+  Kaffe, but unfortunately at least some versions of Kaffe have a
+  nasty bug that makes using GigZag on it quite unpleasant.
+
+* Your Java interpreter is not using enough memory. By default, some Java
+  interpreters only use 16Megs at maximum. Try starting with
+
+	java -mx30m -ms30m foo.Main
+
+  to set it to allocate 30Megs at startup (or more if you have enough memory).
+  That way it won't be garbage collecting constantly and you may get quite a 
+  significant performance improvement.
+
+-----
+1.5.1. I can't use IBM's JDK: it doesn't have the Swing classes
+
+You are using an old version of GZigZag.  Current CVS versions and
+snapshots do not require Swing.
+
+-----
+1.9. I want to report a bug; how do I do that?
+
+There are instructions about this in http://www.gzigzag.org/bugs.html .
+
+-----
+2. How is the Java code structured?
+
+ZZCell and ZZSpace are the center of it all. Start from there and
+also ZZDimension, ZZDimSpace, ZZLocalDimension, ZZPersistentDimension,
+ZZPersistentDimSpace ...
+These latter ones are still a bit new and finding their places.
+
+-----
+3. Why is the ZZEventQueue not called / what is ZZObs / ... ?
+
+Legacy. It's currently supplanted by the ZZUpdateManager for view updates
+but may be revived later.
+
+-----
+4. What is the saved file format?
+
+See the Java/storage/ and Java/media subdirectories of the source
+tree, especially storage/Recs.java, storage/ZZPersistentDimSpace.java
+and media/StringScroll.java.
+
+-----
+5. Will my files be upwards compatible?
+
+No: the format will change soon. However, you can dump the space into XML
+(will be explained later) and restore it to the new file type.
+
+-----
+6. Are there any coding standards?
+
+See the file CODING in CVS.
+
+-----
+7. Do you accept patches?
+
+Yes, we do, but it helps if you consult with us first to make sure your
+intended change is in a reasonable direction. Much functionality should go
+into the Modules/ as well.
+
+diff -u (unified diff) is preferred.
+
+
+-----
+8. What are the advantages of the new Java version over the old Perl version?
+
+- Graphics. You just need to see the vanishing view to see why it's important.
+And that's just the beginning.
+
+- Active development.
+
+-----
+9. What are the disadvantages of the new Java version over the old Perl version?
+
+- Ted's own keystrokes do not yet work (to be fixed soon)
+
+
+
+=============================================================
+Section III: Questions specific to the Perl version
+
+1. Wasn't there a Perl version or something?
+
+Yes, written by Andrew Pam and others.
+
+-----
+2. Are the files from the Perl version compatible with the new Java version?
+
+No.
+
+-----
+3. Is it possible to import files from the Perl version to the new Java version?
+
+Not yet, but soon. Only needs a short Perl script to read the DB_File from
+the Perl version and write the corresponding XML code and then you can import
+it.

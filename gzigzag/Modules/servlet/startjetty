@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# java com.mortbay.HTTP.Configure.ServletServer 8080 . .
+java com.mortbay.Jetty.Server ../Modules/servlet/zzserv2.prp

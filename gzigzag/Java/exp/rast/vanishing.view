@@ -1,0 +1,107 @@
+# An attempt to describe vanishingview using 
+# CDTree raster in a hypothetical language.
+#
+# Python-like: syntax includes spaces
+# a . b = vector product
+# :f(...) = one-directional external function
+
+CDTree(3)
+
+Param
+    # the fraction the gap between cells is from the size
+    # of the larger one
+    float gfrac
+
+    # Alignment point of node at given size
+    vec2 :align(node, vec2)
+
+    # the size for node given fraction. 
+    # If node is null, return a reasonable constant one
+    vec2 :fsize(node, float)
+
+    # Reverse perspective
+    float revper
+
+    # Whether cells' sizes should stretch
+    boolean varsize
+
+    # How much to shrink cells along different axes
+    float shrink0
+    float shrink1
+    float shrink2
+
+    # The fract of the initial cell
+    float initmul
+
+Var
+    # The location of a cell
+    vec2 v(i)
+
+    # The location of the point of alignment of a cell
+    vec2 av(i)
+
+    # The location of a cell, without revper having been applied
+    vec2 rv(i)
+
+    # The location of cell's alignpoint, without revper having been applied
+    vec2 rav(i)
+
+    # Fraction for the font size
+    float fract(i)
+
+    # Size of the cell
+    vec2 size(i)	
+
+    # The x and y gaps
+    vec2 gap(i)
+
+    # The gap size between two cells.
+    vec2 gapb(i,j)
+
+Local(i)
+    av(i) = v(i) + :align(i, size(i))
+    v(i) = revper * rv(i)
+    av(i) = revper * rav(i)
+
+    if(varsize)
+	size(i) = :fsize(i, fract)
+    else
+	size(i) = :fsize(null, fract)
+
+    gap(i) = gfrac * size(i)
+
+Neighbour
+
+    # The shrinking size away from center
+
+    out_0(i,j) => 
+	fract(j) = shrink0 * fract(i)
+    out_1(i,j) => 
+	fract(j) = shrink1 * fract(i)
+    out_2(i,j) => 
+	fract(j) = shrink2 * fract(i)
+
+    # Propagate the gap to between the cells
+    out_*(i,j) => 
+	gapb(i,j) = gap(i)
+
+
+    # The positions of the cells
+
+    pos_0(i,j) =>
+	rv(j) . X = v(i) + size(i) . X  + gapb(i,j) . X 
+	rav(j) . Y = av(i) . Y
+
+    pos_1(i,j) =>
+	rv(j) . Y = v(i) + size(i) . Y  + gapb(i,j) . Y 
+	rav(j) . X = av(i) . X
+
+    # We do z axis in a simplistic way until tested
+    pos_2(i,j) =>
+	rv(j) = v(i) + size(i) + gapb(i,j)
+
+Init
+    av(origin) = vec2(0,0)
+    fract(origin) = initmul
+
+

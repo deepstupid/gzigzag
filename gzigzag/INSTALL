@@ -1,0 +1,5 @@
+INSTALL
+=======
+
+As described in README, this package contains several implementations,
+which contain their own READMEs (and possibly INSTALL) files.

@@ -1,0 +1,49 @@
+Content-Type: application/x-gzigzag-GZZ1
+Content-Transfer-Encoding: binary
+
+GZZ1
+1
+
+N
+nC-1 
+nC-2 
+nC-3 
+nC-4 
+nC-5 
+nC-6 
+nC-7 
+nC-8 
+nC-9 
+nC-10 
+nC-11 
+nC-12 
+nC-13 
+nC-14 
+nC-15 
+nC-16 
+nC-17 
+nC-18 
+nC-19 
+0
+E
+KC-9 tbinary +
+KC-10 tbinary *
+KC-11 tbinary -
+KC-12 tbinary /
+KC-13 tbinary mod
+KC-14 tsubstring
+KC-15 tstring length
+KC-16 tcell equality
+KC-17 tstring equality
+KC-18 tinteger equality
+KC-19 tnot
+KC-1 tstep
+KC-2 tcreate new cell
+KC-3 tget endcell
+KC-4 tconnect
+KC-5 tdisconnect
+KC-6 thome
+KC-7 tif
+KC-8 twhile
+0
+00

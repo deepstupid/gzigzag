@@ -1,0 +1,326 @@
+/*
+VanishingView.java
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka and Rauli Ruohonen
+ */
+
+package org.gzigzag.impl;
+import org.gzigzag.util.*;
+import org.gzigzag.*;
+import org.gzigzag.client.Client;
+import org.gzigzag.client.*;
+import org.gzigzag.vob.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+public class VanishingView implements View {
+public static final String rcsid = "$Id: VanishingView.jpp,v 1.1 2002/02/15 22:10:36 tuukkah Exp $";
+    public static boolean dbg = false;
+    protected static void p(String s) { if(dbg) pa(s); }
+    protected static void pa(String s) { System.err.println(s); }
+
+    /** The factor to shrink the cells with when moving away from
+     * center.
+     */
+    float[] shrink = new float[] {0.9f, 0.9f, 0.9f, 0.9f}; 
+    /** The factor the center cell is enlarged with from default.
+     */
+    float initmul = 1.6f;
+    /** The factor to enlarge the center cell on top of initmul.
+     * This only has an effect on the center cell whereas initmul
+     * affects all cells.
+     */
+    float centermul = 1.0f;
+    /** The depth to raster to.
+     */
+    int depth = 10;
+    /** Whether to allow cell sizes to vary.
+     */
+    boolean varsize = false;
+    /** Distance reverse perspective.
+     */
+    float revper = (float)1.00;
+    float gfrac = (float)0.3;
+    /** The font for the default enlargement.  */
+    ScalableFont font = new ScalableFont("SansSerif", Font.PLAIN, 12);
+
+//    private HashMap nodeToVob = new HashMap();
+
+    private CellConnector cellConnector = new CellConnector();
+
+    /** Add connection lines for CellVobs
+     */
+    private void decorate(VobScene into, Cell wc) {
+
+/*	Iterator i = nodeToVob.keySet().iterator();
+	Solver.Node node1 = (Solver.Node)i.next();
+
+	while (i.hasNext()) {
+
+	    subDecorate(into, node1, node1.s(2, 1), 90);
+	    subDecorate(into, node1, node1.s(4, 1), 180);
+	    subDecorate(into, node1, node1.s(6, 1), 45);
+	    subDecorate(into, node1, node1.s(8, 1), 135);
+
+	    subDecorate(into, node1, node1.s(2, -1), 270);
+	    subDecorate(into, node1, node1.s(4, -1), 0);
+	    subDecorate(into, node1, node1.s(6, -1), 225);
+	    subDecorate(into, node1, node1.s(8, -1), 315);
+
+	    node1 = (Solver.Node)i.next();
+	}
+*/
+	Cell dimc1 = Params.getParam(wc, Client.c_dims).s(Client.d1);
+	Cell dimc2 = dimc1.s(Client.d1);
+	Cell dimc3 = dimc2.s(Client.d1);
+	Cell dimc4 = dimc3.s(Client.d1);
+
+	Iterator i = into.vobs();
+
+	Vob vob1 = (Vob)i.next();
+	Cell c;
+	while (i.hasNext()) {
+
+	    c = (Cell)vob1.key;
+	    if (c != null) {
+		subDecorate(into, vob1, c.s(dimc1), 90);
+		subDecorate(into, vob1, c.s(dimc2), 180);
+		subDecorate(into, vob1, c.s(dimc3), 70);  // 45
+		subDecorate(into, vob1, c.s(dimc4), 110); // 135
+
+		subDecorate(into, vob1, c.s(dimc1, -1), 270);
+		subDecorate(into, vob1, c.s(dimc2, -1), 0);
+		subDecorate(into, vob1, c.s(dimc3, -1), 250); // 225
+		subDecorate(into, vob1, c.s(dimc4, -1), 290); // 315
+	    }
+	    vob1 = (Vob)i.next();
+	}
+    }
+/*    private void subDecorate(VobScene into, Solver.Node node, Solver.Node nodes[], int angle) {
+
+	CellVobFactory.CellVob vob1 = (CellVobFactory.CellVob)nodeToVob.get(node);
+	CellVobFactory.CellVob vob2;
+
+	for (int i=0; i<nodes.length; i++) {
+
+	    vob2 = (CellVobFactory.CellVob)nodeToVob.get(nodes[i]);
+	    cellConnector.connect(into, vob1, vob2, angle);
+	}
+
+    }
+*/
+    private void subDecorate(VobScene into, Vob vob1, Cell cell2, int angle) {
+	DecoratedVob vob2 = (DecoratedVob)into.get(cell2);
+	if (vob2 != null) {
+	    cellConnector.connect(into, vob1, vob2, angle);
+//	    vob2 = (CellVobFactory.CellVob)into.getNext(cell2, vob2);
+	}
+    }
+
+    public void render(VobScene into, Cell wc) {
+
+//	nodeToVob.clear();
+	cellConnector.restart();
+
+	CellVobFactory cvf = new CellVobFactory(Cursor.get(wc));
+
+	Solver sol = new Solver(gfrac, revper, shrink[0], shrink[1],
+				shrink[2], shrink[3], initmul, varsize,
+				cvf);
+	sol.into = into;
+	sol.root = Cursor.get(wc);
+	sol.readDims(Params.getParam(wc, Client.c_dims).s(Client.d1));
+	long t1, t2;
+	t1 = System.currentTimeMillis();
+	if (sol.root != null) sol.solve(sol.new CellNode(sol.root));
+	t2 = System.currentTimeMillis();
+	p("Raster gen: "+((t2-t1)/1000.0)+" secs.");
+
+	decorate(into, wc);
+
+	// Place the dimension cells.
+	Font f = font.getFont(1000);
+	FontMetrics fm = font.getFontMetrics(1000);
+	int dw = fm.stringWidth("XXXXXXX")+10;
+	int dh = fm.getHeight()+10;
+	Cell dimc = Params.getParam(wc, Client.c_dims);
+	into.put(cvf.new CellVob(dimc,f,fm,cellConnector), 1, 0, 0, dw, dh);
+	dimc = dimc.s(Client.d1);
+	int y = dh;
+	while (dimc != null) {
+	    int x = 0;
+	    Cell c = dimc;
+	    while (c != null) {
+		into.put(cvf.new CellVob(c,f,fm,cellConnector), 1, x, y, dw, dh);
+		x += dw;
+		c = c.s(Client.d2);
+	    }
+	    y += dh;
+	    dimc = dimc.s(Client.d1);
+	}
+    }
+
+    protected class Solver {
+	public VobScene into;
+	public Cell root;
+	public Cell dimcells[][];
+
+	/** The Dim objects for the dimensions.
+	 * Caching these shaves off 1/3 of the running time
+	 * of the view building.
+	 */
+	public Dim dims[][];
+
+	public CellVobFactory cellVobFactory;
+
+	public void readDims(Cell dimlist) {
+	    Space s = dimlist.space;
+	    int max = Integer.MAX_VALUE;
+	    Cell[] dlists = Params.getCells(dimlist, Client.d1, max, null);
+	    dimcells = new Cell[dlists.length][];
+	    dims = new Dim[dlists.length][];
+	    for (int i = 0; i < dlists.length; i++) {
+		dimcells[i] = Params.getCells(dlists[i], Client.d2, max, null);
+		dims[i] = new Dim[dimcells[i].length];
+		for (int j = 0; j < dims[i].length; j++)
+		    dims[i][j] = s.getDim(dimcells[i][j]);
+	    }
+	}
+
+	public Solver(float gfrac, float revper, float shrink0, float shrink1,
+		      float shrink2, float shrink3, float initmul,
+		      boolean varsize, CellVobFactory cvf) {
+	    gfrac1 = gfrac; revper1 = revper;
+	    this.initmul1 = initmul; this.varsize = varsize;
+	    shrink01 = shrink0; shrink11 = shrink1; shrink21 = shrink2;
+	    shrink31 = shrink3;
+	    this.cellVobFactory = cvf;
+	}
+	public float align1(Node n, float w, float h) {
+	    return w/2;
+	}
+	public float align2(Node n, float w, float h) {
+	    return h/2;
+	}
+	public float fsize1(Node n, float fract) {
+	    if (n != null && root.equals(((CellNode)n).c)) fract*=centermul;
+	    if (n != null) {
+		String str = ((CellNode)n).c.getRootclone().t();
+		if (str == null) str = "";
+		FontMetrics fm = font.getFontMetrics((int)(fract*1000));
+		int w = fm.stringWidth(str) + 10;
+		int minw = fm.stringWidth("XXXX");
+		if (w < minw) w = minw;
+		return w;
+	    }
+	    return 60*fract;
+	}
+	public float fsize2(Node n, float fract) {
+	    if (n != null && root.equals(((CellNode)n).c)) fract*=centermul;
+	    if (n != null) {
+		FontMetrics fm = font.getFontMetrics((int)(fract*1000));
+		return fm.getHeight();
+	    }
+	    return 20*fract;
+	}
+
+	public class CellNode extends Node {
+	    public Cell c;
+	    public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o != null && o instanceof CellNode)
+		    return c.equals(((CellNode)o).c);
+		return false;
+	    }
+	    public int hashCode() { return c.hashCode(); }
+	    public boolean valid() {
+		Dimension fs = into.getSize();
+		int x = (int)(v1+fs.width/2.0f+.5f),
+		    y = (int)(v2+fs.height/2.0f+.5f);
+		int w = (int)(size1+.5f), h = (int)(size2+.5f);
+		if (x+w-1 < 0 || y+h-1 < 0 ||
+		    x > fs.width-1 || y > fs.height-1) return false;
+		int scale = (int)(fract1*1000);
+		Font f = font.getFont(scale);
+		FontMetrics fm = font.getFontMetrics(scale);
+
+		// Check whether to use CellImageVob
+		// (whether there is an image span in the cell)
+		Span span = c.getSpan();
+		Vob v;
+		if ((span != null) && (span instanceof ImageSpan)) {
+		    v = new CellImageVob(c, ((ImageSpan)span).getImage(), cellConnector);
+		}
+		else {
+		    v = cellVobFactory.new CellVob(c,f,fm,cellConnector);
+		}
+
+		into.put(v, (int)vd1, x, y, w, h);
+//		nodeToVob.put(this, v);	// map this node to the corresponding Vob
+
+		return true;
+	    }
+
+	    public CellNode(Cell c) { this.c = c; }
+
+	    protected CellNode cs(int dim, int dir) {
+		if (dims.length <= dim) return null;
+		for (int i = 0; i < dims[dim].length; i++) {
+		    Cell c2 = c.s(dims[dim][i], dir);
+		    if (c2 == null) continue;
+		    return new CellNode(c2);
+		}
+		return null;
+	    }
+
+	    protected CellNode[] ss(int rel, int dir) {
+		int dim = 0;
+		if (rel == out_0 || rel == out_1 || rel == out_2 ||
+		    rel == out_3) {
+		    if (rel == out_1) dim = 1;
+		    if (rel == out_2) dim = 2;
+		    if (rel == out_3) dim = 3;
+		    if (dir == -1) return new CellNode[] {};
+		    return new CellNode[] {cs(dim, -1), cs(dim, 1)};
+		}
+		if (rel == pos_1) dim = 1;
+		if (rel == pos_2) dim = 2;
+		if (rel == pos_3) dim = 3;
+		return new CellNode[]{cs(dim, dir)};
+	    }
+
+	    public Node[] s(int rel, int dir) {
+		if (depth > 0 && d1 >= depth)
+		    return  new CellNode[] {};
+	        CellNode[] x = ss(rel, dir);
+		int size = 0;
+		for (int i = 0; i < x.length; i++) if (x[i] != null) size++;
+		CellNode[] y = new CellNode[size];
+		for (int i = 0, j = 0; i < x.length; i++)
+		    if (x[i] != null) y[j++] = x[i];
+		return y;
+
+	    }
+	}
+#include "vanishing.out"
+    }
+}
+
+
+// vim: set syntax=java :

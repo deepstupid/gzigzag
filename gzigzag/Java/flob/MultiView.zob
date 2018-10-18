@@ -1,0 +1,90 @@
+/*   
+MultiView.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+ 
+package org.gzigzag;
+import java.awt.*;
+import java.util.*;
+
+/** A view that brings together different applitudes.
+ */
+
+public class MultiView implements FlobView, ZOb {
+public static final String rcsid = "$Id: MultiView.zob,v 1.2 2000/12/28 22:46:02 bfallenstein Exp $";
+    /** Should we print out debugging info? */
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) pa(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {}
+
+    public void raster(final FlobSet into, final FlobFactory fact,
+                       final ZZCell win, final String[] dims, 
+		       final ZZCell accursed) {
+	final Hashtable had = new Hashtable();
+	
+	ZZCell choice = null;
+	ZZCell[] accapps = ApplitudeMgr.getApplitudes(accursed);
+	ZZCell pref = ApplitudeMgr.getWindowApp(win);
+	if(accapps.length == 0)
+	    choice = ApplitudeMgr.getFallback(win.getSpace());
+	else {
+	    for(int i=0; i<accapps.length; i++) {
+	        if(accapps[i].equals(pref)) {
+		    choice = pref; break;
+	        }
+	    }
+	    if(choice == null)
+		choice = accapps[0];
+	}
+	
+	final ZZCell app = choice;
+	final Dimension size = new Dimension(into.getSize());
+	fact.centerFlob(into, pref, pref, (float)1.5, 
+			new Point(size.width, size.height), 1, 1, 1);
+
+	FlobView view0 = ApplitudeMgr.getView(app);
+	FlobSet set0 = into.create(size);
+	view0.raster(set0, fact, win, dims, accursed);
+	into.fetch(set0, 0, 0, 0, app);
+	
+	set0.iterDepth(new FlobSet.DepthIter() {
+	    public void act(Flob[] flobs, int start, int n) {
+		for(int i=start; i<start+n; i++) {
+		    Flob f = flobs[i];
+		    if(f.c == null || had.get(f.c) != null) continue;
+		    had.put(f.c, f.c);
+		    Point fc = f.getCenter();
+		    ZZCell[] apps = ApplitudeMgr.getApplitudes(f.c);
+		    for(int j=0; j<apps.length; j++) {
+			if(apps[j].equals(app)) continue;
+			FlobSet set = into.create(size);
+			FlobView view = ApplitudeMgr.getView(apps[j]);
+			view.raster(set, fact, win, dims, f.c);
+			Flob g = set.findNearest(f, null);
+			Point gc = g.getCenter();
+			into.fetch(set, fc.x - gc.x + j, fc.y - gc.y + j,
+				   f.d+1, apps[j]);
+		    }
+		}
+	    }
+	}, true);
+    }
+}

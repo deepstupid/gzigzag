@@ -1,0 +1,56 @@
+/*   
+UserRecord.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Antti-Juhani Kaijanaho
+ */
+package org.gzigzag.ztp.server;
+import org.gzigzag.*;
+import org.gzigzag.ztp.*;
+import java.util.*;
+
+/** User manager for ZTP server.  It enforces single-threaded access
+ * to the user table in the space. */
+
+public class UserRecord implements ZOb {
+
+    STRUCTPARAMS {
+        /** The username. */
+        String username;
+
+        /** The password for AUTH/PASS. */
+        String password;
+
+        /** Is the user suspended? */
+        boolean susp;
+
+        /** Is the user allowed to change her password? */
+        boolean chpass;
+
+        /** Does the user have Space Administrator Privileges? */
+        boolean sap;
+
+        /** May the user use preauthentication? */
+        boolean auth_pre;
+
+        /** May the user use password authentication? */
+        boolean auth_pass;
+    }
+
+
+}
+

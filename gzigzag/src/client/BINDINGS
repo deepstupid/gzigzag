@@ -1,0 +1,101 @@
+
+This file contains the current hard-coded bindings for the impl.Client. It is
+to be deleted when we move to Clasm bindings.
+
+
+In vanishing view screen
+------------------------
+
+Note: cursor keys include PgUp / PgDown for the Z dimension (up is out, 
+because we show up as up/left in the view currently) and Home / End for
+the fourth dimension Å.
+
+CURSOR. Move cursor.
+CHARACTER. Append to cell's text.
+BACKSPACE. Delete backward char.
+DELETE.    Delete forward char.
+
+NUMPAD-/ and NUMPAD-* Move cursor inside a vstream.
+
+
+CTRL-M. Mark cell. Only one cell can be marked and the mark is in a Java
+	variable: invisible, not persistent in the structure.
+
+CTRL-CURSOR. If connected, disconnect; if not connected, connect to marked.
+ALT-CURSOR. New cell.
+CTRL-ALT-CURSOR. Clone marked cell.
+CTRL-ALT-SHIFT-CURSOR. Include a space (reads space ID from stdin) and
+		       connect to the homecell of that space, in the given
+		       direction.
+SHIFT-CURSOR Hop.
+
+CTRL-U. Update included space whose inclusion cell is accursed.
+
+CTRL-G. Go to cell. Reads cell ID from stdin.
+	If empty, goes to marked cell.
+CTRL-P. Print ID of current cell.
+
+CTRL-E. Edit. Invoke the external editor on the vstream of the cell.
+        The editor is specified as the "user.editor" property
+	(default exists but is left unspecified).
+
+ENTER. Execute the accursed clasm function or expression and print out the
+       return value. (No parameter is passed, even if it's a function; if
+       you need parameters, construct an expression which calls that function.
+       Functions are distinguished by noting they have a poswards connection
+       on ClasmDims.d_def. Expressions are constructed with an empty 
+       stackframe, i.e. no cells in that expression are handled as variables.)
+	
+CTRL-D. Rotate to the next dimension setting.
+	Note: there is a list of dimension settings on d.2 (from the Dims
+	parameter of a window). This goes to the next setting. The standard
+	settings are: d.1 and d.2 without d.clone; d.1 and d.2 with d.clone;
+	clasm programming; and the "code organization setup." That last one
+	contains three dimensions on which we can organize the clasm functions
+	used by the client, in any way we like. Only thing is that the
+	structure should start at the home cell, and all functions should be
+	reachable through the three dimensions of this setup, at least
+	initially.
+
+CTRL-Q Quit & save
+
+CTRL-F reFresh screens based on the list.
+
+CTRL-R Duplicate a parameter tree, marked cell as the source root, accursed
+       cell will be root of the new tree.
+
+CTRL-ALT-P Print the screen
+
+CTRL-Z Change the zoom of the center cell
+CTRL-. Move one page forwards (in a multi-page image span at cursor)
+CTRL-, Move one page backwards (in a multi-page image span at cursor)
+
+CTRL-ALT-R Create a reference to an image (one or multiple pages)
+	on the mediaserver. Prompts for the block name.
+	The reference is put into the accursed cell.
+CTRL-ALT-T Transclude the span contents of the marked cell
+	to the accursed cell.
+
+In vstream screen
+-----------------
+
+Most of the previous ones work, plus some of these will actually work also 
+elsewhere.
+
+Cursor keys:
+Left and Right Move in the stream character by character
+Up and Down    Move in the stream block by block
+Page Up/Dowm   Follow links
+
+Ctrl-A Go to beginning of stream
+
+Ctrl-E Go to end of stream
+
+Ctrl-S Split the stream into two on current cursor position
+
+Ctrl-J Join the stream and the next stream;
+
+Ctrl-N Create a new comment on current cursor position
+
+Ctrl-L Create a comment link between current cursor 
+       position and the previously set mark.

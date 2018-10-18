@@ -1,0 +1,275 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>GZigZag - A Platform for Cybertext Experiments</title>
+<meta name="keywords" content="GZigZag, ZigZag, Ted Nelson">
+</head>
+<body bgcolor="#ffffff" link="#cc0033" vlink="#888888" alink=
+"#ffffff">
+<blockquote>
+<p>
+<i>GZigZag - A Platform for Cybertext Experiments</i><br>
+Tuomas Lukka & Katariina Ervasti
+</p>
+
+<p>ABSTRACT</p>
+
+<p>This article describes GZigZag, which is currently the main project of the Hyperstructure Group 
+at the univ. of Jyv&auml;skyl&auml;. GZigZag is an implemention of ZigZag, a computer paradigm invented 
+by Ted Nelson. The paradigm abandons many currently central concepts, such as folders, files and 
+applications, and instead offers a more flexible way to arrange information. Already at this early stage 
+of development GZigZag has advantages compared with other computer systems.</p>
+
+<p>1. INTRODUCTION</p>
+
+<p>"COMPUTERS ARE FUNDAMENTALLY BROKEN" lectures Ted Nelson (7 February 2000). Unlike 
+many other critics, he also offers ideas for improving the situation. Some of his ideas are 
+currently being implemented by the Hyperstructure Group at the university of Jyv&auml;skyl&auml;, Finland. 
+In this article we present a short summary of our ongoing work.</p>
+
+<p>1.1 Defamiliarization of files, folders and applications</p>
+
+<p>Nelson (1999a) offers many reasons for why users face difficulties with present PCs. This article 
+only includes a short attempt to defamiliarize (<a href="#1">1</a>) folders, applications and files from the user's point of view. 
+This is not an easy task, because folders, applications and files are one of the first things a beginner 
+is taught and are not often questioned.</p>
+
+<p>Hierarchical directories, also referred to as 'folders', were invented to help finding the right file 
+among many files (Nelson 1999a). Let us say that in September -99 a writer has been writing an 
+article dealing with the impossible nature of her cat Vilma.  In September 2000 she wants to find the 
+article again to edit it for a new purpose. In order to find the article, she opens a folder named 'Vilma'. 
+The folder includes approximately twenty files, which are either versions of the final article or include 
+some ideas the writer has considered worth writing down at some point of the writing process. The 
+files have names such as <i>vilma3.doc</i>, <i>vilma4.doc</i>, <i>vilfoo.doc</i> and <i>vilmaprob.doc</i>. By the time the 
+writer finished the article she had no time to make an index explaining the contents of each file. Finally, 
+after opening and closing several files, she succeeds in finding the right file and starts working. When 
+editing, she suddenly remembers that she had a slightly different version of a paragraph in another 
+document. Once again, she has to start opening and closing files to find the right file.</p>
+
+<p>Applications, then, are used for performing different tasks with the computer (Nelson 1999a). Problems 
+arise when a user wants to use the same information in many applications. For example, a multimedia 
+author, who has manipulated sound with SoundEdit, might want to use the sound in a multimedia 
+presentation made with Macromedia Director. Since applications do not support all file formats, 
+he has to find out which sound file formats Macromedia Director supports. After a study of sound 
+file formats, he saves the file in a suitable format and imports it to Macromedia Director. Then, if he 
+later views the presentation and wants to find a different sound sample, which he remembers recording 
+in the same session, it will not be easy. This is because there is simply no connection between 
+the Macromedia Director file and the original sound sample nor between the original sound sample 
+and the second sample from the same session.</p>
+
+<p>These examples demonstrate how the files and folders model of storing information is insufficient: 
+it does not allow the users to track the conceptual relationships between related information or 
+versions. Files, folders and applications are easy to understand but do not need to be, as 
+Nelson (lecture, 30 August 2000) explains, fundamental concepts of software. The above 
+problems could be solved by designing software differently, starting from different assumptions.</p>
+ 
+<p>1.2 Traditions of Bush and Engelbart</p>
+
+<p>Vannevar Bush and Douglas Engelbart developed ideas for tools that would improve the 
+working conditions of people who perform complicated tasks in the complicated world. Bush, who 
+had noticed the explosion of information already in the 1940's, is famous for proposing <i>Memex</i>, 
+a "mechanized private file and library" designed to help individual scientists store and handle the 
+growing amounts of information needed in their work (Bush 1945). Engelbart, the developer of NLS, 
+a tool for collaborative work, writes about augmentation of man's intellect, which has been the goal 
+of his work with computers. By augmenting man's intellect he means "increasing the capability 
+of a man to approach a complex problem situation, gain comprehension to suit his particular 
+needs and to derive solutions to problems" (Engelbart 1962). The purpose of our work is similar 
+to Bush's and Engelbart's: we want to facilitate the production and arrangement of information 
+by creating, as Nelson (1999b) expresses it, "a high-power personal and media system, with editing 
+and presentation systems that expand the state of art".</p>
+
+<p>2. BASICS OF ZIGZAG</p>
+
+<p>Defining ZigZag is difficult, because ZigZag is so different from any software in the currently 
+dominant computer paradigm. It is not an application but neither is it an operating system or 
+a platform. It is a new way of putting information into computers, a cross between a database, 
+a filesystem, a personal information manager and many others, and even that is not sufficient 
+to describe it. ZigZag is simply something new and different.</p> 
+
+<p>3.1.1 Cells, Dimensions, Views and Applitudes</p>
+
+<p>A ZigZag structure consists of cells and dimensions. A <b>cell</b> is the basic unit of information 
+in ZigZag. A cell can contain an information unit of any kind, for example text (e.g. "Vilma"), an 
+image (e.g. a picture of Vilma) or sound (e.g. "Meow" by Vilma). Cells can be connected with 
+each other along <b>dimensions</b>, which are referred to with names such as <i>d.1</i> or <i>d.cursor</i>. On 
+each dimension, each cell can have two neighbours: a predecessor and a successor. The number 
+of dimensions is not restricted, and it is easy to create new dimensions. For example, if Ville wants 
+to comment on many different cells, he could use <i>d.Ville-comment</i> for connecting his comments 
+to the cells.</p>
+
+<p>Figure 1 shows a simple structure. In the Figure, cells are represented by rectangles and neighbours 
+along a dimension by a line.</p>			
+
+<p><a href="vilma.png">Figure 1</a>.<i>Seven cells, connected to each other along the two dimensions d.1 and d.2</i></p>
+
+<p>There are several different visualizations (views) of the ZigZag structure. The views range from 
+<b>general view</b>s that are useful for looking at all kinds of structures to <b>specific view</b>s 
+that are useful for only one particular kind of structure. For example, Fig. 2 shows a generic view of a structure 
+that represents a schedule of a day. This view can show any kind of structure in a fairly reasonable 
+way, by showing the cells arranged along the dimensions and their text contents.</p>
+
+<p><a href="kello.png">Figure 2</a>.<i>The most important events of a day in a general view</i></p>
+
+<p>Figure 3, then, shows a specific view of the same structure. The underlying data is exactly the 
+same, but the specific view designed especially for the purpose interprets the structure and draws 
+the events in a more visual manner. Looking at another structure through this view would not make 
+sense because the view is designed especially for this structure.</p>
+
+<p><a href="kello-o.png">Figure 3</a>.<i>The same events in a specific view</i></p>
+
+<p>Combining the specific view such as the schedule view above with special operations for editing 
+such a structure, for example dragging the start and end times with the mouse makes an applitude. 
+Thus, an <b>applitude</b> consists of views and operations designed for a particular purpose. Even though 
+the term 'applitude' resembles the term 'application', there is an important difference: in ZigZag 
+nothing is separate, and applitudes, unlike applications, can be combined with each other, as the 
+example of the next section shows.</p>
+
+<p>3.1.2 Example: Address Book and Family Tree in GZigZag</p>
+
+<p>One of the first examples Nelson (pers.com., 25 August 2000) has used to demonstrate 
+ZigZag is the <i>Holm Family Demo</i>, a family tree prepared for his talk at the University of Oslo 
+to show how he is related to one of the professors of the university. Here, a variant of Nelson's 
+original example is used, combined with an address book.</p>
+
+<p>The structure of the address book is simple: it is a list of names and addresses . The names are 
+listed along <i>d.2</i> in alphabetical order. The addresses are connected to the names along <i>d.1</i>. 
+Figure 4 shows the (incomplete) address book in the row view.</p>
+
+<p><a href="1.png">Figure 4</a>. <i>The address book in the row view</i>.</p>
+
+<p>Since the list of relatives is long, only a subset of it can be seen on the screen at a time. In Figure 4 
+the cursor is on the cell 'cousin 1'. Moving the cursor down would cause more cells below 
+the 'grandfather 2' cell on <i>d.2</i> to become visible.</p> 
+
+<p>Next, the address book is combined with the family tree, which is represented by a slightly more 
+complicated structure, shown in Figure 3.</p> 
+
+<p><a href="3.png">Figure 5</a>. <i>One family of the family tree in the row view</i></p>
+
+<p>The two dimensions <i>d.marriage</i> and <i>d.children</i> are used to represent the family tree. Siblings 
+are connected along <i>d.children</i>, and married couples along <i>d.marriage</i> (<a href="#2">2</a>). An extra cell ("+") is used 
+on <i>d.marriage</i> to make the structure symmetric, and the list of children from the marriage on 
+<i>d.children</i> starts from that cell. Figures 5 and 6 show two different views of the structure. 
+The row view, as Figure 5 shows, enables dealing with one family at a time. The vanishing 
+view shown in Figure 6 gives a better picture of the family tree as a whole.</p>
+
+<p><a href="4.png">Figure 6</a>. <i>The family tree in the vanishing view</i>
+
+<p>It is important to realize that the same cells are used to represent the relatives in both the 
+address book and the family tree, and that the connections related to the two applitudes are 
+along different dimensions. In the default views only two or three dimensions (x,y,z) can be 
+shown at the screen at a time. As it can be seen on Figure 4, the dimensions used for viewing 
+the address book are x=<i>d.1</i> and y=<i>d.2</i>. Rotating the dimensions to 
+x=<i>d.marriage</i> and y=<i>d.children</i> shows the family tree, as in Figure 5.</p>
+
+<p>The address book and the family tree could be combined with further applitudes. For example, 
+a cell representing a person could also be connected to photographs and emails having to do 
+with that person. Simply all related information could be connected so that it is easily accessible. 
+A consequence of the ZigZag structure is that all connections are two-directional, which means 
+that navigating between related information is easy.</p>
+
+<p>3.2 Utility of GZigZag</p>
+
+<p>ZigZag offers several advantages compared with existing computer systems. To begin with, as Nelson (pers.com., 25 August 2000) usually 
+remarks after showing his <i>Holm Family Demo</i>, "we did not create a genealogy program". Modeling a complicated structure such as the family 
+tree on usual computer systems would require creating a specific program for that purpose. Modeling a complicated structure using 
+GZigZag requires only creating of new cells and connecting them along dimensions.</p> 
+
+<p>Remarkably, there are no separate files and applications in ZigZag. As seen above, the same 
+cells can simultaneously be part of different structures without any restrictive boundaries. 
+Thus, a multimedia author using GZigZag would not have the same problem as the multimedia 
+author described in 2.1. Connecting the same cells in various structures also facilitates updating 
+information. Updating the last name of a newly married aunt in the family tree and address book 
+requires updating only one cell.</p> 
+
+<p>In addition to this, ZigZag is a more flexible way to arrange information than the conventional 
+files and folders model. A certain piece of information is found by following the connections 
+that the user has previously made based on his associations. Hence, a user of GZigZag does 
+not need to remember file names in order to find the right information. The writer looking for 
+a document containing an interesting paragraph about Vilma (described in 2.1) could simply 
+follow a connection made previously. Also, moving between different versions of the same 
+paragraph is simple when using the Xanadu content model.</p>
+
+<p>Finally, ZigZag separates the structure and visualization of information. This is somewhat 
+similar to HTML 4.0 and CSS, but ZigZag generalizes this: all structures and all visualizations 
+are possible. The same GZigZag structure can be used in different media from mobile 
+phones to the immersive virtual reality of the CAVE, because  different visualizations 
+can be constructed to take full advantage of each medium.</p>
+
+<p>3. CONCLUSION AND FUTURE WORK</p>
+
+<p>The primary purpose of this article, which is the first publication of the Hyperstructure Group, 
+is to present a short summary of our ongoing work, especially GZigZag. This is not a simple 
+task because we are dealing with such a different view of the computer. Indeed, the difficulty 
+of explaining the new ideas to people has been one of the main problems of Nelson's broader 
+Xanadu project.</p> 
+
+<p>In the near future we are focused on developing a stable, working GZigZag on the Java 
+platform and cellular language Clang, which would make programming easier.  We are also 
+planning a network protocol for exchanging cells between computers
+and developing applitudes for several purposes in order to learn more about the system.</p> 
+
+<p>We believe that Nelson's ideas are creative, excellent, original and that they should finally be 
+understood and implemented. Our long-term goal is to develop a computer system we would 
+like to use ourselves. ;-)</p>
+
+<p>Everyone interested in our project is welcome to test and work on the current version of GZigZag, 
+which can be downloaded from <a href="http://gzigzag.sourceforge.net">the project's homepage</a>. GZigZag is a free software project: the 
+source code is released under the LGPL license and interested parties are welcome to join 
+our mailing list. By the time this article is published, we hope to have released the first stable 
+version (recommended for non-developers). "Patches",  as people of the free software 
+community say, and any other ideas of developing the system are gladly accepted.</p>
+
+<p>ACKNOWLEDGEMENTS</p>
+
+<p>We would like to thank Theodor Holm Nelson and Marlene Mallicoat for our collaboration. 
+We would also like to thank the other members of the Hyperstructure Group: Tuukka Hastrup, 
+Antti-Juhani Kaijanaho and Vesa Parkkinen.</p>
+
+<p>FOOTNOTES</p>
+
+<p><a name="1">1 According to Fowler (1986: 35, 42) defamiliarization is the use of a strategy to force us to look at familiar things in a critical way, to see the 
+absurdity of a familiar object. Criticism, as Fowler sees it, is not a negative practice. The basic motivation for criticism is "healthily sceptical 
+inquisitiveness", which can give a stimulus to developing things for better (Fowler 1986: 34).</a></p>
+
+<p><a name="2">2 If a person has been married several times, a mechanism called cloning is used to represent this in the structure. However, 
+this is beyond the scope of this article.</a></p>
+
+<p>REFERENCES</p>
+
+<p><u>Print References</u></p>
+
+<p>Fowler, Roger (1986). <i>Linguistic Criticism</i>. Oxford: Oxford University Press.</p>
+
+<p><u>Electronic References</u></p>
+
+<p>Bush, Vannevar (1945). <i>As We May Think</i>. <br>
+Available in the Internet: <a href="http://www.theatlantic.com/unbound/flashbks/computer/bushf.htm">
+http://www.theatlantic.com/unbound/flashbks/computer/bushf.htm</a></p> 
+
+<p>Engelbart, Douglas (1962). <i>Augmenting Human Intellect: A Conceptual Framework. </i> <br>
+Available in the Internet: <a href="http://www.histech.rwth-aachen.de/www/quellen/engelbart/ahi62index.html">
+http://www.histech.rwth-aachen.de/www/quellen/engelbart/ahi62index.html</a></p>
+
+<p>Nelson, Ted (1999a). <i>Ted Nelson's Computer Paradigm, Expressed as One-Liners.</i> <br>
+Available in the Internet: <a href="http://www.sfc.keio.ac.jp/~ted/TN/WRITINGS/TCOMPARADIGM/tedCompOneLiners.html">
+http://www.sfc.keio.ac.jp/~ted/TN/WRITINGS/TCOMPARADIGM/tedCompOneLiners.html</a></p>
+
+<p>Nelson, Ted (1999b). <i>ZX Views.</i><br>
+Available in the Internet: <a href="http://www.xanadu.com/FW99/ZXviews.html">
+http://www.xanadu.com/FW99/ZXviews.html</a></p>
+
+<p><u>Other References</u>
+
+<p>Nelson, Ted. Lectures at the University of Jyväskylä. 7 February 2000 & 30 August 2000.</p>
+
+<p>Nelson, Ted. Conversation with the authors. 25 August 2000.</p>
+
+</blockquote>
+</body>
+</html>
+
+
+
+
+

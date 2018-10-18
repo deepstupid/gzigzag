@@ -1,0 +1,1068 @@
+\newif\ifdraft
+\ifx\dontdraft\relax
+\message{IFX TRUE}
+\draftfalse
+\else
+\message{IFX FALSE}
+\drafttrue
+\fi
+% Final version: use times!
+% \documentstyle[times,graphicx,ht01e]{article}
+\documentstyle[a4,isolatin1,times, concmath,ht01e, graphicx]{article}
+% \draftfalse
+
+\ifdraft
+\renewcommand{\baselinestretch}{0.9}
+\def\margincomment#1{
+\marginpar{
+\vbox{
+\scriptsize #1
+}
+}}
+\def\nakki#1{\marginpar{\bf Nakki: #1}}
+\pagestyle{plain}
+\else
+\def\margincomment#1{}
+\def\nakki#1{}
+
+% Make the times fonts defaults again if not draft.
+\renewcommand{\sfdefault}{phv}
+\renewcommand{\rmdefault}{ptm}
+\renewcommand{\ttdefault}{pcr}
+
+\fi
+
+
+\newcommand{\url}[1]{\textsf{#1}}
+\newcommand{\hyp}{\discretionary{}{}{}}
+
+% Define a macro for your own margin notes here
+% If it is ABSOLUTELY clear that something is a typo, go ahead
+% and fix it. But don't make any major changes to the text itself
+% yet. Also, only propose rearrangements in the margin: CVS doesn't
+% work too well with rearrangements and edits done by several
+% people. I will be the editor until wed or thu.
+\def\tjl#1{\margincomment{Tjl: #1}}
+\def\vp#1{\margincomment{vp: #1}}
+\def\rr#1{\margincomment{rr: #1}}
+\def\cat#1{\margincomment{cat: #1}}
+\def\ajk#1{\margincomment{ajk: #1}}
+\def\jvk#1{\margincomment{jvk: #1}}
+
+\def\ra{$\rightarrow$}
+
+\ifdraft
+\onecolumn
+% \textwidth 8.5cm
+\textwidth 9.6cm
+\marginparwidth 8.5cm
+\fi
+
+\renewcommand\floatpagefraction{.9}
+\renewcommand\topfraction{.9}
+\renewcommand\bottomfraction{.9}
+\renewcommand\textfraction{.1}   
+\setcounter{totalnumber}{50}
+\setcounter{topnumber}{50}
+\setcounter{bottomnumber}{50}
+
+
+
+\title{Hypertext markup and focus+context interfaces}
+
+% \title{Direct vs.\ indirect hypertextual views}
+\begin{document}
+
+\def\figurewidth{\columnwidth}
+\def\wfigurewidth{\textwidth}
+\def\mockupwidth{16cm}
+
+\ifdraft
+\nocopyright
+\fi
+
+\authorname{Tuomas~J.\ Lukka, Rauli Ruohonen, Vesa Parkkinen, Antti-Juhani Kaijanaho
+}
+\authoraddr{  University of Jyv\"askyl\"a,
+  Department of Mathematical Information Technology\\
+  PO.~Box~35, FIN-40351~JYV\"ASKYL\"A, Finland\\
+  E-Mail: \{lukka,raulir,veparkki,gaia\}@iki.fi
+}
+\maketitle
+% \ajk{Ewww... the title is zzzzz\ldots}
+% \tjl{Ehdota parempaa}
+% \rr{The old title was better, IMO. This sounds {\em content-free}.}
+% \ajk{It no longer induces sleep, but it equally fails to attract attention.  Perhaps Rauli is right.}
+
+\ifdraft
+\begin{verbatim}
+$Id: hyp.tex,v 1.225 2001/03/05 10:03:37 ajk Exp $ 
+\end{verbatim}
+\fi
+
+\abstract
+
+We describe the issues faced in designing an effective user interface
+to the Internet RFCs,
+a set of
+highly technical documents, whose contents are deeply interconnected.
+The desired user interface is such that HTML cannot be used
+as descriptive markup, only presentational markup.
+To allow flexibility with respect to visualizations, a different, descriptive
+markup system for the hyperstructure must be used.
+Such a system enables advanced focus+context
+visualizations.
+We also discuss
+our work-in-progress implementation on top of GZigZag.
+
+
+
+\paragraph{KEYWORDS:} Bidirectional links, 
+focus+context visualization, virtual paper, RFC,
+presentational markup, declarative markup, markup
+
+\ifdraft
+\vfill
+
+\break
+\tableofcontents
+
+\vskip 0pt plus 2cm
+\hrule
+\vskip 0pt plus 2cm
+\fi
+
+%----------------------------------------------------------------------------
+\section{INTRODUCTION}
+
+We use the Network Working Group's Request for Comments
+(RFC) document series~\cite{rfc-intro,rfc-index} as an example 
+of a large set of interrelated documents.
+We argue that it would be easier to browse these documents
+using an interface that would
+be able to show the actual 
+underlying hyperstructure of the documents
+by showing the ``neighbouring'' pieces of documents simultaneously,
+i.e.~a focus+context\cite{fc-large-trees,fc-fisheye,fc-star} interface.
+
+HTML\cite{html-spec} is often considered to be descriptive markup language,
+since instead of describing the appearance of the various elements,
+it describes their functions, such as {\tt title}.
+However, for representing the intertextual structure of the RFCs,
+HTML as it is today implemented quickly becomes a mere presentational tool.
+We discuss what would be needed of a descriptive markup language
+for this task.
+
+
+% Two-directional and multi-directional links are mentioned in several
+% contexts in the hypertext literature\cite{XXX,XXX}, but 
+% there are relatively few implementations and almost none that are
+% in production use.
+
+% Focus+context methods!!! \cite{XXX}
+% \tjl{Please help with intro... Needs lots of text \& refs}
+
+% {\bf Needing to "go" somewhere to know whether it is relevant is not
+% acceptable!} \cite{XXX}
+
+% \nakki{Viitteet mm. Tediin.}
+
+% We feel that scalability of hypertextual user interfaces to large
+% amounts of data is an important consideration that has
+% not been paid enough attention to in the literature.
+% Any%
+% \nakki{References for this?}\ajk{Ei tunnu löytyvän.}%
+% \tjl{Entäs näin? Liian arroganttia?}
+% interface is sufficient when one is
+% dealing with a small amount of information.  For example, one can
+% easily handle a two-page document regardless of how it is
+% presented---on paper, as a text file or as hypertext\ajk{should this
+%   be ``a hypertext''?}.  However, many interfaces that work well with
+% small amount of data---which is a common laboratory situation---do not work
+% so well when presented with a large dataset, such as a document
+% that is several thousand pages long or, more to the point, consists of
+% \rr{``More to the point''? Why do we say something that has little point?
+%     This sounds like ``Take this example --- no, this is not good, take
+%     {\em that one} instead.''}
+% dozens of volumes each thousands of pages long.  In other words, those
+% interfaces do not scale well.
+
+
+
+In the following sections, we first introduce the RFC genre
+and discuss how the HTML document model is insufficient for this class
+of documents. 
+Then we present our view of what a good interface and hyperstructure
+for the RFCs would be like and discuss our work-in-progress 
+implementation on GZigZag.
+
+%----------------------------------------------------------------------------
+\section{THE INTERNET RFCS}
+
+The
+RFC series forms a critical basis for the Internet standardization
+effort: 
+most technical standards which the
+Internet is based on
+have been published 
+in the last twenty years as RFCs (Requests For Comments).
+A history of the RFC series can be found
+in~\cite{rfc-refguide} and in~\cite{thirty-years-of-rfc}.
+
+% The RFC series, founded in 1969, was originally a series of
+% working notes circulated among the early designers of the ARPANET,
+% which later became the Internet.  Many of the earlier debates are
+% still available in the RFC archives.  As the services of ARPANET grew
+% and discussions could be held online via email and public discussion
+% services, the RFC series became a publishing medium for results of
+% those discussions.  
+
+RFCs are divided into \emph{Standards Track}\/ RFCs and other
+types, such as \emph{Informational}\cite{rfc-authoring,not-all-rfcs-are-standards}.  
+A Standards Track
+RFC is either an \emph{Internet Standard} or on its way to become
+one\cite{ietf-standardization}.  
+For example, the Internet email protocols and the Hypertext Transfer Protocol
+(HTTP) are 
+documented in Standards Track RFCs (see for example~\cite{rfc822}).
+Most RFCs are also of a highly technical 
+nature~\cite{rfc-intro}.  
+%In essence, Standards Track RFCs document Internet's standard
+%protocols in various stages of maturity~\cite{ietf-standardization}.
+
+% Figure~\ref{fig-rfc-update} contains an example of an RFC that updates
+% another RFC.
+
+\rr{Kata sanoi, että seuraavassa osassa ihmetyttää, miksi RFC:t sitten eivät
+    ole hypertekstimuodossa alunperinkin. Tässä pitäisi selittää, että niiden
+    std-format on ASCII, miksi se on niin, ja tehdä viittaus. Selittäessä
+    voisi ehkä viitata Tedin ``markup considered harmful''-juttuun, jotta
+    saadaan lisää Tediviittauksia :*)}
+\rr{Voisi tässä vaiheessa sanoa, että olemme kiinnostuneita standardien
+    nykytilan esittämisestä, ja obsolete RFC:t eivät siksi juuri kiinnosta
+    meitä.}
+
+The actual RFC documents are rather long.  
+For example, the RFCs used in the Figures of this article, 
+1034, 2181 and 2308, which discuss the DNS (Domain Name System) 
+are
+17000, 5800 and 5900 words long, respectively --- and these three
+are not the only ones concerning DNS.
+
+The RFC series is considered to be an archival series:
+once issued, an RFC is never modified~\cite{rfc-intro}.  Thus, when a
+protocol documented in an RFC needs to be modified for whatever
+reasons, a new RFC is issued.  Such an RFC either \emph{obsoletes} or 
+\emph{updates} the RFC it is based on~\cite{rfc-authoring}.
+If an RFC has been obsoleted, it is generally only interesting for
+historical reasons. 
+On the other hand, an RFC that has been updated retains its importance;
+the updates usually only slightly change the content.
+Among the abovementioned RFCs 1034, 2181 and 2303, the two latter
+RFCs update the original 1034 by various amendments relating
+to security, among other things.
+
+%----------------------------------------------------------------------------
+\section{HTMLIFYING THE RFCS}
+
+An HTML version of the RFCs is available at \cite{rfc-index-faqs}.
+Figure \ref{fig-example-current}
+shows the index entry and fragments of the HTML version of
+RFC 1034.
+The index entry shows which RFCs this RFC obsoletes as well
+as which RFCs update it. 
+The text of the RFC itself has not been modified (see below),
+and therefore the RFC itself only shows its relationship with RFCs that came
+before it.
+
+% Direct references to complete
+% RFCs are shown as hyperlinks.
+
+\begin{figure}[htb!]
+\vbox{
+a) \\ \includegraphics[width=\figurewidth]{HTML-RFC-index.ps} \\
+b) \\ \includegraphics[width=\figurewidth]{HTML-RFC.ps}
+}
+\caption{a)The index entry at \cite{rfc-index-faqs} for RFC 1034
+b) Fragments of the HTML version of RFC 1034 from \cite{rfc-index-faqs}.
+\label{fig-example-current}}
+\end{figure}
+
+On the RFC 1034 HTML page, no reference is made to the RFCs that
+have later updated that RFC.
+When reading the the RFC, there is no way of knowing directly
+whether some other RFC has updated the content of a given paragraph,
+since none of the updated paragraph
+contain links to the updating RFCs.
+This can be a problem for the reader, since
+the 
+longest and most important RFCs 
+naturally become the most heavily updated ones with time and the
+updates can be of a crucial importance for e.g.~security or interoperability.
+
+It would therefore be an obvious
+improvement to show links to sections that
+update a given section. This cannot be done using normal in-line 
+hyperlinks, as
+issued RFCs may not be
+modified~\cite{rfc-intro}, so
+modifying a phrase to make a
+smoothly worded inline hyperlink would be a copyright violation at
+best~\cite{rfc-authoring}.  
+One possibility is having an icon
+(e.g.~``\emph{updated}'') as the link
+source---this is not as
+intrusive but the problem here is that a reader cannot know the nature
+of the update, so following the link is essentially blind-folded
+activity.  
+
+One possibility, of course, is placing the links outside the text, in
+the margin. This way, the text of the RFC remains untouched but
+the link can state where it is going.
+Figure \ref{fig-updatelinks} shows how such a
+version could look. 
+Creating a version such as this of all RFCs would be a monumental task
+but would also save countless hours for later users.
+
+% It is often tedious to try to find the right piece of information from RFCs
+% due to their length and complexity. 
+% Updates make the situation worse: even if the correct information is found,
+% other RFCs have to be checked to see whether they change the XXX.
+
+\begin{figure*}[htb!]
+\centering
+\fbox{
+       \includegraphics[width=\mockupwidth]{demo4.ps}
+}
+\caption{A mock-up HTML version of a fragment of RFC 1034,
+where the margin contains links to other RFCS that have been
+published later and contain updates relevant to these locations in 
+RFC 1034.
+\label{fig-updatelinks}}
+\end{figure*}
+
+However, even here it is not immediately clear from the links what
+the actual update in the updating RFC is. 
+As Nielsen
+states\cite{nielsen-links-as-microcontent},
+links should be seen as microcontent, i.e.~an
+ultra-short abstract of its target document. Thus, the users should
+be made aware of what is at the other end of the link 
+so that they can decide whether the linked-to document is
+relevant to their current task.
+
+The most unambiguous way is to simply display the complete
+updating paragraph(s) from the updating RFC and vice versa.
+Figure \ref{fig-updatelarge} shows the same fragment of RFC 1034 as before
+in this type of display.
+The problem with the page in Fig.~\ref{fig-updatelarge} is that the text of the
+original RFC does not flow smoothly any more, since there is
+too much updating information. 
+
+Abstracting the nature of the update to fewer words is sometimes
+possible but 1)~it would be an even more enormous task than simply
+connecting the updating paragraphs for all currently used RFCs,
+2)~the RFCs are already rather dense and it is not necessarily 
+easy to find a good summary of the changes in a few words.
+
+% Some of the above-mentioned problems can be solved by showing as much of the
+% first updating paragraph as possible, with the constraints that the update
+% must be centered to the updated paragraph and may not overlap with other
+% updates. This is not much better, as it is less clear what is linked to what,
+% and with cases such as the items 4.~and~5.\ of fig.~\ref{fig-updatelarge}
+% there is no difference to the previously described clipping view.
+
+In addition to showing the updates, 
+it would also be desirable to show other
+material related to the current paragraph from the same or other RFCs:
+the RFCs contain a wealth of other intra- and intertextual structure
+that would be useful for the reader to have at hand
+in addition to the ``Updates'' relationship.
+
+% such as a packet format or
+% a command syntax.
+% Readers not familiar with the subject
+% would need definitions of terminology, and references to more obscure
+% things such as the packet format is useful to any technical reader.
+% Showing all this for every paragraph of the document is exteremly cumbersome,
+% to say the least.
+
+
+\begin{figure*}[htb!]
+\centering
+\fbox{
+       \includegraphics[width=\mockupwidth]{demo3.ps}
+}
+\caption{A mock-up HTML version of the same fragment as in Fig.~\ref{fig-updatelinks},
+where the actual paragraphs from the other RFCs that update this RFC
+have been included in the margin along with the links to give some more
+context for the links.
+The layout problems encountered by HTML are obvious.
+Additionally, the browser is unable to animate the text quoted from the other
+RFC to its new position on the screen when the reader follows the link to that 
+RFC --- the text will jump, causing disorientation for the reader.
+\label{fig-updatelarge}}
+\end{figure*}
+
+%----------------------------------------------------------------------------
+\section{FOCUS+CONTEXT VISUALIZATION}
+%\ajk{Please review!  This will probably need a rewrite to make the
+%  flow better.}
+%\tjl{Should start more like the heading: one example of a more direct
+%        view than a page-oriented scissor-clipped view}
+
+%An interesting direct view is the class of presentation methods often
+%called distortion-oriented, also known as the \emph{focus+context}
+%technique.  Instead of showing the currently
+%``interesting'' data on the screen and providing the viewer a way to
+%switch the viewpoint --- for example by scrolling, or arranging the data into a browsable hierarchical structure, thus providing a way to
+%zoom the viewpoint, so to speak ---  
+%\tjl{Minä aloittaisini ensin
+%  mainitsemalla distortion-oriented -jutun, sitten sen mistä siihen
+%  tullaan.}
+%focus+context views attempt to show an overview of the whole
+%dataset while at the same time showing the details the viewer wants to
+%see.  This usually scales better with the size of the dataset than
+%simpler views that do not employ the distortion techniques.~\cite{fc-taxonomy}
+
+Animation is a powerful tool for clarifying visualizations\cite{fc-taxonomy}.
+Consider the view in Figure~\ref{fig-updatelarge}.
+When the user clicks on the text in the margin
+in order to move to the updating RFC,
+the transition 
+would be less disorienting if the parts of the text that are the same before
+and after the transition were to be animated between the initial and final
+conditions.
+
+Level of detail is another useful device.
+When the user is looking at Item 4 in Fig.~\ref{fig-updatelarge}, it
+could be a good idea to show only the updating paragraphs related to 
+that item fully and to shrink the level of detail of the updates
+related to the other items to e.g.~showing only the headings. 
+
+% Also, if there is enough room on the screen, it would be interesting to
+% show more context: larger portions of the related documents, following more
+% levels of connections and so on. 
+% 
+% On the other hand, since the update
+% to the item 4.~in Fig.~\ref{fig-updatelarge} is so long, the neighbouring
+% updates could be shown smaller when the user is looking at item 4.
+
+Doing this in HTML is difficult or impossible due to the page model
+of HTML (the next sections discuss why we exclude Javascript here).
+When converting the RFCs into HTML, 
+we are effectively printing (or manually writing)
+the document and its relationships to other documents 
+onto a virtual sheet of paper, the HTML page. Once on the page,
+the amount of detail in the margin is fixed.
+%However, as
+As Ted Nelson puts it\cite{ted-oneliners}
+%\begin{list}{}{\setlength{\leftmargin}{1cm}}
+%\item[]
+
+{\leftskip=0.7cm \rightskip=0.7cm
+        Imitating paper on a computer screen ---
+        as almost all consumer applications presently do ---
+        is like tearing the wings off a 747 and using it as a bus on the highway. 
+%\end{list}
+
+} Since the reader is going to focus on one paragraph at a time
+anyway, it would be much clearer to show that paragraph and 
+the material related to it with more detail than the material
+further away from the focus.
+To do this we will have to
+abandon the virtual paper model of HTML
+in favor of the \emph{focus+context}
+model\cite{fc-large-trees,fc-fisheye,fc-star}.
+
+The fundamental ideas of focus+context were already expressed above:
+showing what the viewer is focusing on with the
+greatest amount of detail (usually enlarged in size)
+and the rest of the material with less detail the further away
+from the viewer's focus it is, and using animation when the user
+changes the focus.
+% To make more
+% relevant data also more prominent, focus+context views typically vary
+% magnification, level of detail and distance from the focus. This way the
+% viewer can concentrate on the information, not on finding it.
+
+A simple example of a focus+context view is
+\emph{billowing}\cite{ted-billowing}, where 
+a stream of text is shown so that the size of the letters is largest on the line
+where the user's current focus (cursor, viewpoint) 
+is, and the letters get smaller towards the edge of the window.  
+Similar views can be found e.g.~in \cite{fc-fisheye} and \cite{fc-bifocal}
+% It is
+% similar to Furnas's Fisheye View~\cite{fc-fisheye} and Bifocal
+% Display~\cite{fc-bifocal}.
+%\tjl{Rather similar on outo}
+and more advanced examples can be found from the areas of visualizing large
+datasets, using hyperbolic trees \cite{fc-large-trees,fc-hyperbolic,fc-star}
+and image browsing
+\cite{fc-images}.  
+
+%\tjl{Hyperdocument browsing - pitäisi puhua
+%  tarkemmin ja verrata meidän työmme kanssa, vrt. Vesan nakki lopussa.
+%  Koordinoi Vesan kanssa} \ajk{Vesa, selitä mikä se hyperdocument
+%  browsing on. (Tai voin minä lukea viitteenkin mutta jos saisit
+%  parilla sanalla tarkentaa.)}  \vp{ www-selausta. Periaatteessa nuo
+%  on www browsereita, joissa joko esitetään sivujen suhde toisiinsa,
+%  esim. historiatai sivujen topologia, tai pilkotaan näytettävä sivu
+%  pienempiin palasiin, kuten siinä zoom-browserissa tai WEST:ssä.
+%  Meillä olevaa block2block tyyppistä ratkaisua minä en ole nähnyt.
+%  Lisäksi meillä on etuna ( ja haittana) se, että meillä on
+%  käytettävissä oikea hyperrakenne, eikä litistetty html-versio.  }
+
+% Animation and user interaction are an important part of focus+context
+% views.  
+% The user browses the data by moving the focus, 
+% and animation is used to avoid disorienting jumps of the 
+% focus\cite{fc-taxonomy}.
+
+% show where the new focus comes from in the
+% old context and where the old focus goes in the new context.
+% Similarly, animation shows where other parts of the dataset shown move
+% when the viewpoint moves..~\cite{fc-taxonomy}
+
+% One can think of such views this way: The dataset is printed on a stretchable
+% rubber sheet which is mounted on a rigid frame.  Whichever part of the dataset
+% it is that the viewer wants to see, that part is stretched; this enlarges the
+% data at the focus and makes the context seem smaller.  When the viewpoint is
+% moved, the focus moves smoothly in this model, and this is usually simulated on
+% the screen using all-pervasive animation.
+
+One depiction of what a complete focus+context view of the RFCs
+might look like
+is shown in Fig.~\ref{fig-foccont-utopia}.
+In this view, the user is shown many related paragraphs from different
+documents at once, with the focus largest in the center.
+
+\begin{figure*}[htb!]
+% \includegraphics[width=\wfigurewidth]{utopia.1} 
+\includegraphics[width=\wfigurewidth]{utopia.1} 
+\caption{
+\label{fig-foccont-utopia}
+One possible focus+context view of the RFC 1034.  The original RFC is
+in the middle, and related material, such as the pieces of the updating
+RFCs, float around it.
+The idea for the lines connecting the related parts is
+taken from Nelson's early 
+work on 
+transpointing windows~\cite{as-we-will-think,ted-xanalogical-structure-needed}.
+This view would of course be completely animated: when the user
+clicks on a piece of text, that piece floats to the center.
+}
+\end{figure*}
+
+%----------------------------------------------------------------------------
+\section{DESCRIPTIVE AND PRESENTATIONAL MARKUP\\AND THE VISUALIZATION OF HYPERDOCUMENTS}
+
+In this section, we discuss the view proposed in the previous sections
+and some issues in its implementation related to the 
+relationship between presentational and descriptive markup.
+
+In markup theory, 
+the distinction between presentational and descriptive markup
+is important (see e.g.~\cite{markup-systems-future-scholarly}).
+Presentational markup expresses the way the document is supposed to look,
+while descriptive markup describes the function of the
+parts, e.g. the {\tt title} element in HTML.
+Presentational markup generally ties the information it marks
+up into a particular representation (e.g.~paper page),
+which is why
+information that is marked up in a descriptive way is 
+generally easier to adapt to new visualizations and systems.
+
+For document sets such as the RFCs where there are
+important relations between parts of the different documents, 
+HTML is only descriptive on the level of single documents.
+Figure \ref{fig-hyperstructure-example} shows how the HTML 
+visualizations in the previous sections use HTML as a presentational markup
+language. 
+The underlying simple hyperstructure has to be cut into
+pieces (pages) and flattened
+beforehand in order to create relatively complicated HTML
+pages such as the one in Fig.~\ref{fig-updatelarge}.
+The produced HTML files do not tell the browser that two copies
+of the same text in different files actually do correspond to the same text in
+the hyperstructure.
+The fundamental ``Updates'' relationship between two pieces of text
+has been lost in the conversion into low-level tabular formatting and 
+point-to-point links between different HTML pages.
+
+% A different, descriptive markup system could be able
+% to describe the hyperstructure shown in 
+% directly. An associated visualization system could then be able
+% to show the structure with different visualizations.
+
+% which could be described in a different markup system needs to be cut
+% into pieces
+% to obtain the view in Fig.~\ref{fig-updatelarge}: the latter view
+% uses HTML as presentational markup for the connections, and the 
+% true structure of the connections is not known by the browser..
+
+% However, if we remain in the HTML model, it is not really possible to 
+% implement these features in any simple way. 
+
+% Also, when descriptive markup is used to create the documents,
+% it is important that the full descriptive version be given to the reader's browser.
+% Otherwise, the browser is given a particular presentationally marked-up version...
+
+
+% and an associated visualization system which is able to use that
+% descriptive markup to produce interesting visualizations is vital.
+% \tjl{Pitäisikö sanoa intratextual ja intertextual? Kuulostaa hienommalta ;)
+% }
+% \rr{Humanisti-marketointispeakkia. Ja eikös siinä ``tehtävänannossa'' sanottu,
+%     että pitäisi välttää turhia obscurificationeita?}
+
+
+\begin{figure}[htb!]
+a)\\%
+\fbox{
+        %\includegraphics[scale=0.5]{diagram.1}
+        \includegraphics[width=5.3cm]{diagram.1}
+}\\
+b)\\%
+\fbox{
+        %\includegraphics[scale=0.5]{diagram.2}
+        \includegraphics[width=8.3cm]{diagram.2}
+}
+\caption{
+How converting the RFC hyperstructure to 
+HTML pages makes the markup of the connections between 
+documents presentational and not descriptive.
+a) Three RFCs, with their structural relationships. A descriptive
+        hyperstructural markup language would be able to directly
+        represent this figure.
+b) The resulting HTML pages, for visualizations such as
+        Fig.~\ref{fig-updatelinks} and \ref{fig-updatelarge}.
+  From these pages, the browser cannot 
+identify the two different appearances of each letter with each other,
+and cannot render the transitions from one page to another in a 
+meaningful way. The link markup is presentational.
+\label{fig-hyperstructure-example}}
+\end{figure}
+
+We pause to note that the same effect can be observed on countless
+WWW pages, in the form of {\em navigation bars} where 
+a set of HTML pages each show the same listing of pages at the same
+hierarchical ``level'', with the current page highlighted. 
+Here HTML is also being used as presentational markup and 
+therefore the browser cannot easily show the set of pages 
+in a more interesting user interface.
+
+In order to express the actual hyperstructure in
+Figure \ref{fig-hyperstructure-example},
+a descriptive markup language
+where bidirectional connections can be indicated
+is necessary.
+The W3C XLink proposal\cite{www-xlink-proposal} would
+be able to represent the underlying hyperstructure 
+of the RFC example properly.
+Unfortunately, no implementations seem to exist.
+Another alternative, which we discuss below
+in Section ``A POSSIBLE IMPLEMENTATION'', is Ted Nelson's 
+ZigZag\cite{zigzag-welcome}.
+
+\subsection{Snapshots from a virtual reality: an analogy}
+
+As an analogy, consider a 3D architectural model. 
+One way of displaying it to the user is simply as a series of 
+snapshots from inside it, with possibly anchors in them for selecting
+the next shot. This is analogous to showing the RFC hyperstructure
+to the user as a set of fixed HTML pages.
+A more advanced way of showing the 3D architectural model is as a virtual
+reality
+walkthrough, where user can move around freely.
+If there are some pre-specified viewpoints, the user's view
+can fly through the space between them in a smooth way, causing
+no disorientation by jumping from point to point.
+This ability 
+comes from the fact that
+the virtual reality model contains the true structure of the 
+underlying building, as opposed to just snapshots. The identities between
+objects in different views are retained.
+
+It could be said that the virtual reality viewer gives the user a more direct
+view to the actual underlying structure as opposed to the indirect
+view through the fixed snapshots.
+It is possible to do the same for hypertext by creating
+a more direct view of the underlying structure, such as a focus+context view
+as discussed above.
+
+% Figure \ref{fig-twomodes} shows schematically 
+% the two different ways in which we can go from 
+% a hyperstructure such as the RFCs and the Updates-relationships 
+% onto the user's display, either indirectly via HTML page snapshots
+% or directly by a program that directly traverses the hyperstructure.
+
+% There is another important analogy between the virtual reality and hypertext
+% examples. In the snapshot representation of the virtual reality world,
+% the structure was flattened to images. These images, if too large, the user
+% would then scroll like ordinary paper.
+% Quite similarly, most HTML browsers simulate paper when displaying large
+% pages to the user. For HTML, this is a reasonable option since the
+% design of HTML is mostly concentrated on just that medium (except for
+% some work on aural CSS\nakki{viite? Relevanttia?}), but with 
+% a more intricate hyperstructure, as shown in \ref{fig-hyperstructure-example}
+% a paper view is not reasonable any more.
+
+% In the first alternative, the hyperstructure is first split into pages and
+% flattened into HTML either manually or by e.g.~a program extracting data from a database.
+% This HTML is sent over the network to the client machine.
+% On the client, the browser then further flattens the
+% HTML page into an image 
+% on a virtual canvas, which the user can then scroll.
+
+% \begin{figure}[htb!]
+% \fbox{
+% \vbox{
+% a)\\ Hyperstructure \ra(translation,app-specific) \fbox{HTML} \ra(layout) virtual paper
+%         \ra(painting) display
+% \\ \\
+% b)\\ \fbox{Hyperstructure} \ra(painting,app-specific) display \\
+% }
+% }
+% \caption{Diagrammatic representation of the two modes of operation.
+% The framed stages indicate the stage that is transferred in the network.
+% a) The underlying hyperstructure is flattened into HTML, which
+% is sent over the network and
+% laid out onto the virtual page which the user can then scroll.
+% b) In the direct model, the hyperstructure moves over the net
+% as structure. In the client end there is much more latitude for
+% different visualizations using focus+context, animation etc.
+% \label{fig-twomodes}}
+% \end{figure}
+
+
+
+% Indeed, it is not necessary to be bound by the virtual paper paradigm.
+% Modern computer displays have in the order of a million pixels,
+% and the color of each pixel may be set individually at each moment
+% in time. There is no requirement to use "pages".
+
+
+% In Fig.XXX we saw how including too many
+% \vp{ Screen is also a box. Think about ads in the magazines,
+% they break the usual box layout. I'd say it is more about the box
+% layouts than the paper itself.}
+% \tjl{ I don't think so. Our system can also be used by box layouts.
+%         The difference is that our boxes can move dynamically w.r.t. each
+%         other, whereas HTML and paper simulators can't: the boxes are
+%         frozen. We should make this point more clearly.}
+% marginal notes in a document broke the flow.
+% The flow was broken because all the marginal notes could not be properly
+% fitted with the text into the virtual paper page.
+
+
+\subsection{Using HTML as a presentational medium\\ for focus+context views}
+
+Once we have the hyperstructure in Fig.~\ref{fig-hyperstructure-example}
+marked up in a descriptive markup language, we can of course
+generate HTML pages from that version using some kind of stylesheets.
+
+
+When HTML is used in this way as the virtual paper, it does have
+certain advantages: for instance,
+it is a nearly universally supported,
+well-specified\cite{html-spec} format.
+Since virtual paper is
+far cheaper than real paper, we can ``print" a virtual HTML page
+for each focus separately.
+\nakki{Rauli: enemmän pystysuuntaa kuviin!}
+\begin{figure*}[htb!]
+\centering
+\hbox{a)\hskip\textwidth}
+\fbox{
+       \includegraphics[width=\mockupwidth]{demo1.ps}
+}\\
+\hbox{b)\hskip\textwidth}
+\fbox{
+       \includegraphics[width=\mockupwidth]{demo2.ps}
+}
+\caption{a) Focus+context with HTML. The unfocused paragraphs are
+            links to other focus+context pages.
+         b) The view after used has clicked on paragraph 4.
+         Animation between these pages is not possible, and the arrow keys
+         can't be used for navigation.
+\label{fig-htmlfoccont}}
+\end{figure*}
+
+Unfortunately, this type of
+focus+context content does not interact well with the common
+HTML browsers:
+for example, it is not possible to scroll the page up and down
+using the usual paradigms of the browser. 
+Also, since each new view would have to be fetched over the network,
+the 
+performance would be poor; if the browser were able to take advantage
+of the descriptive representation, it would only need to be transferred
+over the network once.
+
+Using Javascript might also be one way of implementing focus+context
+views but then, once again, the markup would be rather presentational.
+The user would then be able to use one advanced interface to the data
+but only one: the one written by the author of the pages.
+
+% It is, of course, possible to express the underlying hyperstructure
+% using HTML, using HTML anchors and links, and then to create a
+% WWW browser that is able to show the structure around a document.
+% \tjl{Citations to such work? Vesa?}%
+% \vp{Pad++ http://www.cs.umd.edu/hcil/pad++/}%
+% %\vp{http://www.cs.umd.edu/hcil/pad++/papers/bookchap-98-webbrowser/index.html}
+% \vp{should be more... I'll add more when I find them.}%
+% \vp{see c+t section}%
+% \tjl{Any other reasons for why our approach is better?}%
+% \vp{Adding bidirectional links to other documents. Or is this part only
+% about visualisations }%
+% However, this approach loses many of the benefits of HTML, as the document
+% will then need to be designed for display on that browser,
+% and on other browsers and other platforms, the result will be not as good.
+% \cat{"as good", lalalaa}%
+% In the next section, we describe our solution using a different
+% cross-platform tool: Java\cite{java-ref}.
+% \tjl{More explanation...}
+
+
+
+%----------------------------------------------------------------------------
+\section{A POSSIBLE IMPLEMENTATION}
+
+\nakki{Make it clear that we do not say that cells are the representation
+        we'd use finally, but spans, xanadu-type content links etc.}
+
+We are currently working on a prototype implementation of the above
+concept,
+which we hope
+to have completed in time for the final version of this paper, or
+at least the conference.
+This implementation, as 
+most of our other work is based on
+GZigZag,
+\tjl{Cybertext yearbook-artikkeli ei ole vielä julkaistu, viittaus
+        ei tiedossa}
+which is an implementation of Ted Nelson's original ZigZag 
+design\cite{zigzag-manual,zigzag-presentation,zigzag-welcome}
+and is being developed in collaboration with him.
+
+As with most of Nelson's work, ZigZag can be seen as several
+different things depending on the point of view: a data\-base,
+an operating system, a hypertext system, 
+a personal information manager or
+a wacky spreadsheet.
+For the purposes of this article, it is probably best to
+regard GZigZag (and thus ZigZag) as a toolkit for 
+representing and editing hyperstructures and 
+creating focus+context views into them.
+
+% GZZ as a platform for making Fig.~\ref{fig-twomodes} b) easier!
+% \nakki{Kirjoita!}
+% Allows for transparent transfer of hyperstructure and simple Java code
+% (later to be Clang) for structure \ra display!
+
+The ZigZag structure is a simple way of representing data structures.
+Information is divided into {\em cells}, which are connected
+to each other along {\em dimensions}. The dimensions obey
+physical-like rules: if cell A is "above" cell B, then cell B is "below"
+cell A.
+ZigZag allows for any number of dimensions to be used in the structure.
+The data structure is fully persistent and in fact all the state
+of GZigZag is currently stored in the ZigZag structure.
+On restarting GZigZag after closing it down, all windows and focuses
+are in exactly the same places as they were when the structure
+was last saved.
+This structure can be regarded as a general descriptive markup
+language for hyperstructures, similar in scope to XML due to its
+ability to represent any structure.
+
+With the aid of the persistent structure,
+GZigZag provides a simple framework 
+for building focus+context views. The program code
+to traverse the structure starting from the focus and
+putting the cells onto the display is generally quite simple to write
+(the technical detail is outside
+the scope of this paper and will be discussed elsewhere).
+
+Animation is used throughout the system to enhance the
+visual connection between the subsequent displays --- the
+system provides a framework for automatically including animation
+into any new view programmed into the system.
+
+% Another structure implemented in GZigZag in addition to the
+% cell structure is the Xanadu media model. In this model, 
+
+% but usually only a few are shown at a time.
+
+
+
+% For example, Nelson's original row raster can be seen
+% as a simple version of the view in Fig.~\ref{XXX}.
+% \tjl{Can we nowadays do paragraphs in cells? Haven't checked
+%         recently. I thought Benja had something like that.}
+% \ajk{It has been possible to enter end-of-line characters into
+%   cells for some time.  The edit view, at least, shows them
+%   correctly.  I'm not sure if this is the paragraph point you talk about.}
+% \tjl{No, I'm talking about having e.g. the row or vanishing view, with 
+%   one paragraph per cell.  }
+% \ajk{I'm not following at all.  Sounds like it's just a matter of interpretation
+% and not of views.}
+% \tjl{It's a matter of cellviews!}
+% In the row raster, two dimensions are used, one vertically and
+% one horizontally. The vertical dimension can be thought of as a stream
+% and the horizontal rows show the connections between different streams
+% (or parts of the same stream). Fig.~\ref{fig-rowraster} shows
+% a structure simulating the "Updates" relation of RFCs and
+% the focus+context motion through the documents.
+% It is of course possible to show more context and use the human eye's
+% perspective perception to great advantage: the same material viewed
+% through the VanishingView is shown in Fig.~\ref{fig-vanishing}.
+% \vp{ Is this too similar to the row/col raster? How about something completely
+% different ? }
+% \tjl{ It's similar but it shows more. We should additionally
+%         show something completely different, I agree on that one.
+%         }
+
+% \begin{figure}[htb!]
+% \caption{
+% \label{fig-rowraster}
+% Nelson's original row raster.
+% a) The ZZ structure used for this demonstration
+% b) When the focus is at G, the stream 2 is shown, with connections
+%    to streams 1 and 3 visible.
+% c) Moving vertically does not change the appearance of the display radically
+% d) Moving horizontally switches the stream. However, the connection between
+%    the two horizontally connected cells remains.
+% }
+% \end{figure}
+% 
+% \begin{figure}[htb!]
+% \caption{
+% \label{fig-vanishing}
+% The data in Fig.~\ref{fig-rowraster} shown in VanishingView, from
+% three different foci.
+% }
+% \end{figure}
+
+% For example, in Fig.~\ref{fig-rowraster} d), the horizontal motion
+% causes the cells shown in both frames to smoothly animate
+% to each other's positions. This effect makes moving around in the structure
+% much easier because it is easier to maintain one's orientation.
+% Similar ideas have been used in other focus+context visualizations,
+% see e.g.~\cite{fc-hyperbolic}.
+
+% \tjl{Find citation of text zooming in focus-context views! I've seen one.
+%      Show a fragment of an RFC in billowing view}
+% \vp{pad++ is a zooming interface, would that be even close
+% to what you are looking for?}
+% \tjl{No. A "less" analogue but which billows}
+% \cat{Siis mikä pointti tällä näkymien näin tarkalla esittelyllä on? Miten
+% näin tarkka "general view"-juttujen esittely liittyy RTC-tapaukseenne?}
+% \tjl{Eihän se ole tarkkaa. Pointti on, että noissa näkymissä
+%         noi streamien väliset kytkennät toimii samalla lailla kuin
+%         niissä kuvissa on mitä laitetaan}
+
+% One special feature of GZigZag is that views can be easily added
+% to the system, currently by coding one Java class.
+% \cat{Määrittele view? Termi ei ole sangen selvä.}
+% Therefore,
+% the "painting" phase in Figure~\ref{fig-twomodes} is easily alterable
+% on a per-application level even if all the user's data were stored
+% in the same hyperstructure.
+% \cat{En tajua.}
+% Because the hyperstructural network of cells can be of any size,
+% focus+context views are usually used: a particular cell is the focus
+% of the user and cells either directly or indirectly closely connected
+% to that cell are shown in some way.
+% \tjl{Vesa said that Cat had a reference: a document should look like
+%         the user wants it to look like}
+% \vp{\cite{personalized}}
+
+%----------------------------------------------------------------------------
+\section{RELATED WORK}
+
+% Essentially, a focus+context browser uses the distorted view to
+% show the viewer either a map of the set of documents being viewed or
+% the one document being viewed in small pieces with one of the pieces in
+% focus and the others as context, depending on the
+% brower.
+
+% There are several different types of focus+context visualizations of hypertext
+% (mostly WWW). 
+
+Most of the existing focus+context visualizations of hypertext 
+focus on the topology of pages, mapping the
+connections between different pages and some structural information of
+the pages to either two- or three dimensional graphs or maps. Examples of
+this type of visualizations are hyperbolic visualizations of large
+hierarchies in \cite{fc-hyperbolic}, Natto \cite{fc-natto} and
+hyperbolic visualization in three dimension in \cite{fc-3dhyperbolic}.
+Some visualization show browsing history: for example WebPath
+\cite{fc-webpath}, WebBook and WebForager \cite{fc-webbook} and
+Zooming web browser \cite{fc-zooming}.
+The VR-VIBE system\cite{fc-vrvibe} shows multiple WWW search 
+query results to a 3D-space.
+
+In addition to these,
+there are some visualizations which show the contents of the web page in
+a different way. The zoom web browser \cite{fc-zoom} and WEST
+\cite{fc-west} show the web page as a set of cards with the
+focused card bigger than the rest.
+
+To our knowledge, all of the existing focus+context hypertext systems
+are based on WWW and the HTML page model. 
+\nakki{PROBLEMS!}
+
+
+% Better in our system: real hyperstructure :-) We have easily
+% modifiable views, bidirectional region-to-region links. We can show
+% the interconnected information of hypertext better without the need
+% for actively going to different pages to find related information. (
+% Should mention something about the amount of information and
+% links. And 404s in www. ) This system is closer to memex \cite{as-we-may-think}. 
+% No page model! This system shows the content 
+% better than others, other systems have boundaries in pages, they
+% handle whole papers.
+
+%----------------------------------------------------------------------------
+\section{CONCLUSIONS}
+
+We have presented the Internet RFCs
+as an example of a situation where HTML easily becomes presentational
+instead of descriptive markup if the interrelations between
+different RFCs need to be shown.
+The underlying hyperstructure 
+needs a different markup format for its description,
+such as XLink\cite{www-xlink-proposal}  or ZigZag\cite{zigzag-welcome}.
+
+A descriptive representation of information usually allows the information
+to be used in more ways than a presentational representation does.
+This is also the case here:
+we have described an advanced visualization of the RFCs which is only
+made possible
+by representing the hyperstructure descriptively. 
+
+
+
+
+% One of the advantages of HTML 
+% \tjl{Important point we need to answer WELL}
+% is of course that it is 
+% relatively simple to produce without any programming experience,
+% especially with current-generation WYSIWYG tools\cite{XXX}.
+% This is one of the reasons for the explosive proliferation of the WWW.
+
+ 
+% \nakki{Mainitse syntax descriptions}
+
+\section{ACKNOWLEDGMENTS}
+
+The authors would like to thank Ted Nelson, Benjamin Fallenstein,
+Kimmo Wideroos and Katariina Ervasti for interesting discussions.
+
+% \raggedright
+
+\bibliographystyle{abbrv}
+\bibliography{gzigzag}
+
+\end{document}

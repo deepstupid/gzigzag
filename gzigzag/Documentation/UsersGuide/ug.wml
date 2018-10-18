@@ -1,0 +1,400 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>GZigZag User's Guide</title>
+#include '../wmlinc/article.wml'
+ </head>
+ <body>
+{: [[s/(?<!>)\b(d\.+\w+)/<code>\1<\/code>/g]]
+<H1>GZigZag User's Guide</H1>
+<pre>$Id: ug.wml,v 1.6 2000/09/12 17:12:13 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas Lukka</b> <br>
+ 	<code>lukka@iki.fi</code><br>
+        Dept. of Mathematical Information Technology <br>
+	University of Jyväskylä 
+ </cell>
+</grid>
+
+<toc>
+
+<p>
+This is the first attempt at an user's guide for GZigZag. It is not yet
+complete and not a good tutorial but we will try to work on it. Patches
+are gladly accepted!
+This is work-in-progress: if there are any unclear parts, feel
+free to ask me to clarify things.
+
+<warn>
+
+<h2>Introduction</h2>
+
+<p>
+GZigZag is a free implementation of Ted Nelson's ZigZag structure.
+The ZigZag structure is a revolutionary new way of storing information
+in a computer, in that it provides a clear, extensible structure
+that can be orthogonally laid over existing information.
+
+<p>
+This document attempts to help users to get started with GZigZag.
+We start at the point where the user has gotten the program to start;
+to get to that point, read the other documentation, including
+the <code>README</code> files.
+Note that this document does not attempt to cover designing sensible
+structures: the "Gentle Introduction" document is for that purpose.
+Here we only explain how to use the GZigZag implementation of the structure.
+
+<p>
+GZigZag is a moving target: we will try our best to keep this document
+up to date but sometimes it will simply be forgotten and be out
+of date. Please notify
+us if this happens.
+
+<h2>The save model</h2>
+
+<p>
+GZigZag currently stores data in directories, in which there is
+one file per dimension and one or two extra files for the contents of the 
+cells.
+
+<p>
+In the new, cached and explicit model, the data is loaded at startup
+and stored in memory until it is explicitly saved.
+Pressing <b>ctrl-S</b> saves the changes.
+And indeed, in GZigZag, it is only the changes that are saved:
+like CVS, GZigZag stores all the previous saved versions implicitly
+as well (XXX Because of timestamp problems, not usable yet).
+
+<h2>Viewing and moving around</h2>
+
+<figure img="bothwins.png" width="600px">
+ The initial display of two windows next to each other. To fit them
+ in this document, they have been horizontally resized but otherwise
+ the view is exactly what you should get when starting GZigZag.
+</figure>
+
+<p>
+The first figure shows the two windows next to each other that show 
+up when starting GZigZag on an empty space.
+There are two cursors, the green and the blue cursor, which are
+seen on the same cell, the home cell. From the home cell downwards
+(poswards on d.2) is the <dfn>system list</dfn>, which contains
+metainformation about the structure as well as keybindings, which
+we shall return to later.
+
+<p>
+Let's move the blue cursor that defines the center of the
+right-hand window down three steps. There are three different
+ways to achieve this: either clicking on the "AllFlobViews" cell in the 
+right-hand window or by pressing the arrow down key thrice,
+or (probably the most counterintuitive at first), pressing the
+comma (,) key thrice.
+This moves the view to the one shown in the next figure.
+If your machine is fast enough, it should animate between each step
+in order to better show how the cells move around.
+
+<figure img="rightmoved.png" width="600px">
+ The right-hand window, after moving the cursor down three step.
+ Both cursors are shown in both views, but
+ moving the blue cursor has moved the center of the right-side view
+ with it.
+</figure>
+
+<p>
+The last way is actually the recommended way since it allows you to
+keep your hands on the main area of the keyboard at all times: mouse input
+is not needed in GZigZag. 
+The direction keys for the X and Y directions are i, j, l and ',' 
+for the right-hand view and
+e, s, f and c for the left-hand view. If you look at the keyboard, you'll
+see that they are arranged in two diamond patterns on the keyboard, one
+for the left and one for the right hand to use.
+
+<p>
+If you look at the upper left-hand corner of the windows, you'll see
+that X and Y are not the only dimensions here: there is also a third
+dimension, Z, on which d.3 is shown by default.
+A place in the default structure where d.3 is used can be found
+by moving two steps right and one down from "AllFlobViews".
+The depth cell is connected to other cells poswards on d.3.
+The keys to move the right-hand view along the Z axis are k for poswards
+and K (shift-k) for negwards.
+
+<figure img="showingz.png" width="500px">
+ A place where the third dimension shown is used, as discussed in 
+ the text.
+</figure>
+
+<p>
+There are various different views to the structure, press 'v' or
+shift-V to cycle through them in either window.
+
+<p>
+Before going on, you should train yourself to use these keys to move around
+in the structure. The direction keys will be used in many places later
+on in this guide, since they also form a vital part of the commands.
+
+
+<h2>Editing the structure</h2>
+
+This section does not give all the possible operations but
+tries to give a subset that will be sufficient. Marking is not discussed.
+
+	<h3>Creating new cells</h3>
+
+	<p>
+	We shall start from the home cell.
+	<infigure img="edit1.png">
+	Press 'n' (for "New cell") and 'l' (the direction key
+	discussed above) and a new cell is created left of the 
+	blue cursor:
+	<infigure img="edit2.png">
+	The same would work for the other view, you just need to
+	use the direction keys for the green cursor after the "n"
+	command.
+	For practice, move to the new cell (press 'l') and
+	press 'n' 'l', 'n' 'j', 'n' 'i' and 'n' ',' to create new cells on all
+	sides of the new cells. Note that when creating the new cell 
+	leftwards, it is inserted between the first new cell and the
+	home cell:
+	<infigure img="edit3.png">
+
+	<h3>Entering text</h3>
+
+	<p>
+	Now, press Tab and type in some text:
+	<infigure img="edit4.png">
+	Tab moved you to the text editing mode which is pretty
+	much like familiar text entry mode in other systems:
+	the arrow keys move the insertion cursor and typing a character
+	inserts it.
+	Press Tab again to move out of text edit mode, and
+	the insertion cursor vanishes.
+	(NOTE: one planned feature is to have the background
+	change when in the edit mode - these pictures were taken
+	when this did not yet happen).
+
+	<p>
+	Try putting more text into the other cells.
+
+	<h3>Connecting and disconnecting cells</h3>
+
+	<p>
+	Now we get to the most important part of ZigZag: making
+	actual structures.
+	There are actually several different ways of connecting
+	cells but we shall only cover one because there's no
+	time to write this user's guide completely yet.
+
+	<p>
+	The way to connect two cells is to move the cursor of the
+	left-hand view (green) and the right-hand view (blue) 
+	on the two cells, press '/' (slash) and a direction
+	to connect the two cells in. 
+	Connect will fail if either of the two cells is connected
+	in that direction already, except if one of them is alone
+	in that dimension, in which case it is inserted next to 
+	the other one.
+
+	<infigure img="connect1.png">
+
+	<p>
+	In this situation, pressing '/' ',' or, equivalently,
+	'/' 'e' results in 
+	<infigure img="connect2.png">
+
+	<h3>Hopping</h3>
+
+	<p>
+	Hopping is a structural operation where cells are reorganized
+	along a rank.
+	It's easiest to figure out if you try it: press 'h' and a 
+	direction key.
+
+	<h3>Alpha-shear</h3>
+
+	<p>
+	Another structural operation that can be very useful is
+	the alpha-shear, which changes a connection from the current cell
+	to another one in the same rank.
+
+	<p>
+	It is used by typing 'a' and two directions: first the connection
+	and then the direction into which the connection is to be moved.
+
+	<h3>Cell exchange</h3>
+
+	<p>
+	One more editing operation which helps a lot in making the structure
+	work the way you want it to. Press '%' (percent) to exchange
+	the connections of the two accursed cells in the visible X and Y
+	dimensions.
+	No other connections (Z or invisible) are touched.
+
+	<h3>Cloning</h3>
+
+	<p>
+	Cloning is an important structural operation in GZigZag,
+	as explained in the Gentle Introduction. 
+	Basically, a clone of a cell is a cell poswards from that
+	cell on d.clone, but with the special property that their
+	contents are implied to be the same. Cloning is visually
+	shown by GZigZag by coloring the clones yellow and the original
+	light yellow.
+	A clone of a cell is made by placing the right or left cursor 
+	on the cell and pressing 't' or shift-'t', respectively, and
+	a direction in which to place the clone.
+	<infigure img="clone1.png">
+	Pressing shift-T 'l' creates a clone of the left (green) cursor
+	and places it right of the right-side (blue) cursor:
+	<infigure img="clone2.png">
+
+
+<h2>The system list</h2>
+
+<p>
+In this section, we explain briefly what the system list is, and
+what you can do with it.
+
+<p>
+Basically, the system list contains information for the user interface
+of GZigZag, i.e. the types of views, keybindings etc. It is possible to
+configure GZigZag to look like something completely different
+but you must act carefully: it's fairly easy to accomplish something like
+the following:
+<blockquote>
+	Hmm, I want to rebind the keys completely. So let's delete the
+	previous binding list (click) and then I'll start making the
+	new bindings list (click.. click.... click....) oops, it's not 
+	responding! Right, I just deleted the keybindings list so of
+	course it will not do anything when I press a key. Duh!
+</blockquote>
+<p>
+So remember that any changes to the system list are <strong>immediately</strong>
+reflected in the behaviour of the user interface. At some point
+we will probably create a mechanism for making delayed changes that you
+can commit all at once but this is not yet in place.
+
+<p>
+The system list starts at the home cell of the space and continues on 
+d.system, but for your convenience those cells you will most likely want to
+use are cloned to a d.2 rank starting from the home cell. The d.2 rank
+is freely modifiable but changing the text in any of the system list cells,
+or breaking the d.system rank can lead to dire consequences and you probably
+shouldn't do that. At a later date, the system list will probably be locked
+by default.
+
+<p>
+The cells on the system list simply enumerate the functions: the
+actual cells that describe whatever are connected to the system list
+cells on d.1.
+
+	<h3>Dimension list</h3>
+
+	<p>
+	The <code>DimLists</code> system list cell has connected to it on d.1
+	a cyclical rank on d.2, the dimension list.
+	This list contains the names of dimensions that the views
+	will cycle through when you press X, Y, Z (possibly with 
+	shift/alt). 
+
+	<p>
+	Adding a dimension simply involves creating a new cell and
+	typing the name into that cell. Likewise, deleting a cell
+	will delete the dimension from the list (but not currently the
+	connections along that dimension).
+	NOTE: don't rotate to an empty cell: this will possibly
+	cause problems: at the very least, a raster error.
+
+	<p>
+	The dimension cursors of the different views
+	are a variety of pink shades.
+	These dimension selectors of the different views are actually
+	generic cursors so it would be possible to have different
+	dimension lists for each X, Y and Z of each view but at the moment
+	it's not possible to repoint them to a different list except by 
+	trickery. We will probably provide a mechanism for this.
+
+	<h3>Views</h3>
+
+	<p>
+	The views are defined on three different cells in the system list:
+	<code>Views</code>,
+	<code>AllViews</code> and
+	<code>CellViews</code>.
+	These cells have different functions.
+
+	<p>
+	The windows cycle through different views by moving in the
+	list below <code>Views</code>, much like the dimensions are
+	cycled on the list below <code>DimLists</code>. 
+	The cells below <code>Views</code> describe one particular
+	view.
+
+	<p>
+	The cells below <code>Views</code> are actually clones of
+	cells below <code>AllViews</code> that actually give those
+	views' parameters. For instance, the Vanishing and StretchVanishing
+	rasters use the same Java code but have different parameters
+	in the structure below <code>AllViews</code>.
+
+	<p>
+	The structure below <code>AllViews</code> is simple:
+	it is a list of the clonable cells (which name the views, but
+	the name is just decoration for the user: the real information
+	is in the structural operation of cloning), which are
+	connected on d.1 to the structure that actually defines the view.
+
+	<p>
+	The defining cells are structure along the ZOb structure,
+	explained better elsewhere (XXX).
+
+	<p>
+	Not all views in <code>AllViews</code> are by default cloned to the
+	main 
+	<code>Views</code> 
+	list for two reasons: first, there are too many views to just cycle
+	through, and second: some are not yet very stable or useful.
+	Experimentation with them is encouraged, though.
+
+
+	<p>
+	<code>CellViews</code>
+	is similar to 
+	<code>Views</code> and
+	<code>AllViews</code> 
+	in that it also contains a list of cellviews, i.e. how to render
+	one cell.
+
+	This is because currently there are not enough different cellviews
+	that having a separate list of more possibilities is not necessary.
+
+
+	<h3>Bindings</h3>
+
+	<h3>Actions</h3>
+
+
+<h2>The keystrokes.</h2>
+
+This is a list of (almost) all the currently available keystrokes
+in the default bindings. As explained above, it is simple to modify the 
+bindings.
+
+#include '../keybindings.wml'
+
+:}
+</body>
+</html>
+<!--
+	vim: set syntax=html :
+-->

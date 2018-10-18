@@ -1,0 +1,1580 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>GZigZag spec</title>
+
+#include '../wmlinc/article.wml'
+#use wml::fmt::xtable
+
+<!-- 
+	Make d.foo into <code>d.foo</code> so we don't have to explicitly
+     	do it whenever we talk about dimensions.
+-->
+
+ </head>
+ <body>
+<substdims>
+<H1>GZigZag spec</H1>
+<pre>$Id: zzspec.wml,v 1.72 2001/10/08 04:36:43 tjl Exp $</pre>
+
+Written by <br>
+<b>Tuomas J. Lukka</b> <br>
+<b>Benjamin Fallenstein</b> <br>
+<b>Antti-Juhani Kaijanaho</b> <br>
+(add your name here if you do any significant modification)
+
+<toc>
+
+<warn>
+
+<h2>Introduction</h2>
+
+<p>
+The purpose of this document is to be a living specification of the
+features in the GZigZag system.  The GZigZag system is an implementation
+of the ZigZag structure, invented by Ted Nelson. Much of this document
+is simply a somewhat more verbose version of discussions with him but
+other places go into more technical detail.
+
+<p>
+Some parts of this specification are not yet correctly implemented by
+the current version, but in these cases, this document is correct (or
+it <strong>should</strong> be ;-)
+and the implementation wrong.
+
+<p>
+Some parts of this spec are at the moment
+just general ramblings about a topic - once
+we have the pole editor, I will definitely rearrange it completely.
+The idea is to try to make them more and more like a true spec as 
+time goes by.
+
+<p>
+The parts marked with the dreaded triple-X symbol (XXX) are as yet incomplete
+and should be taken with a not only a grain but a mountain of salt. They 
+mostly contain just a few loose sentences setting the topic.
+
+<p>
+If you see anything suspicious, feel free to ask me at <code>lukka@iki.fi</code>.
+
+
+
+<h2>The role of ZigZag in the overall scheme of things</h2>
+
+<p>
+ZigZag is a delightfully simple way of operating structures.
+As such, it has its own uses simply as a personal information manager
+for people who like multidimensionality, 
+
+<p>
+In addition to stand-alone use
+ZigZag is related to Ted Nelson's Xanadu system; a newer version of Xanadu
+is being designed to make use of ZigZag as a platform.
+As a brief description of Xanadu, it has
+<dl>
+<dt> Stable media streams (permascrolls)
+	<dd> A stable media stream is an invariant, addressable stream of 
+	data, e.g.~text, video or audio.
+<dt> Documents
+	<dd> In Xanadu, documents
+	are simply lists of spans from the stable
+	media streams.
+<dt> Content links 
+	<dd> The linking model is fundamentally different
+	from anything else hitherto seen. All links are handled on the
+	lowest level, i.e. as links between lists of spans of stable
+	media streams.
+<dt> Finding by content
+	<dd>  There are fast ways to find out in which
+	documents a particular point in a stable media stream is 
+	included. All content copied via cut&paste can be tracked.
+</dl>
+
+<p>
+ZigZag can also work as a platform for other types of applications
+--- or preferably applitudes, meaning that they should also expose the
+other possibilities of ZigZag <em>at the same time</em> as being normal
+applications. This is so that the interconnectivity provided by ZigZag
+can be used to make the whole of two applitudes greater than the sum
+of the parts.
+
+
+<h2>Cells, dimensions and connections</h2>
+
+<p> A cell is the fundamental container of data. A cell can
+"physically" contain either a text string or a single, contiguous span
+(which is an address, and references a permascroll).
+
+<p>A cell has an ID, which is a string.  Currently, if a cell ID
+contains a colon (:), the cell belongs to a <em>space part</em>, where
+the space part ID is everything from the beginning up to and excluding
+the colon.  If a cell ID contains an at sign (@), it is a <em>global
+ID</em>; everything starting from and excluding the at sign to the end
+of the ID is the ID of the cell's <em>creation space</em>.  If the
+creation space ID differs from the ID of the space the cell is in, the
+cell is <em>foreign</em>, otherwise its <em>native</em>.
+
+<p>
+Cells may
+be connected to each other along dimensions, 
+so that each cell can be connected to another cell in two directions 
+(negative and positive) on each dimension. 
+The more global structure is not constrained: any two cells can be 
+neighbours on any dimension, but some of these connections are used
+for interpreting the structure into views and actions (see below).
+
+<p> 
+An important way to describe the space is to take dimensions to be
+"objects": the dimensions are 
+invertible mappings between cells. This is opposed to the immediate way
+of thinking "cell and connections", and there is a difference.
+This view is important because here it is easy to discuss special dimensions
+that have interesting properties.
+
+<tjl>
+    Tuukka, I guess your work starts about here.
+
+<p>
+It is not yet clear whether dimensions are strings or whether they
+are cells. The various slice and compound space
+implementations will probably affect and depend on this.
+If dimensions are cells, then several uniqueness problems are quickly solved, 
+but their being strings may be easier on the users.
+
+<p>
+One important point is that of headcells: on non-circular ranks, the headcell
+is the cell at the negative end of the rank. 
+Ted specifies that all ranks should have a headcell and that there should
+be a way to specify the headcell of a circular rank. The exact mechanisms here
+are as of yet unclear.
+
+        <h3>Subspaces, closed cell sets, closures</h3>
+
+        <p>
+          The following terms may prove useful from time to time:
+
+        <p>
+        <dl>
+          <dt>Closed set of cells</dt>
+          <dd>
+            A set of cells C is <strong>closed</strong> with respect
+            to a set of dimensions D if and only if all neighbours of
+            the cells in the set C along the dimensions in D are also
+            in the set C.
+          </dd>
+          <dt>Semiclosed set of cells</dt>
+          <dd>
+            A set of cell C is <strong>semiclosed</strong> with
+            respect to a set of dimension-direction pairs D if and
+            only if all neighbours of the cells in the set C along the
+            dimensions and their associated directions in D are also in
+            the set C.
+          </dd>
+          <dt>Closure</dt>
+          <dd>
+            Let us have a set of cells C and a set of dimensions D.  A
+            set C' is a <strong>closure</strong> of C with respect to
+            D if and only if it is a minimal closed (with respect to
+            D) set containing all the elements of C.
+          </dd>
+          <dt>Semiclosure</dt>
+          <dd>
+            Let us have a set of cells C and a set of
+            dimension-direction pairs D.  A set C' is a
+            <strong>semiclosure</strong> of C with respect to D if and
+            only if it is a minimal semiclosed (with respect to D) set
+            containing all the elements of C.
+          </dd>
+          <dt>Subspace</dt>
+          <dd>
+            A subset C of the set of cells in a ZigZag space Z is a
+            <strong>subspace</strong> of Z with respect to a set of
+            dimensions D, if and only if C is closed with respect to D
+            in Z.
+          </dd>
+          <dt>Proper subspace</dt>
+          <dd>
+            A subspace C of a ZigZag space Z is a <strong>proper
+            subspace</strong> if it is closed with respect to the set
+            of dimensions D which contains every dimension of Z except
+            <tt>d.cellcreation</tt>.
+          </dd>
+          <dt>Semisubspace</dt>
+          <dd>
+            A subset C of the set of cells in a ZigZag space Z is a
+            <strong>semisubspace</strong> of Z with respect to a set
+            of dimension-direction pairs D, if and only if C is
+            semiclosed with respect to D in Z.
+          </dd>
+          <dt>Generated subspace</dt>
+          <dd>
+            A set of cells C in a ZigZag space Z and a set of
+            dimensions D are said to <strong>generate</strong> a
+            subspace C', which is the closure of C with respect to D
+            in Z.
+        </dl>
+
+        <p>XXX: are these definitions OK?
+
+
+<h2>Key structural mechanisms</h2>
+
+
+<h3>Cursors</h3>
+
+<tjl> <b>THIS IS WRONG AND OUT OF DATE. </b>
+
+<figure img="cursor1.png" width="250px">
+The path from the viewcell <code>viewspx</code>
+to the cell the cursor of the view points to <code>A</code>
+via the main cursor cell <code>C</code> which may or may not be the 
+same as <code>viewspx</code>.
+<code>C</code> is at the negend of <code>d.cursor-cargo</code> 
+from <code>viewspx</code> and the accursed cell <code>A</code> is
+at the negend of <code>d.cursor</code>.
+</figure>
+
+<p>
+The viewcell points to a particular cell where its cursor lies.  The idea
+of cursors is not restricted to cursors of views but, as we shall see
+below, anything where selecting a single cell is important. This makes it
+possible to create a new view to select that cell on the fly (see below).
+
+<p>
+In the structure, a relcell is used so that several cursors can be
+maintained pointing to the same cell. The path to find the cell the
+view is pointing to is start at the viewcell, go to the posend on 
+d.mycursor and then to the posend on d.cursor.
+
+<p>
+In order not to disturb other cursors, the insert operation should be
+used to move the relcell to a new <code>d.cursor</code> rank. This operation
+will leave the original and the new rank otherwise intact.
+It is possible that any other operation on <code>d.cursor</code> will
+be declared illegal.
+
+<h3>Inheritable parameter lists</h3>
+
+<p>
+NOTE: this is liable to change. It is only documented here for
+understanding.
+
+<figure img="inheritparam.png" width="250px">
+An example of the inherited parameter traveral to find a parameter
+value. Starting from <code>start</code>, we go poswards on <code>d.2</code>
+until we reach a cell with a negward connection on <code>d.3</code>.
+We include that list and return to the main list. The parameters
+that have values store them on <code>d.1</code> or as cursors starting
+on the parameter cell.
+</figure>
+
+<p>
+This section defines a way to inherit parameter lists based on the
+structure.
+
+<h2>Views</h2>
+
+<p>
+A view is represented by one maincell in the structure, called the
+viewcell.  This cell can contain text which will be interpreted as the
+``title'' of the view, but this is not mandatory.
+
+<p>
+XXX Since some views which contain more than one cursor are planned, 
+it is possible that something will change below.
+
+<h3>Visible Dimensions</h3>
+
+<figure img="cursordim.png" width="250px">
+The path from the viewcell to the cell specifying the Y dimension shown.
+First, we go two steps on <code>d.dims</code>, then 
+use the same method as in the previous figure for getting to the accursed
+cell from there.
+Note that both the <code>viewspx</code> cell and the <code>X</code> have
+cursors similarly attached to them.
+</figure>
+
+<p>
+Dimensions that are currently visible
+are listed on d.dims from the viewcell, in order X,
+Y, Z (and possibly others, in case of complicated view rasters). The
+dimension cells are treated as cursors, i.e. the cell representing the
+dimension is found by going to the posend on d.mycursor and then
+to the posend on d.cursor from the dimension cell.
+
+<p>
+The point of this odd-seeming arrangement is, as alluded to in the
+Cursors section above, is that we can very simply create a new view that
+is bound to a dimension cell of another view.
+
+<h3>Dimension lists</h3>
+
+<p>
+In order to change dimensions shown, the views provide an operation ``move
+the X/Y/Z-dimension-selector-cursor one step pos/negwards on d.2''.
+The usual plain-vanilla dimension lists are thus simply lists of cells on d.2
+which
+contain the dimension name as a string (possibly by cloning).
+Most often these lists are cyclic but this is not mandatory: trying
+to move past the end/beginning of a list simply does nothing.
+
+<p>
+This is just the default arrangement - the user is free to create other 
+dimlist operators and use them to change the dimensions taking advantage of the
+structure in a different way. One example of an operation we may want to provide
+at some point is "change dimension but not to one already being shown".
+
+<p>
+To select the dimension list for a particular dimension of a particular
+view, the user can simply create a new view for the dimension cursor,
+using the cursor-cargo mechanism.
+To set all the dimensions to the same list, the user can set the X
+dimension and then invoke a special operation that sets Y to the 
+d.1 poswards neighbour of X, Z to the neighbour of Y and so on, on the
+same list.
+
+<h3>Raster definition</h3>
+
+<h4>Vanishing raster</h4>
+XXX
+
+<figure img="canvasraster.png" width="250px">
+Getting to the raster-defining cell <code>R</code> from the view specs.
+Note that the cursor-traversing operation is abbreviated to the curvy arrow.
+Also note that the inheriting mechanism defined previously is allowed.
+</figure>
+
+<p>
+The raster to use is obtained similar to the dimensions to use;
+only the first motion is different: down on d.2 until the text
+<code>FlobRaster</code> is found.
+
+<figure img="rasterspec.png" width="250px">
+A sample specification of a vanishing
+raster, specifying values for two parameters.
+Here, the <code>vanishing</code> cell would stand in for the
+<code>R</code> cell in the previous image.
+</figure>
+
+<p>
+The raster itself is specified using a corner list.
+An incomplete list of parameters follows:
+<dl>
+ <dt>shrink
+  <dd>2 floats; the numbers to multiply the width and height
+  	of the cells with.
+ <dt>gap
+  <dd>2 ints: the number of pixels of space to leave between cells
+ <dt>depth
+  <dd>1 int: The number of cell "layers" to draw.
+ <dt>dimorder
+  <dd>2.. ints. The precedence of dimensions.
+ <dt>initmul
+  <dd>1 float. If the default size of cell will be multiplied by a number
+  	for the center cell (it is usually good to make the center cell
+	larger
+</dl>
+
+<p>
+There are currently some undocumented interactions to provide for
+hard rasters; see the source.
+  
+<h4>Simple Flob Raster</h4>
+
+The simple flob raster displays flobs extracted from the structure,
+on dimensions given by the structure.
+The dimensions are given by attaching paths to the cells in the dimlist.
+
+
+
+<h2>Primitive operations</h2>
+
+	<h3>Connect</h3>
+	<h3>Insert (XXX rename)</h3>
+	<h3>Mono-chug</h3>
+
+	<p>
+	This operation changes one connection. It takes two directions
+	and one cell as parameters. 
+	XXX image.
+
+
+<h2>Bindings</h2>
+
+	<p> 
+	Keybindings offer a nice way of seeing how flexible the
+	ZigZag structure is for programming.
+
+	<p> 
+	Most fundamentally, the names of the keys
+	(e.g. <code>Ctrl-k</code>) are on cells connected along d.2. The
+	action for each key is the poscell on d.1 from those cells - this
+	way several keys can be bound to the same action quite easily.
+
+	<p> 
+	However, this is not yet sufficient: there may be several
+	input states, e.g. with the vi editor there is the insert mode
+	and the command mode, and inside the command mode there is the
+	special mode of waiting for a motion command. So in addition
+	to the command, there needs to be a way to specify the next
+	state. Likewise, some states are similar to each other so
+	states should be able to inherit commands from each other in
+	various ways.
+
+	<p> 
+	GZigZag uses blank cells to represent inheritance: when the
+	routine that searches for a key is going down along d.2, it will
+	go to the poscell from that cell and check all the bindings on
+	that dimension before returning to continue the search along
+	the original rank.
+
+	<p> 
+	The cursor mechanism is useful for keybindings as well: the
+	current state can easily be maintaned by a cursor as shown above,
+	allowing the user to easily set the cursor to a different state.
+	However, care has to be taken here as moving the cursor in
+	question can render keybindings unusable, so it is better to use
+	an interface where the cursor can be immediately transported to
+	the right place (such as clicking with the mouse).
+
+	<p> 
+	The actual structure is currently such that the bindings
+	cursor is the posend on d.bind of the view cell. This cursor
+	points to the place where the inheritable parameter search for
+	the next binding is begun.  The cursor is set, if the inheritable
+	parameter's value (on d.1) has a negward connection on d.3 --
+	it is set to the negend.
+
+	<p> 
+	Additional problems arise when the same view can show
+	different rasters.  A different visualization of a structure
+	often makes different means of navigation necessary, or different
+	operations desirable. To provide for this, it is possible to
+	assign a raster a list of modifications to a bindings mode; when
+	the mode is selected, the raster's modifications are searched
+	first, and the standard bindings for the mode are searched when
+	the binding is not found in the modifications list.
+
+	<p> 
+	A raster can be assigned two groups of modification lists:
+	one to be applied when the raster is selected in the left
+	(control) view, and one to be applied when the raster is
+	selected in the right (data) view. These groups are obtained
+	from the same corner list as the parameters given to the raster
+	(see above); the text searched for is <code>ctrlbindings</code>
+	and <code>databindings</code>, respective.
+
+	<p> 
+	From that cell, an intersection on d.1 and d.clone with
+	the current bindings mode is searched. That means that a mode
+	which is intended to be modified is cloned, and attatched to the
+	raster's bindings cell on d.1. From this cell, a definition for
+	the binding is searched on d.2; if none is found, the mode's
+	default bindings are invoked. For any of these searches, the
+	standard parameter inheritance (see above) is allowed.
+
+	<p> 
+	This method is practical because it "feels" very much
+	like the definition of the modes themselves, as the modes are
+	commonly listed on a d.1 rank from the <code>Bindings</code>
+	cell on the system list. On the other hand, it's somewhat
+	different structurally.
+
+#include '../keybindings.wml'
+
+
+
+<h2>Notification, events and synchronization</h2>
+
+<p>
+XXX
+
+<p>
+There are many situations where one may want to be informed about changes
+to the structure, either before it happens (with the possibility of
+vetoing it), or after (e.g.~to reraster a window).
+
+<h3>Updating views</h3>
+
+<p>
+Out of an email from Ted,
+<pre>
+There are several issues here.  One is just the mechanics
+ of a clean method of synchronization.  The other is
+ the problem of A FEELING OF FAST RESPONSE--
+ which means, very importantly, PREVENTING the
+ non-current windows from refreshing in order to have
+ truly INSTANTANEOUS response to each user action.
+ Anyway, as much as possible.
+</pre>
+
+<p>
+In order to ensure a speedy response, we have to consider the numbers.
+There are thousands of cells. Each view shows some fraction of them. 
+At each time, there are probably 1-10 views open and changes to cells
+will reflect in several of them. 
+
+<p>
+Therefore, it is probably unnecessarily slow to store the information about
+which cells are seen by which views (except if it is naturally stored by the 
+view itself). Rather, for views, there should just be a global list which
+gives the priorities with which the views get to refresh themselves.
+
+<p>
+Now, it makes no sense to start updating 
+at each change to the structure - internally there has to be some method to
+freeze and thaw the global update queue.
+
+<p>
+One interesting problem here is finding which view is really the current view:
+for instance, in the two-part view
+Also, displaying only the central portion of the views whose cursor changes first
+could make a big difference. Or the rank along which the cursor moves plus some
+small number of cells.
+
+<h3>Internal triggers</h3>
+
+<p>
+However, this is not the whole story: views are not the only things that need
+to be informed when something changes.
+It should be possible to define per-cell triggers as well.
+
+<p>
+This is possible in the Java code by passing an extra parameter, a
+<code>ZZObs</code> to a routine that returns some structural information,
+such as a neighbour, a headcell or the contents.
+The ZZObs will then be called <em>once</em> after any of the items it is
+observing changes, i.e. the return value of the function the <code>ZZObs</code>
+was passed to has changed.
+
+<p>
+The callback is not necessarily instantaneous; rather, all the callbacks
+are grouped and run after the activity that caused the trigger has finished.
+
+<h3>Cursor triggers</h3>
+
+<p>
+Eventually, it should be possible to define these triggers in the structure
+as well, but the best mechanism for that is not yet known.
+However, for some applications these can't wait. Especially important are
+cursor triggers, which do something whenever a cursor changes value.
+
+<p>
+A cursor trigger is placed by placing the action (XXX In what form)
+on d..cursor-trigger of the cursor-cargo cell.
+These actions are queued to be called sometime after the cursor is
+changed (usually <em>before</em> the next screen update).
+
+
+
+
+
+<h2>Cell types</h2>
+
+	<h3>Cell ID types</h3>
+
+	<p>
+	The most common cell type is a plain cell. The id of a plain
+	cell is in the format
+	<blockquote>
+	    <i>mediaserverBlock</i><code>-</code><i>localId</i>
+	</blockquote>
+	where
+	<i>mediaserverBlock</i> is the mediaserver block containing the
+	    space version that created that cell, and
+	<i>localId</i> is the id of that cell inside <i>mediaserverBlock</i>.
+	    This is unique <strong>only </strong>
+	    among the cells created in 
+	    the same <i>mediaserverBlock</i>.
+
+	<p>
+	Transcluded cells have the format
+	<blockquote>
+	    <i>tid</i><code>;</code><i>origId</i>
+	</blockquote>
+	where 
+	<i>tid</i> is the id of the cell identifying this transclusion, and
+	<i>origId</i> is the id in the mediaserver block transcluded from.
+
+	<p>
+	Cells that transclude text spans to the vstream dimension
+	have the format
+	<blockquote>
+	    <i>tid</i><code>;</code><i>mediaserverBlock</i><code>$</code><i>offset</i>
+	</blockquote>
+	where
+	<i>mediaserverBlock</i> 
+	    is the mediaserver id of the scrollblock containing
+	    the transcluded span unit (e.g., character), and
+	<i>offset</i> is the offset in natural units inside the scrollblock
+	    of the unit represented by the cell.
+
+	<p>
+	Cells that are in slices have the format
+	<blockquote>
+	    <i>sliceId</i><code>:</code><i>origId</i>
+	</blockquote>
+	that is, the same as transcluded cells except that the 
+	separator is the semicolon instead of colon.
+
+
+	<p>
+	Slice-included cells cannot be transcluded, and transcluded cells
+	cannot be used as base cells for slices so an Id like
+	<blockquote>
+	    <i>sliceId</i><code>:</code><i>tid</i><code>;</code><i>origId</i>
+	</blockquote>
+	means a transclusion included from a slice, and
+	<blockquote>
+	    <i>tid</i><code>;</code><i>sliceId</i><code>:</code><i>origId</i>
+	</blockquote>
+	is impossible.
+
+	<h3>Transient cells</h3>
+
+	<p>
+	Most of the structure is persistent but some parts should be
+	transient in order to save space and time. For example, if the
+	information about the rastered representation of a part of the
+	space (coordinates on the 2-D display) is stored in the space,
+	this would waste an enormous amount of space each time the
+	cursor moved.
+
+	<p>
+	The transiency is specified at the time of the cell creation
+	on the Java level. How this figures in the space is yet to
+	be decided.
+
+	<p>
+	The transient cells are not trivial: because of design
+	considerations, they can't simply override connections and have
+	all their connections appear deleted in the persistent space.
+	Instead, the persistent space should appear as if the cells
+	had been truly deleted using the delete operation, which causes
+	the cells on opposite sides on a dimension from the cell being
+	deleted to be connected to each other. In other words, if we
+	have the rank ABCDE and the cell D is a transient cell, then
+	this should correspond to a rank ABCE in the persistent space.
+
+
+	<h3>Slices</h3>
+
+	<p>
+	The slice design is what Ted ultimately wants but because
+	it's somewhat more complicated to implement, it's postponed
+	until some other parts of the system clear up (most importantly
+	synchronization) and the existence of other types of subspaces
+	and their interaction.
+
+	
+	<h3>Versioning</h3>
+
+	<p>
+	A key mechanism for versioning is timestamps, which specify
+	moments in the past. The full state of the ZZ space 
+	at each timestamp can be accessed through the file formats.
+
+	<p>
+	The past versions of cell structures are shown in the structure
+	as virtual, non-modifiable cells, except for the one allowed
+	source of modification: d.cursor. The dimension d.cursor
+	is a source of much headache in versioning because of its 
+	nature but the current solution is to move past versions
+	of d.cursor to d..cursor-past.
+
+	<p>
+	The past versions of a cell can be accessed on d.version,
+	and the past versions where the cell's content or connections
+	have changed is on d.cell-version, and the past versions
+	where the cell's content has changed are on d.content-version.
+	So d.cell-version skips on the cells of d.version,
+	and d.content-version skips on the cells of d.cell-version.
+	The skipped-to cells are the <em>first</em> cells with
+	the new, changed property.
+
+	<p>
+	XXX Can we do d.cell-version efficiently???
+
+<h2>Stable media streams</h2>
+
+<p>
+Referencing stable media streams is an important part of the
+overall design. For the Dominica project, we need a subset of the
+features. The stable media streams in the current design 
+are built on top of mediaserver
+blocks (see the mediaserver documentation).
+
+<h3>The old design and its problems</h3>
+
+<p>
+Earlier on, the design was that a cell could directly contain one <em>span</em>
+-- a reference to a continuous range of units from a mediaserver block. (Note
+that the units can be Unicode characters (text), frames (video) or samples
+(audio)). A cell could not contain a list of spans directly. It would
+indirectly refer to a stream of spans by being connected to a rank of
+other cells, each containing a single span.
+
+<p>
+This format makes for complex code;
+Consider what happens when text is inserted into the middle of a span
+contained by a single cell. 
+The cell needs to be "split" in two,
+creating a new cell that will take part of the span in the first cell,
+so that a new cell can be inserted between them. (XXX Image!) All cursors
+pointing to a position inside the cell (image!) need to be updated.
+Additionally, there was no easy way to go "n characters forward"-- this
+always required some complex computations counting characters in cells.
+
+<p>
+Nile ("Nile Is a
+Literary Editor"), one of the first ZigZag text editors using spans,
+was horribly complex and full of bugs, partly due to this inadequacy.
+
+<p>
+Therefore, there is a new design which avoids some and hides others of these
+complexities.
+
+<h3>The new design</h3>
+
+<figure img="span-insertion-before.gif" width="150px">
+A stream of characters; each character is in its own cell. A cursor points
+directly to a position in the stream.
+</figure>
+
+<figure img="span-insertion-after.gif" width="185px">
+The same stream of characters; a new cell with the character "D" has been
+inserted between characters "C" and "E" (imagine an ordinary
+<code>Cell.insert</code> call has been used). The cursor accursing "E" stays
+on its position. Note: it has not been moved; it simply wasn't affected by
+the insertion operation.
+</figure>
+
+<p>
+In the new design all editing operations <em>standard ZigZag ops</em>:
+insertion and removal are simply normal connect and disconnect operations.
+Cursors stay on the characters, even if
+cells are inserted or deleted before their position. 
+
+<p> All this is archieved by
+making a cell on the stream dimension contain only one single unit 
+(character, frame, sample) from a mediaserver block.
+
+<p>
+Of course this is only the external "API"; internally,
+we do not create an ordinary cell per character/frame/sample; that
+would be woefully inefficient. 
+Instead, internally the cells and dimension are represented
+efficiently by a single object per span.
+After being created
+atomically, these spans already form a rank on the media stream dimension.
+They can be inserted into an exising media stream as a whole.
+
+<p>
+The most important difference between the old and new designs is that
+in the old design, the complex code handling e.g. splitting spans when inserting
+was above the structure, i.e. all code accessing the structure would need
+to handle all difficult cases.
+In the new design, all the difficult cases are handled below the structure,
+presenting a unified view for the programmer of applitudes.
+
+    <h4>The internal structure</h4>
+
+    See "cell types".
+
+    
+
+<h3>Cursors</h3>
+
+<p>
+There are two distinct ways we want to accurse cells in media streams:
+as cells, or as positions in a stream. Imagine we have a cell accursed
+in a ZZ view that contains the text "foo." There is a cursor after the f--
+"f|oo." Then, we accurse a position in the media stream-- the position
+between the f and the first o. On the other hand, we might want to look
+inside the stream, i.e. rotate to the media stream dimension and actually
+accurse the cell containing the first o. In the first case the cursor
+points to a <em>position inside the cell containing "foo"</em>; in the
+second case the cursor points to <em>the cell containing o.</em>
+(XXX Image)
+(Another reason for this distiction, clang pointing, is described below.)
+
+<p>
+Besides the different meanings of these posititions, they need to be
+treated differently when cells are removed from the media stream.
+In the above example, "f|oo," consider the case that the first two
+characters are deleted, letting only the second o remain. Now, the
+text should read "|o"-- that is, the pointer should still be in the same
+stream. (XXX Image)
+If, on the other hand, the second o was accursed as a cell, the cursor
+should remain on that o: we want to see where the cell "travels."
+
+<p>
+Now, consider that a pointer into a media stream is at the same time a
+cell pointer to the media stream as a whole. That is, the "f|oo" pointer
+accurses the <em>position in the stream</em>, but it indirectly also
+accurses <em>the stream as a whole</em>: to the view layouting the cells
+on the screen, the "foo" cell (containing the whole stream) is in the
+middle. Only the code dealing with cells' contents sees the cursor as
+pointing to the gap between f and o.
+
+<p>
+The <code>Cursor</code> class thus supports the <code>Cursor.get</code>,
+<code>Cursor.set</code>, <code>Cursor.getPosition</code>, and
+<code>Cursor.setPosition</code> functions (all static). <code>get</code>
+gives the <em>cell</em> accursed by this cursor; <code>getPosition</code>
+gives the <em>media stream position</em> accursed by this cursor.
+<code>setPosition</code> sets the media stream position, and thereby
+implicitly sets the accursed cell as well: it is the cell that contains
+this media stream. <code>set</code> sets the accursed cell, and also
+makes the media stream position <code>null</code>, i.e., makes the cursor
+accurse no specific position inside the cell.
+
+<h4>Cursor bias</h4>
+
+<p>
+Cursors in text documents are classically between characters, and have a
+bias, which is generally to the right. Let us consider the "f|oo" example
+again (the cursor is obviously between the f and the o), and assume the
+standard bias to the right-- we'll note "f[oo." The bias comes into play
+when there is an insertion at the cursor position: the cursor sticks with
+the character it is biased towards. Let's say we insert "bar" at the above
+cursor position; then we get "fbar[oo." Had the cursor been biased to the
+left, i.e. "f]oo," we would have gotten "f]baroo."
+
+<p>
+Now, a cursor cannot really be between two cells in ZigZag-- you cannot
+connect to a connection, you can only connect to a cell. Thus, we model
+the cursors by accursing the character the cursor is biased towards:
+the cursor in "f[oo" is connected to the first o, while the cursor
+in "f]oo" is connected to the f. Now, we can say that a cursor accurses a
+<em>side of a cell</em>: "f[oo" accurses the left side of the first o; 
+"fo]o" would accurse the right side of the first o. (XXX Image!)
+In addition to the cell in the media stream we accurse, we thus need to
+store the side we accurse. This is unique to cursors into media streams:
+when we normally accurse a cell, the "side" concept (poswards or negwards
+on the virtual media stream dimension) has no relevance.
+
+<p>
+Now, if we distinguish between cursors on a cell, and cursors into a
+media stream, we can say: Cursors on a cell are those cursors which
+do not have a side attached; cursors into a media stream are those cursors
+which do have side attached. Remember that a cursor accursing the cell
+containing the o would not be moved if the o were removed from the stream,
+but a cursor pointing into the media stream, e.g. the "f[oo" cursor,
+would be moved so that it is still inside the stream; e.g. if the first two
+characters were removed we would get "[o," where the cursor is on the
+single remaining o. What to do with a cursor can be determined by finding
+out whether it has an attached side.
+
+<p>
+However, we said above that a cursor pointing into a media stream
+also accurses the cell containing that media stream at the same time.
+So a cell pointing into a stream always also accurses a cell. On the
+other hand, a cursor can accurse a cell without pointing into a stream;
+that's the case when it has no side attached.
+
+<p>
+XXX explain better, make terms clearer! Also, anything else about cursors?
+
+<h3>Markup</h3>
+
+<p>
+markup is connected to the stream on d.markup-list, and defined on
+d.markup (first cell on d.markup connects to the first marked-up
+character on d.markup-list, second cell on d.markup connects to
+the last marked-up character on d.markup-list)
+
+<p>
+markup stays with the marked-up ranges, even when text is cut out--
+that is why the system dealing with spans needs to know about it
+
+<p>
+XXX
+
+<h3>Optimization</h3>
+
+<p>
+a special dimension, which efficiently stores connections inside a span:
+in a-b-span.1-span.2-span.3-c (where span.x is "the xth element in
+the span), the connections inside the span are just stored as
+"span.1 to span.3 are connected." the other connections are stored
+regularly
+
+<h3>Lookups</h3>
+
+<p>
+Given a space, it is possible to obtain a list of cells that overlap
+with a given list of spans.
+These can be used in various ways to display parts of texts that have
+links in different ways etc.
+
+<p>
+Later on, an enfiladic (tree-like) structure will be used to perform
+the cross-matching of the cell lists.
+
+
+
+
+<h2>ZObs</h2>
+
+<p>
+It is going to be fairly common for a Java class to get its parameters
+from the structure.
+The ZOb mechanism is useful for easily creating such Java classes that
+read their parameters in a standard way.
+Basically, a ZOb is a Java class for which the instance variables are 
+defined inside a  <code>STRUCTPARAMS {}</code> block. There is some
+syntax support for specifying the number of elements required in arrays 
+etc.
+
+<p>
+The point of the mechanism is to allow more latitude with the parameters
+later: for example, inserting them into the structure with descriptions,
+or caching the ZOb parameters read from the structure for larger ZOb
+systems to speed up the process.
+
+
+<h2>Interactions</h2>
+
+<p>
+This section deals with the interactions between the various
+planned features. Unfortunately, this is one part that is not yet
+fully specced but at least we're speccing what the problems are.
+
+(XXX todo)
+
+<xtable spacing=3 border=2>
+((1, 2))
+	Clones
+((1, 3))
+	Cursors
+((1, 4))
+	Versioning (access to old versions)
+((1, 5))
+	Slices
+((1, 6))
+	Content links
+((1, 7))
+	I18N
+
+((2, 1))
+	Clones
+((3, 1))
+	Cursors
+((4, 1))
+	Versioning (access to old versions)
+((5, 1))
+	Slices
+((6, 1))
+	Content links
+((7, 1))
+	I18N
+</xtable>
+
+<h2>Summary of special dimensions</h2>
+
+<p>
+<dl>
+	<dt>d.clone 
+	<dd>	The clone dimension. All cells on a clone rank 
+		are clones of each other, meaning
+		that their contents are enforced to be the same and
+		changes to the contents of one are reflected to the
+		others.
+
+		For example, clones could be used to represent the same
+		email address on a number of email headers, so that all
+		those instances of the same email addresses would be
+		linked to each other through d.clone.
+
+	<dt>d.cursor, d.cursor-list and d.cursor-cargo.
+	<dd>	A set of pointing dimensions.
+		This mechanism is used for instance by the views to point
+		to the cursor which is at the center of the view. Moving
+		the cursor is equivalent to inserting the maincell of the
+		view poswards on d.cursor from the new position
+		of the cursor (the accursed cell).
+		d.cursor-cargo provides a mechanism for locking
+		several cursors together.
+</dl>
+
+
+<h2>File format</h2>
+
+<p><b> Note: </b>
+This section describes the file format to be used in the new implementation
+of GZigZag, in src/. 
+This file format is to be used from version 0.8.0
+onwards.
+The file format is not yet finalized; the format currently documented
+in this section is not the final GZZ1 format and changes may well
+occur before release. Once this format is fixed, it will be mentioned
+here.
+
+<p>
+This section describes the GZigZag file formats that store the low-level
+structure. This is separate from the space description which describes
+e.g. the system list: the file format is lower-level still.
+
+<p>
+The file format is arranged as several layers, in order to 
+make it more flexible in the future.
+
+<p>
+In order to retain some transparency for the user and a feeling
+of openness, the file is completely encoded in UTF-8 and all the control
+structures are ASCII characters.
+This way, if something goes wrong, it is possible to see what's in the
+files easily.
+Space efficiency is not really an issue since the stream can be gzipped
+if desired.
+
+<p>
+In order to make the format robust and easy to parse, again
+at the expense of brevity, all the nonterminals
+are self-delimiting and therefore the format can be 
+parsed without any lookahead.
+
+<p>
+The current version number of this format is 1. 
+
+    <h3> Cell identifiers </h3>
+
+	<h4> Identifier formats </h4>
+
+    <p>
+    Cell identifiers are currently defined as arbitrary octet sequences.
+
+    <p>
+    There are several ways to identify cells.
+    In the format, a cell identifier is a single letter indicating
+    the storage format, 
+    followed by the identifier.
+
+    <p>
+    We currently define only the following two ways to store
+    cell identifiers:
+
+    <dl>
+	<dt> <b>'C'<i>(text-id)</i>' '</b>
+	<dd> The capital C is followed by a sequence of characters
+	    from the set [0-9a-zA-Z.:,+-].
+	    This set may be expanded in future versions.
+	    A space (ASCII 32) character ends the sequence
+	<dt> <b>'c'<i>(hex-coded binary string)</i>' '</b>
+	<dd> If the ID contains other data, it is represented as a hex-coded
+	    binary string.
+    </dl>
+
+    <p>
+    The first format is intended for brevity and clarity; it is recommended
+    that it be used if possible but it is possible to use only the second
+    format.
+
+    <p>
+    It is likely that in the future there may be other formats to
+    remove redundancy resulting from the space ids.
+
+    <p>
+    <b>Examples.</b>
+    "Cabc012 " = the cell 'abc012'.
+    "c616263303132 " = the same cell in the other encoding.
+    Note the terminating spaces at the ends.
+
+	<h4> Semantics: local and global identifiers </h4>
+
+    <tjl>
+    Maybe some more explanation here of mediaserver etc?
+
+    <p>
+    The mediaserver id of a block to be written is not known when the
+    block is written, since the id contains a cryptographic hash of
+    the block's content.
+    This poses an interesting problem for the file format: the ids of
+    new cells, created in the current block, are of a different
+    format than general ids.
+
+    <p>
+    The octet 0x2D ('-') is used as a separator between the block id and
+    the local id. If the id starts with that character, it is local
+    and equivalent to having the id of the mediaserver block in which
+    the reference is made prepended.
+
+    <p>
+    <b>Example.</b>
+    In mediaserver block XXX:
+    <pre>
+    +
+    C-1_C-2_
+    </pre>
+    following that, in mediaserver block YYY:
+    <pre>
+    +
+    C-1_C-2_
+    CXXX-2_C-1
+    </pre>
+    overall, the result is a chain of cells:
+    "XXX-1" --- "XXX-2" --- "YYY-1" --- "YYY-2"
+
+    <h3> Simple dimension single deltas </h3>
+
+    <p>
+    The changes between two versions of a single simple dimension
+    are described by a sequence of disconnection and connection operations.
+    The basic format is 
+	<b>'-\n'<i>(disconnects)</i>'+\n'<i>(connects)</i>'0\n'</b>
+    where the (disconnects) and (connects) are
+    pairs of cells followed by a newline after each pair.
+
+    <p>
+    Each pair of cells refers to one connection either made or broken.
+    It is forbidden for the same cell to appear twice in the same 
+    position (first/second) in the disconnect or connect list:
+    the same cell can only be disconnected from one cell on each side
+    and connected to one cell on each side.
+
+    <p>
+    The design for the delta is such that it is simple to reverse:
+    simply exchanging the disconnects and connects produces the inverse
+    delta.
+
+    <p><b>Example.</b> (underscore means space)
+    <pre>
+    -
+    C1_C2_
+    C2_C3_
+    +
+    C2_C1_
+    C1_C3_
+    0
+    </pre>
+    Assuming that the cells 1, 2 and 3 are at first arranged as 1-2-3,
+    this delta rearranges them to 2-1-3 by deleting and creating two
+    connections.
+
+
+    <h3> Cell content deltas </h3>
+
+    <p>
+    The changes to cell contents are not as easily reversable as
+    the connection changes; therefore, to allow better compression,
+    there are two different variants of the content delta format:
+    the irreversible and reversible formats.
+
+    <p>
+    The records here are either 'k' followed by a cell id and
+    two content specifications: the contents before and after,
+    and 'K', followed by a cell id and the content after.
+    The same cell may occur in a single delta only once.
+
+    <p>
+    The content specifications are a somewhat difficult at the moment
+    since it has not been exactly specified what a cell can contain.
+    Because of this, we shall define two tentative content types:
+    UTF-8 strings and spans.
+
+    <p>
+    The UTF-8 strings are escaped by transforming all backslashes 
+    into double backslashes and all instances of the newline
+    character (0x0a) into a backslash and the character 'n'.
+
+    <p>
+    The spans are stored as a sequence of hex digits (the mediaserver
+    ID), a colon and a comma-separated list of numbers
+    to be interpreted by the span type, and finally a newline.
+
+    <h3> Space inclusions (primitive slices) </h3>
+
+    <p>
+    Space inclusion is described below.
+    When including a space, it is necessary to prefix all references
+    to that space by something, since the included space could be or
+    contain e.g.
+    an older version of the current space, or two included spaces
+    could contain some common space etc.
+
+    <p>
+    One important point is that all included spaces are associated
+    with a particular cell in the current space.
+    That cell is then used as a prefix in the cell id, with the format
+    <pre>
+    (cell):(cell)
+    </pre>
+    where the first cell is the prefix cell and the second is the cell
+    inside that included space.
+
+    <p>
+    <b>Example.</b>
+    First, include the space A using ZZ structure (currently interfaced by
+    <code>SimpleCompoundSpace.include()</code>).
+    Then, connect cell 42 in that space to the cell 7 in the current space
+    (of course, this is in a different section of the file).
+    Note the use of the <code>:</code> cell format
+    <pre>
+    +C1:42_C7
+    </pre>
+
+    <b>Note: for dimensions, the global identifier with no prefixes is always
+    used.</b>
+
+
+    <h3> Transcopy deltas/sections </h3>
+
+    <benja> XXX update!
+
+    <benja>
+    The following section is a proposed extension to the described-- and already
+    implemented-- file format. It assumes some background information
+    available in <code>Documentation/misc/cellids</code> (the content there
+    should probably be moved here or to another .wml document). I consider
+    transcopies to be vividly important and want to implement them... now, so
+    please comment.
+
+    <tjl>
+    I first read that wrong: I thought that you had implemented this design
+    already ;)
+    
+    <p>
+    A transcopy section in the diff is not really a delta. It contains a
+    space version to transcopied cells from, and a list of pairs the first
+    element of which is the cell ID of the to-be-transcopied cell in the
+    space version transcopied from, and the second part of which is (in the
+    language defined in <code>Documentation/misc/cellids</code>) the tlid,
+    the local part of the transcopy ID, appended to the cell's cid, or
+    constant ID, in the new space. (The tsid, the space version part of the
+    tid, is implicitly given through the ID of the block the cell was
+    transcopied in.)
+
+    <tjl>
+    First: the ids should be discussed in either this document
+    or DesignProblems. Second, I'd really like to see this matched
+    with the use cases that Tuukka is working on.
+
+    <p>
+    All transcopy sections in a single delta should come before all content
+    and all dimension sections. This is because the transcopied cells' content
+    and connections cannot be changed before they are transcopied, but can
+    well be after.
+
+    <p>
+    I propose the following simple format: A transcopy section is a number
+    of lines each containg one of the pairs as described above, ended with
+    a line that contains only '0'. Each line contains two cell IDs; however,
+    the second ID is not really a cell ID but a local ID part, namely the tlid
+    as described above.
+
+    <tjl> 
+    When proposing syntax, it's be really nice to have it in the same EBNF
+    as there is below.
+
+    <h3> A single delta on multiple dimensions and content </h3>
+
+    <p>
+    The change in a whole space between two versions is encoded
+    in a single delta on multiple dimensions.
+
+    <b>Note: for identifying
+    dimensions, the global identifier with no prefixes is always
+    used.</b>
+
+    <h3> Transclusions of spans </h3>
+
+    <p>
+    The way spans work are described in another section above. The connections
+    on the VStream dimension are saved as ordinary dimension diffs. However,
+    the way the spans are <em>transcluded</em> into a space needs some
+    special handling, because we do not want to specify each single cell
+    to be transcluded, but rather the <em>range</em> of transcluded units.
+
+    <p>
+    A section of span transclusions has the following general format:
+    <pre>
+spans           : ('s' cell-id block-id ' 'number ' ' number '\n')* '0\n'
+                ;
+single-delta-part:
+		.
+		.
+		.
+                | 'S\n' spans
+                ;
+    </pre>
+    where the <code>cell-id</code> is the id of the transclusion,
+   <code>block-id</code> is the scroll block we transclude from,
+    and the numbers are the indices of the first and last units we transclude.
+    For example, <code>s00918B 14 17</code> would transclude the cells
+    <code>00918$14</code>, <code>00918$15</code>, <code>00918$16</code>, 
+    and <code>00918$17</code> (the units 14-17 in the scroll block).
+
+    <h3> Collected syntax </h3>
+
+<pre>
+
+/*
+ *	Basics
+ */
+number: [0-9]*.[0-9]* ;
+hexdigit: [0-9a-zA-Z];
+id-char: [0-9a-zA-Z:,+-]
+cell-id	: 'C' id-char* ' ' 
+	| 'c' (hexdigit hexdigit)* ' ' 
+	;
+block-id: (hexdigit hexdigit)* 
+local-cell-id	: cell-id ;
+escaped-utf-string	: [^\n] * ('\\' [n\\] [^\n]*) '\n' ;
+
+/*
+ *	Simple dimensions
+ */
+cellpair	: cell-id cell-id '\n' 
+		;
+simple-dim-delta: ('-' cellpair)* ('+' cellpair)* '0\n' 
+	        ;
+
+/*
+ *	Content
+ */
+content-spec	: 't' escaped-utf-string 
+		;
+content-change	: 'k' cell-id content-spec content-spec 
+		| 'K' cell-id content-spec 
+		;
+content-delta	: (content-change '\n' ) * '0\n'
+		;
+
+/*
+ * 	New cells
+ */
+new-cells	: ('n' local-cellid '\n')* '0\n'
+		;
+
+/*
+ * 	Transcopies
+ */
+transcopies	: ('t' cell-id '\n')* '0\n'
+		;
+
+/*
+ *	Transclusions from spans
+ */
+spans		: ('s' cell-id block-id ' 'number ' ' number '\n')* '0\n'
+		;
+
+/*
+ *	High-level structure
+ */
+single-delta-part: 'D' cell-id '\n' simple-dim-delta 
+		| 'E\n' content-delta
+		| 'N\n' new-cells
+		| 'T' cell-id block-id '\n' transcopies
+		| 'S\n' spans
+		;
+single-delta	: single-delta-part* '00\n' ;
+
+gzzfile		: 'GZZ1\n' 
+		  number '\n' 
+		  block-id '\n'   	/* Id of previous space */
+		  single-delta ;
+
+
+</pre>
+
+<h2>Cell identity</h2>
+
+<p>
+In the new "src/" implementation, identifying primitives
+is based on 
+cell identity instead of the contained
+string.
+This, with
+the immutable 
+mediaserver blocks brings out a whole slew of issues we have to solve
+with regards to cell identities between different versions, 
+connecting different spaces together etc.
+
+<h3> Some problems to solve </h3>
+
+<p>
+In this section, we'll attempt to discuss some of the problems that
+need solutions.
+
+<dl>
+<dt> Primitives
+<dd> We wish to define dimensions and types, such as "Lambda expression",
+     in a space and use them in other spaces.
+     <tjl> I'd prefer the term "Primitives", as it's not only dims and types
+           but procedures, operators etc.
+<dt> Versioning Clang programs / primitive sets
+<dd> When we produce new versions of the definition space, old code and new
+     code should be compatible at least in areas of no change.
+	<figure img="transspace-versioning.jpg" width="354px">
+	 The program versioning problem.
+	 A cell from the library is cloned across space to the user space.
+	</figure>
+    <tjl> This passes by very briefly a really major set of problems.
+	  What determines what version of a procedure needs to be called
+	  in a different space, if we only use the original IDs?
+	  For example, in the figure,
+	  when the library is modified, what happens? Where is it decided
+	  what version of the original cell the clone in the user space
+	  corresponds to?
+	  Here, we need to provide all features a good shared library system
+	  has: simultaneous versions, testing whether an upgrade works,
+	  upgrading the version of the library etc.
+    <rtr> Original ID's? Why not use a cell, which specifies whose clone it
+          wishes to be, and the d.clone connection is generated by a space
+          part? The specification could be e.g. "the latest version of
+          procedure X in the library that has features a, b and c that are
+          compatible with those from version xyzzy".
+    <tjl> "a cell which specifies whose clone it wishes to be"!?!?!?!?!?!?!
+          That has a LOT of problems; clones should not change from what
+	  they have been cloned at all.
+	  The version, I think should be the version of the included space
+	  which may be upgraded... There, you might have something like
+	  this, autoupgrading etc. but for single cells that sounds horrible.
+<dt> Modifiability
+<dd> Others should independently be able to add their own modifications to
+     the definitions, without interfering with our work. This would be
+     things like adding a new expression type into a simple imperative Clang,
+     or a new view type to a list of view types, etc. [XXX missing stuff here]
+     <tjl> A <b>lot</b> of missing stuff ;)
+	   I don't understand this at all
+<dt> Space composition
+<dd>Given multiple spaces (e.g. from different slices, or autogenerated),
+     we wish to combine them into a new space in some user-defined way.
+     The user must be able to define this in the structure. Examples of
+     this would be the preflets and autogenerated document structure tree
+     in Nile.
+	<figure img="transspace-versioning-inclusion.jpg" width="372px">
+	    How the above versioning and this inclusion are related.
+	    The set of problems is different if the library is included
+	    by transcluding the whole space.
+	</figure>
+     <tjl> The real problem you're trying to bring out here is that
+     the user needs a way to refer to another space inside the one space?
+     This is not only a structural problem but also a presentation problem:
+     any method can be chosen as long as the user presentation is suitable.
+     See figure.
+</dl>
+
+<h2>Slices, transcopying, inclusion</h2>
+
+
+<p>
+In this section, we specify the simplest slice model which shall hopefully
+remain upwards compatible with later, more refined functionality
+but should be powerful enough to support the first clients.
+The overall idea is shown in this figure.
+<img class="wideimg" src="sliceinclusion-simple.jpg">
+
+<p>
+The analogy to shared libraries and dynamic linking must be stressed.
+
+<p>
+The lowest-level (hard-coded!) space defines the cells
+that represent the CLASM primitives in the ZZ space.
+The Client Space, which contains basic subroutines for user interaction
+and basic sets of bindings, includes the CLASM space in order to use
+the primitives in subroutines by cloning them.
+This space is then included in the user space, which contains the user's data.
+
+    <h3>Versioning, changing, preflets</h3>
+
+    <p>
+    However, including slices brings on complexities.
+    First of all, we do want to be able to upgrade the included slice:
+    <br><img class="wideimg" src="sliceinclusion-upgrade.jpg"><br>
+    However, some upgrades may create conflicts:
+    <br><img class="wideimg" src="sliceinclusion-upgrade-conflict.jpg"><br>
+    Preflets are Ted's mechanism for expressing the connections in such
+    ways that conflicts can be resolved.
+    However, there are several types of preflets and simply connecting cells
+    does not give enough information about the intended connection:
+    <br><img class="wideimg" src="sliceinclusion-preflet-types.jpg"><br>
+
+    <h3>Containment</h3>
+
+    <figure img="sliceinclusion-containment.jpg" width="276px">
+    a) The space A is included into space D as a part of two different
+    spaces.
+    b) Two possible models: either keeping the different copies
+	separate or unifying them.
+    </figure>
+
+    <p>
+    One related question is
+    whether spaces are shared or unified when they are included
+    in different included spaces.
+    For example, here the space A is included in both B and C.
+    Space D includes both B and C. 
+    Now, are there two different instances of A inside D or 
+    a single, shared instance.
+
+    <p>
+    In the first version, we would like to use the former model: 
+    the spaces are always included verbatim, with no consideration 
+    of lower-level subspaces included.
+
+    <p>
+    However, there are some interesting problems here, related
+    to dimensions.
+    Consider the image
+    <br><img class="wideimg" src="sliceinclusion-dimsame.jpg"><br>
+    Here, it is easily seen that in the user space, all the red cells
+    should represent the same dimension. For clones, that is natural,
+    but for the cells that come from different versions of the space
+    via different routes, this is less obvious.
+
+    <p>
+    This consideration also explains where d.clone comes from;
+    we have tacitly assumed its existence and globality in the above
+    but not discussed e.g. where the cell which contains it
+    comes from.
+    With the above considerations, it is easy to create a basic
+    space included in all spaces which contains the cell representing
+    the clone dimension and possibly some other such global dimensions.
+
+
+    <h3>Implementing inclusion</h3>
+
+    <p>
+    <img class="wideimg" src="spaces1.jpeg">
+
+    <p>
+    <img class="wideimg" src="spaces2.jpeg">
+
+    <p>
+    <img class="wideimg" src="spaces3.jpeg">
+
+
+<h2>Image spans</h2>
+
+<p>
+We really want to do image spans containing parts of postscript/PDF files. 
+The problem is that creating the images from these files is time-consuming
+but caching the images is space-consuming. 
+We need to be able to do tradeoffs here.
+
+<p>
+For example, when paging through a multi-page document, usually ps/pdf
+viewers show the pages fairly slowly. We want INSTANT response, but
+the initial image is allowed to be of lesser resolution.
+This way, "leafing through" the document is easier: you always see
+what page you are on, unlike with normal ps viewers.
+
+
+</substdims>
+</body>
+</html>
+
+<!--
+	vim: set syntax=html :
+-->

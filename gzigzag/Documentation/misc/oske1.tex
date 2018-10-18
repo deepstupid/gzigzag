@@ -1,0 +1,119 @@
+\documentclass[a4paper,12pt]{artikel3}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[latin1]{inputenc}
+\usepackage[finnish]{babel}
+\usepackage{times}
+%\def\zigzag{ZigZag}
+%\def\zigzag{{\fontfamily{yinit}\fontencoding{U}\fontsize{5}{7pt}\selectfont Z}
+%{\huge i}{\fontfamily{yinit}\fontencoding{U}\fontsize{5}{7pt}\selectfont G}
+%{\huge}{\fontfamily{cmr}\fontencoding{OMS}\fontsize{30}{30pt}\selectfont  Z}
+%{\large$\displaystyle \alpha$\Huge\bf\selectfont$\gamma$}}
+%\def\gzigzag{{\it \Huge G}\zigzag}
+\def\zigzag{ZigZag}
+\def\gzigzag{G\zigzag}
+\def\url#1{\texttt{#1}}
+\pagestyle{empty}
+\begin{document}
+
+\title{Yhteenveto GZigZag-tutkimusryhmän toiminnasta 1.1-31.10.2001}
+\author{Tuomas Lukka}
+\maketitle
+
+\section{Yleistä}
+
+\gzigzag"-projekti tutkii ja soveltaa käytäntöön nykyistä edistyneempiä
+tiedonhallintamenetelmiä käyttäen pohjana Ted Nelsonin \zigzag"- ja
+Xanadu"-malleja. Lähtökohtana on, että nykyiset
+tiedonhallintamenetelmät ovat riittämättömiä vastaamaan tulevaisuuden
+haasteisiin. Ryhmän olennaisia tutkimusalueita ovat käyttöliittymät ja
+informaation varastointi hyperrakenteisiin, sekä näiden tutkimusten
+tulosten soveltaminen käytäntöön.
+
+\section{Vapaan prototyypin kehitystyö}
+
+Käytännön tutkimus tapahtuu vapaan GZigZag-ohjelmiston 
+({\sf http://www.gzigzag.org}) kautta. 
+Prototyypistä on kuluvan vuoden aikana julkaistu uudet versiot
+0.5.0, 0.5.1, 0.6.0 ja 0.6.1. 
+
+Nämä versiot ovat olleet lähinnä prototyyppejä eivätkä vielä soveltuvia
+tuotantokäyttöön;
+huhtikuusta alkaen projekti on keskittynyt uuden,
+tuotantotasoisen version toteuttamiseen.
+Uusi versio on aikaisempaa huomattavasti nopeampi ja sisältää
+tukea ryhmätyössä tarpeelliselle  versioinnille ja eri tekijöiden
+muutosten yhdistämiselle.
+Tämän lisäksi uusi versio on sisäiseltä rakenteeltaan huomattavasti
+entistä siistimpi: käyttäjän toimintoihin reagoiva ohjelmakoodi voidaan
+kirjoittaa itse ZigZag-rakenteeseen Java-kielen sijasta.
+
+Syksyn aikana on tarkoitus
+julkaista versio 0.8.0 ("chartreuse"), joka perustuu uuteen
+toteutukseen. 
+
+\section{Mediaserver}
+
+Prototyypin versio 0.8.0 pohjautuu Mediaserver\footnote{työnimi}-teknologialle,
+jonka ryhmämme on kehittänyt Xanadu-mallin pohjalta.
+Mediaserver-ajattelu pohjautuu tiedostomallin kääntämiseen nurinpäin.
+Sen sijaan, että koneelle kerrottaisiin tiedostonnimi, johon jokin
+tieto pitäisi tallentaa, 
+konetta pyydetään antamaan tiedolle sen maailmanlaajuisesti yksilöivä tunniste
+(Globally Unique ID, GUID). Tämän jälkeen tietoon voidaan viitata missä tahansa
+tietokoneessa samalla GUID:illa, ja tällöin on kaksi vaihtoehtoa:
+\begin{enumerate}
+\item  Tieto ei löydy eikä sitä voida hakea tälle koneelle; ehkä käyttäjällä
+    ei ole oikeutta lukea kyseistä tietoa
+\item  Tieto löytyy. Tällöin GUID:iin sisällytetty tarkiste varmistaa,
+    että tieto on oikea.
+\end{enumerate}
+On käytännössä mahdotonta, että viitattu tieto olisi väärä.
+
+Tietoblokkeja on tarkoitus käyttää eri tavoin kuin tiedostoja:
+sen sijaan, että koko uusin versio varastoidaan blokkiin, ajatuksena
+on varastoida uuteen blokkiin vain uudet muutokset ja viittaus vanhempaan
+versioon.
+Tällöin verkosta haettavan tiedon määrä voi pienentyä huomattavasti,
+mikä helpottaisi käyttöä mobiiliympäristössä.
+
+
+
+\section{Käytännön sovellukset}
+
+Version 0.8.0 myötä projektin itsensä on tarkoitus siirtyä käyttämään
+GZigZag:ia arkityössään, esimerkiksi julkaisujen kirjoittamiseen.
+Projektilla on käytössään monipuolinen työympäristö, johon kuuluu
+useita pöytäkoneita, kannettavia, taskutietokoneita sekä
+useita erilaisia syöttölaitteita (näppäimistön ja hiiren lisäksi 
+joystick, spaceball ja skanneri).
+
+Osa käytöstä tapahtuu mobiiliympäristössä kannettavalla tietokoneella
+GSM-modeemin kautta. Tässä yhteydessä erityisesti hiotaan GZigZagin
+ja Mediaserver-ajattelutavan
+sopivuutta hitaiden tiedonsiirtoyhteyksien yli.
+
+
+\section{Perheportaali-projekti}
+
+Projektissa tehdään läheistä yhteistyötä Sonera OYj:n rahoittaman
+perheportaali-projektin kanssa perheitten käyttöön soveltuvien
+uusien käyttöliittymien kehittämiseksi. 
+Tuloksista ei vielä voida kertoa julkisesti.
+
+\section{Julkaisutoiminta}
+
+Kuluneen vuoden aikana ryhmältä on tullut kaksi julkaisua:
+\begin{itemize}
+\item Lukka, Tuomas ja Ervasti, Katariina: GZIGZAG -- A Platform for Cybertext
+    Experiments. In Eskelinen \& Koskimaa (eds), Cybertext Yearbook 2000,
+    Jyväskylä 2001.
+\item Wideroos, Kimmo: Awt (Associative writing tool): Supporting
+    writing process with a ZigZag based writing tool --- work in progress.
+    In Proceedings of the Twelfth ACM Conference on Hypertext and Hypermedia, Århus 2001.
+\end{itemize}
+Lisäksi useat ryhmän jäsenet pitivät kutsutun esitelmän Hypertext 2001 -konferenssin
+yhteydessä pidetyssä ZigZag-workshopissa.
+
+\end{document}

@@ -1,0 +1,244 @@
+% This paper is aiming to be an introduction to ZigZag technology.
+
+\documentclass[a4paper]{article}
+
+\usepackage[latin1]{inputenc}
+
+\usepackage{beton}
+
+\ifx\dontdraft\undefined
+%Draft
+\newcommand{\marginaali}[1]{\marginpar{#1}}
+
+\setlength{\marginparwidth}{3cm}
+\setlength{\textwidth}{13cm}
+\setlength{\oddsidemargin}{1.3cm}
+\else
+%Non-draft
+\newcommand{\marginaali}[1]{}
+\linespread{1.6}
+\fi
+
+\newcommand{\nakki}[1]{\marginaali{\textbf{\small Nakki: #1}}}
+\newcommand{\ajk}[1]{\marginaali{\small ajk: #1}}
+\newcommand{\tjl}[1]{\marginaali{\small tjl: #1}}
+\newcommand{\benja}[1]{\marginaali{\small Benja: #1}}
+
+\begin{document}
+
+\title{GZigZag technology}
+
+\author{(ordering?) AJK, RR, TJL, THN\dots}
+
+\maketitle
+
+\begin{abstract}
+  \nakki{Deadline: 2001-03-31.  Abstract needs to be about 300 words.}
+We introduce Ted Nelson's ZigZag invention 
+from the point of view of the programmer.
+ZigZag is a hyperstructure which consists of
+cells and dimensions that connect them bidirectionally.
+As a platform for software
+development, ZigZag provides
+persistent data structure, efficient network transparency and
+a global system for interconnecting data. 
+Its difference from conventional approaches such as object-orientation is
+discussed.
+
+ZigZag also allows simple development of flexible non-textual programming languages
+\tjl{Should mention same overall structure and framework for different
+        languages!}
+that emphasize the program's structure over its representation.  These
+languages are similar but not identical to visual programming languages.
+
+The visual platform provided by our implementation, GZigZag is
+also introduced. The visual system allows modular addition of new views
+and provides a framework for animation between different views of
+the same cells.
+\end{abstract}
+
+\bigskip
+
+\begin{verbatim}
+$Revision: 1.18 $  
+$Date: 2001/03/28 06:32:00 $
+$Author: ajk $
+\end{verbatim}
+
+\newpage
+
+\section{Introduction}
+
+The basic idea of ZigZag, from one perspective, is
+to represent all the (persistent/state/...? Not register and 
+small-level stuff, optimization et.) information in a computer
+in a generic structure model.
+
+Instead of building all structures using the RAM and pointer model,
+structures are instead built using nodes (cells) and 
+two-directional connections between them.
+
+The two-directional connection between the cells is a primitive
+in this system.
+
+Relational databases...
+
+\begin{itemize}
+\item Structure axioms! (a formal description of the structure)
+        \item Relationship to relational databases' model
+        \item unique ID for just about everything
+        \item Xanadu text/media model in cells
+        \item versioning
+          \begin{quotation}
+            \emph{From Benja}: Versioning in zz has a complex triple
+            nature. We imagine people using their zz spaces as 'the
+            system'. Such a system space must be linear in its
+            microversions-- no branching!  That's because having
+            different 'leading edge' versions of the system don't make
+            sense-- kinda like the users would have to choose at
+            startup 'which version of the system would you like to
+            use?' But for 'documents', branching does make sense. In
+            classical computer worlds, document = file, i.e. is well
+            defined; that makes the task of versioning easier (ref.
+            Ted's OSMIC)-- the document as a whole has versions, not
+            its parts. In ZZ, that's more complex b/c you want to be
+            able to version arbitrary collections of cells. So, that
+            level, including how to implement branching of parts of
+            the space when the space as a whole can't branch, is the
+            second. It's the undo/redo level, while the first level is
+            just kinda lookin' back in time. The third level is above
+            microversions-- which everything before is about-- and
+            about 'user's versions', i.e. versions of a document or
+            part of it which are important for a user; but this
+            doesn't necessarily belong here, as its a structure and UI
+            issue, not one of the underlying system (although to
+            explain the usability of versioning, this should be hinted
+            at).
+                
+                 Build-in \emph{branching} versioning in the system is AFAIK
+                 something nobody has done so far (linear undo/redo is mostly
+                 build by the application programmers individually, even).
+                 \ajk{CVS does it.}
+                 \benja{Right. I haven't seen any applications using CVS as
+                        a storage system, though. Are there any? But well,
+                        you're right, one could build them even if there
+                        aren't.}
+             \end{quotation}
+             TJL: Not really: I saw in the Handbook of Theoretical
+             Computer Science references to "persistent data
+             structures" in a different way from the one usually meant
+             - meaning exactly what we mean by versioning here.  It
+             would be worth taking a look at those papers for 1) the
+             algorithms, 2) references for this paper.
+             \ajk{\cite{persistent-ds}} Also, Ted's OSMIC/INLUV. GUI's
+             (like Swing) action encapsulation.
+
+                Benja: The algorithms aren't directly usable because they're
+                designed for a node/pointer structure. ZZ connections are
+                "two-dimensional": cell plus dimension. Artifically mapping
+                this to a pointered structure would probably not save us any,
+                even if the persistency algorithms we use are very effective
+                for pointered structures. Well, I'll play that through. But
+                I suspect that if anything, we should use a modified version
+                of their ideas.
+             
+             AJK: The article~\cite{persistent-ds} talks about
+             ephemeral data structures (structures where only the
+             newest version is accessible at all), partially
+             persistent DSs (all versions are accessible but only only
+             one is mutable) and fully persistent DSs (all versions
+             are both accessible and mutable).  IMHO we should be
+             aiming for full persistence if we can do it without
+             sacrificing too much cycles.
+             
+             Benja's concern about users not needing to choose
+             different versions of the system is IMHO a user interface
+             issue.  One can use only one branch even if branching is
+             allowed.
+             
+             I think it would be possible and even worthwhile to
+             implement fully persistent documents on top of a fully
+             persistent space, assuming that the cost of branching is
+             proportional to the number of cells and connections
+             actually changing and not proportional to the size of the
+             space.  We could then easily map document branches to
+             space branches.
+                
+                Benja: A user interface issue? Well, yes. It's a UI issue if it
+                is undefined which configuration the computer uses at startup. 
+                But in my humble opinion, that doesn't make it less important 
+                to the system design... ;)
+                
+                Or do you want to say if one wants to use different branches,
+                one would have to choose between them at startup? I.e., one
+                could not use branching documents if one doesn't want to
+                choose the "current space" at startup?
+                
+                I think that the implications of branching the space to branch
+                a document are too nasty. When you view document D from
+                timestamp i, and there are two consecutive versions at
+                timestamps j and k, how do you find out whether these contain
+                branches of D? The change that lead to j may not have changed
+                anything inside the document, but some change a lot deeper than
+                j may have affected D. So somewhere along j there would be a
+                branch of D. These kind of lookups would be easier if the
+                data structure was designed for being efficient with
+                branching documents, not branching spaces.
+                
+                I don't know if I'm talking clearly here. I'll write a school
+                paper about versioning issues in ZZ sometime soon, so then
+                I'll take the time to clarify.
+                
+                One thing is that I still don't understand why you would want
+                to branch the whole space. What for? Why do you need space
+                branches so often that you intend to make that the efficient
+                case, not document branches? Because of course one could at
+                least as easily map space branches to document branches as
+                the other way around, with the slight difference that these
+                space branches would have only branches of the home cell, not
+                the home cell itself, and thus wouldn't be "the current space"
+                (although technically, they'd be part of the current space,
+                but there wouldn't be a single connecting path from the
+                home cell to the branched spaces' home cells).
+                
+                (I find the "persistent" terminology not useful. I'd prefer
+                unversioned, linearly versioned, fully versioned.)
+                
+                AJK: I would encode the document name into the branch
+                that was made for that document.  And when we are
+                talking about branching versions, version tags will
+                not be simple timestamps any longer.
+                                
+        \item persistence
+        \item separation of view and data
+        \begin{itemize}
+                \item Usually APIs exist but not easily publicly accessible
+                        in programs. MS's COM is one example, but
+                        how often does it really provide true 
+                        reusability? It allows embedding full components
+                        but for more fine-grained access, there's
+                        just about nothing.
+                \item structure vs. API
+                \item easy to define new views
+        \end{itemize}
+        \item Clangs -- non-textual and non-visual languages (structure programming:-)
+          (need to compare to visual programming, eg.~Prograph)
+          \ajk{Note: Microsoft's Visual Basic etc.\ are \emph{not} visual programming languages}
+        \item merging?
+        \item hyper-orthogonality
+        \item applitudes -- examples
+        \item focus+context views
+\end{itemize}
+
+\section{A formal description of the GZigZag structure}
+
+
+
+\section{Conclusion}
+
+\bibliographystyle{abbrv}
+\bibliography{gzigzag}
+
+
+\end{document}
+

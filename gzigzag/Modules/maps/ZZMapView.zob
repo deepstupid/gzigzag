@@ -1,0 +1,143 @@
+/*   
+ZZMapView.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+
+package org.gzigzag.module;
+import org.gzigzag.*;
+import org.gzigzag.map.*;
+import java.util.*;
+import java.awt.*;
+
+public class ZZMapView implements FlobView, ZOb {
+    
+    public static boolean dbg = false;
+    static void p(String s) { if(dbg) System.out.println(s); }
+    static void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+        ZOb mapZOb 
+            = new ZZSOM1();
+        ZOb mapInputReaderZOb
+            = new DefaultInputReader();
+    }
+
+    private static ZZMap.InputReader mapInputReader = null; 
+    private static ZZMap zzmap = null;
+ 
+    class ZZMapCell {
+        public Point p = new Point();
+        public Dimension dim = new Dimension();
+        public int d=0;
+        public ZZCell c=null;
+        public float fract=(float)0.0;
+        public float weight=(float)0.0;
+        public ZZMapCell() {}
+    }
+
+    private static ZZMapCell[] cellStore;
+    private static int nShown = 0;
+    FlobDecorator linker = new StdLinks();
+ 
+    public void raster(FlobSet into, FlobFactory fact,
+            ZZCell view, String[] dims, ZZCell accursed) {
+ 
+        final Dimension ideal = fact.getSize(null, 1);
+        final Dimension size = into.getSize();
+
+        if(zzmap == null || mapInputReader == null 
+           || !zzmap.equals((ZZMap)mapZOb) ) {
+            if(zzmap != null) zzmap.stop();
+            zzmap = (ZZMap)mapZOb;
+            mapInputReader = (ZZMap.InputReader)mapInputReaderZOb;
+            zzmap.initialize(mapInputReader);
+        }
+
+        boolean ud = zzmap.update(dims, accursed);	
+        if(ud || zzmap.changed()) {
+            ZZMap.Particle[] shown_inputs = zzmap.getShownParticles();
+            nShown = shown_inputs.length;
+            cellStore = new ZZMapCell[nShown];
+            float mag = (float)(1.0/Math.sqrt(nShown));
+            for(int i=0; i<nShown; i++) {
+                ZZMap.Particle shownp = shown_inputs[i];
+                ZZMapCell mc = cellStore[i] = new ZZMapCell();
+                mc.c =  shownp.cell();
+                //mc.weight = weight = kkmap.particleWeight(id);
+                mc.d = 1; // (weight >= 1.0) ? 2 : 3;
+                mc.p.x = (int)((0.9*shownp.x()+0.05)*size.width);
+                mc.p.y = (int)((0.9*shownp.y()+0.05)*size.height);
+                mc.fract = 1;//cfr(weight);
+                int w = (int)ideal.width;
+                int h = (int)ideal.height;
+                if(ZZGroupHighlightCache.isMember(mc.c)) {
+                    mc.d = 1;
+                }
+                mc.dim.width = w;
+                mc.dim.height = h;
+            }
+            zzmap.changed(false);
+        }
+
+        int fid = -1;
+
+        try {
+            fid = zzmap.focusId();
+        } catch(ZZMap.NoFocusException e) {}
+
+        System.out.println("focusId = "+fid);
+
+
+        for(int i=0; i<nShown; i++) {
+            ZZMapCell mc = cellStore[i];
+            fact.centerFlob(into, mc.c, mc.c, 
+                            (float)mc.fract, mc.p, 0, 0, mc.d, mc.dim); 
+        }
+
+       linker.decorate(into, "", view);
+
+       // Do the dimensions. 
+        if(true)
+            ZZUtil.showFlobDims(into, fact, view, 3);
+
+    }
+
+   static public ZZModule module = new ZZModule() {
+        public void action(String id,
+                ZZCell code, 
+                ZZCell target,
+                ZZView view, ZZView cview, String key, Point pt, ZZScene xi) {
+        }        
+        public ZOb newZOb(String id) {
+           if(id.equals("som")) {
+                return new ZZMapView();
+            } else 
+            if(id.equals("fmm")) {
+                ZZMapView zmv = new ZZMapView();
+                zmv.mapZOb = new ZZFMM1();
+                return zmv;
+            } else
+                return null;
+        }
+    };
+
+}
+

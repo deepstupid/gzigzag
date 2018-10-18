@@ -1,0 +1,274 @@
+
+CELL IDS, and related issues
+----------------------------
+
+BENJA >>
+
+Consider the problem of global cell IDs. We want to:
+- identify a version of a cell;
+- identify a version of a cell so that when we update the space (and thus
+  create a new version of the cell), our reference goes to the new version
+  of the cell (this is what the Cell class does);
+- identify the cell itself, not a special version of it, e.g. to reference
+  a dimension.
+
+Let us start with a simple ID that will reference the cell globally, and not
+changed across versions. This will be called the constant ID, or cid. We
+assume here that we can generate these somehow; more about that later.
+
+Now, let us consider the ID for a given version of the cell. Let's assume
+we have an ID for each space version, the ID of the mediaserver block
+defining that space. Let's call this the version space ID, or vsid. The ID
+of the cell version could then be defined to be vid = cid + vsid. In other
+words, given the cid and the vsid, we can identify a single version of the
+cell.
+
+Now for the identification the Cell class does, i.e. the identification
+that is updated when the space is updated. We would do this just like the
+vid, except that instead of a constant vsid, we store a reference to a Space
+object (whose version can change).
+
+
+
+Let us now consider the problem of acquiring a cid. Remember that a cid must
+be globally unique. We use a cells to refer to dimensions; however, a dimension
+cannot be a specific version of a cell, it must be the "cell itself:" Each
+time a space is saved, the version of all cells in that space changes. Yet,
+if a cell refered to a dimension before saving, it should refer to the same
+dimension after saving, too. It must be possible to use the same dimension
+in any space, for example to define applitudes and their semantics. Therefore,
+to refer to dimensions, we must use a cid which is unique across all spaces.
+Two users should not accidentally create the same dimension, because that
+could lead to headaches later (one main reason why we got rid of 
+dimensions-as-strings, after all).
+
+The solution seems simple: use the ID of the space version that created the
+cell, plus a serial number for cells created in that space version. Let us
+call these components the csid and the clid (for constant ID, space version
+part, and constant ID, local part). Another scheme, creating unique IDs
+as random numbers from some source, is nowhere near as appealing.
+
+However, the implementation of that scheme poses a nonobvious problem.
+Mediaserver IDs are only assigned after a block is written; all references
+inside a single Mediaserver block need to be some kind of "local" refs,
+meaning they refer to the block through somehow without knowing its ID.
+If we create a new cell, we cannot refer to it through its "proper" cid until
+we save the space-- we can only use some special reference saying "current
+block," plus the clid (the serial number).
+
+So what happens after we save the space? The former current block isn't the
+current block any more-- instead, it has acquired a proper Mediaserver ID.
+Next time we write a .diff, we want to reference the cell through the
+correct cid; besides, now we also want to refer to the dimension represented
+by that cell through the proper cid. We would need to update the ID-to-Dim
+mappings, and *all* the Cell objects refering to that cell. Urgh!
+
+The nonobvious problem has a nonobvious solution, which is to never reference
+a csid directly as a String (from an existing Cell). Instead, we have a
+Space.Version object which encapsulates a csid. There is only one Space.Version
+for any csid, so Space.Versions have == equality. Now, the trick is to have
+the "current block" be a Space.Version without an assigned ID: Space.Versions
+which do not have an ID yet can be assigned one. A Space has a "current"
+Space.Version which does not have an ID assigned. When the space is saved,
+the Space.Version is assigned an ID, and a new Space.Version without an ID
+is created which has no ID yet.
+
+A Cell, then, contains a Space, a Space.Version (the csid), and a String
+(the clid).
+
+
+
+Now, consider the problem of creating a transcopy of a cell. I use the term
+transcopy to refer to the creation of a new "instance" of a (set of) cell(s), 
+whose content(s), and whose rootclone(s)' connections, are not the same. This
+has two main uses:
+- Create a new version/copy of the (set of) cell(s).
+- Move the cell(s) into a different space.
+- (also: both of the above)
+
+The first of these cases occurs when we want to maintain two different
+versions of something inside the same space. For example, let's say we are
+writing a Clang program, and want to reuse a piece of code somewhere else
+(but not create subroutine). Or, we have created a diagram and want to
+re-use it as the basis for a new diagram we're creating. In each case, when
+we create the new version, we don't want the old version to be changed when
+the new version changes. Thus, clones don't work. Yet, it would be foolish 
+to simply create new cells with the same content and connections, as we 
+really want to keep-- and be able to show-- the connection.
+
+(The rootclone being different and thus its connections not being the same
+is important because many abstractions of units in ZZ-- for example, Clang
+functions-- rely on there being the rootclone, whose connections represent
+the thing itself, and then the different clones, which put the thing in
+different contexts.)
+
+When we move a cell into a new space, we may or may not mean to create a new
+version of what we transcopy at the same time. But of course, when we change
+it in one space, in can by definition not change in the other one. However, if
+the cell is simply a reference to a dimension, possibly in some Clang code,
+and we attach the space containing it to the original one, we may want it
+to unify as a clone, i.e. become a clone of the cell it was originally
+transcopied from. In that case, we treat it as a Remote Clone (see Ted's docs).
+
+If, on the other hand, we transcopy a bunch of cells representing a draft
+for a political paper, send it to a friend to review, and they send it back,
+heavily modified because they think it'll be more successful that way, and we
+attach it to our space as a slice, we certainly do not want the clones to
+unify. Let's say one cell somehow created by our text editor applitude refers
+to a point we are making in the paper, and our friend has modified that point.
+Now, the rootclone of that cell changes, and all the view show us there is--
+our current version of the point, because the rootclone in the slice is not
+our rootclone.
+
+The exact way Remote Clones are done is way outside this document-- it is
+part of the slice design. Suffice to say here that in any case we want to
+create a new version of our cell(s) in a different space, and that the
+identity (cid) of the cell(s) should remain the same.
+
+(Note that a transcopy of a bunch of cells would be a single action giving
+a space version to transcopy from, plus a list of cell IDs inside that space.
+The contents of the cells and all connections *between* them would be copied.)
+
+(Also note that the question isn't exactly limited to transcopies. Clones
+should have the same identity, too-- all clones must represent the same
+dimension.)
+
+
+
+The pertinent question is now how to realize the connections between
+transcopies (and clones) and their identities. RAULI proposes to create a
+scheme similar to that of clones for transcopies. He requires that a cell with
+the same ID can be in different spaces; that is, he agrees that a cell should
+be assigned a constant ID comprising creator space version ID plus a local ID,
+and extends this concept by other spaces which are not decendants of the
+space creating the cell be able to use that cell as one of theirs, making
+connections from/to it and setting their content. This is consistent with the
+status quo in GZZ space implementations, which treat any string as a cell ID--
+possibly of a cell which simply has never been touched yet. In a sense, he
+requires that by being created in any space, a cell is automatically in all
+spaces.
+
+Then, he proposes that the transclusion operation creates new cells in the
+target space, connecting them and setting their content to reflect those of
+the transcopied cells. However, he says the cells shouldn't be related in any
+way whatsoever through their IDs, in order to keep the number of primitives 
+needed to define the functionality of ZigZag small. Instead, we should adopt
+a system similar to the way clones are done, and maintain the information
+about which cells origin where through a dimension. He proposes to have a
+rank on d.transclusions, where all transclusions of a cell would be stored.
+
+In the space where the cell was originally created, and in all spaces
+descending from that space version (i.e., all later versions of that space),
+the headcell on d.transclusion would be the original cell, i.e. the identity
+of all the transclusions, the one we also use to refer to the corresponding
+dimension.
+
+In a space which is not a later version of the space that created the cell,
+the headcell on d.transclusion would again be the identity of all the
+transclusions-- as mentioned before, that cell would automatically be in all
+spaces. However, it would not have any connections or content (by standard,
+that is-- the user would of course be free to go to it somehow and change
+content and connections). Transcopies would then again be realized by
+creating new cells in the space and connecting them the same way they were in
+the version we transcopy from, and by connecting them on d.transclusion to
+the identity we transcopy.
+
+Furthermore, Rauli proposes to use a preflet scheme that would
+- unify the headcell on d.transclusion, so that when a slice is brought in
+  which has the same cell, the two cells would be the same;
+- unify the ranks along d.transclusion, so that in the joint space, the rank
+  from d.transclusion starting from the unified cell would list all
+  transclusions of that cell in all slices in the joint space.
+
+
+
+I, on the other hand, feel that versions of the same cell, with the same
+identity, should be connected through their ID. Before all implementation
+considerations, I think that the cell ID should somehow identify the cell's
+identity. When an entity (a something) travels through the computer world,
+we want it to retain its identity so that we can e.g. compare its versions--
+and that is most easily done by assigning it a lasting ID, not by maintaining
+references between the different "copies" of the thing. (This is an important
+part of the Xanadu concept, I'd say.)
+
+Additionally, I feel that making the identity part of the ID is a cleaner
+solution, as well as suited to the particular case at hand. With the current
+way clones are done, and the way Rauli proposes transcopies being done,
+one can excise a cell from a rank of clones, and move it on a different one;
+that is, you can "give it a new identity." As I consider a transcopy a version
+of the *same* cell, I do not like that, and as I consider a clone an
+incarnation of the *same* version of the *same* cell, I like it even less
+for clones. (Of course you can create safeguards that prohibit that, and
+verify .diffs when reading them in, etc., but I don't like that either.)
+
+Instead, I propose we store the identity of a cell in its ID, the ID thus
+comprising of the cid, which is the identity, plus a tid which has the same
+form as the cid, but identifies this specific transcopy of the cell. (The
+original, not transcopied version of the cell would not have a tid part in 
+its ID.) A tid would be generated by the normal "new cell ID" procedure;
+that is, no cid is also a tid and the other way around. I also propose that
+all clones of a cell have the same cid-- i.e., identity-- as the rootclone;
+the cells could be created as transcopies, even if they're made clones in the
+conventional way of connecting them along d.clone.
+
+The idea of having clones be identified through the ID somehow has a certain
+appeal to me. That would mean they would not be identified by connections
+along d.clone, although they could be shown that way, but solely through their
+ID. In the above scheme, they could have an ID of the form
+cid + tid + clone ID. I like this mainly for two reasons: One, there is no
+way to disconnect a cell from d.clone, then reconnect it and give it a
+different ID. Basically d.clone could only be changed by cloning and deleting
+clones. Two, the rootclone would be obvious from the cell ID: cid + tid,
+without the ID of the clone. As clones *are* supposed to be the same thing,
+this makes a lot of sense to me.
+
+Another appealing idea is to base the IDs of transcopied cells on the history
+of transclusions; that is, when cell C is transcluded into space version S,
+then from there to space version T, the transcluded cell's ID would be
+something like C+S+T. Two reasons for this: First, it is easily recognizable
+that C+S+T is closer to C+S+V than to C+X+Q+E, and that C+S+T and C+S+V have
+C+S as their "least common denominator," so to speak. That may be useful in
+merging. 
+
+Second, the ID parts appended each time a transclusion happens would
+not need to be unique IDs; rather, all cells transcluded together could get
+the same (otherwise unique) ID appended. That way, cell D transcluded together
+with C would be D+S+T, not D+S2+T2 or some such. If we only store the cid
+and the tid, i.e. lose the previous tid when transcopying, using the same tid
+for all cells transcopied together might not yield unique verison IDs: namely,
+if we transclude *two* versions *of the same cell* *together*. Therefore, this
+"history" being a part of the cell ID might be useful. (At the very least the
+history should be easily accessible through a convenience function looking
+at the previos space versions actually doing the transclusions, but that would
+not influence the IDs.)
+
+In any case, I disagree strongly with Rauli's opinion that his scheme is
+cleaner than even the simple cid + tid. I also dislike the way he puts the
+original/identity cell in all spaces, but gives it the role of being the
+transcopied original only in the space that originally created the cell, while
+in the other spaces it would basically be an empty cell in the middle of
+nowhere, just serving as the common identity of a couple of transclusions.
+
+
+
+The current implementation, in Cell.java in the branch_20010704_gid_try,
+implements the cid + tid scheme. It works like this:
+- The Cell object contains, besides the space, a Space.Version and a ID string
+  local to that Space.Version, as explained above.
+- Additionally, it contains a reference of type Cell, called identity.
+  Cell.identity always refers to the Cell object whose Space.Version and
+  local ID part represent the cid of the Cell object.
+- Now, the original, not transcluded Cell object contains its own cid, and
+  its identity field refers to "this," i.e. the same Cell object. It has no
+  tid, so we need not worry about that.
+- A transcluded Cell object contains its tid, and its identity field refers
+  to a different Cell object containing its cid.
+- To know whether a Cell contains its tid or cid, we simply ask
+  "identity == this?"
+- If the space the original cell is in is not currently loaded, we simply
+  create a Cell object with space null.
+
+I think this is reasonable.
+
+
+<< BENJA

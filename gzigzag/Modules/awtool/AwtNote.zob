@@ -1,0 +1,135 @@
+/*   
+Awtnote.java
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+ 
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+
+/** this is for awt content. change 'AwtNote' => 'AwtContent' 
+*/
+
+
+public class AwtNote extends ZObCellRepr implements ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	double width
+	    = 0.1;
+
+        double height
+            = 0.07;
+    }
+
+    // category link
+    private AwtLink cLink = null;
+    double x = Double.NaN;
+    double y = Double.NaN;
+
+    public void setCell(ZZCell c) { 
+        super.setCell(c);
+        ZZCell cc, nCategoryCell = AwtUtil.getNoteCellCategory(c);
+        if(nCategoryCell != null) {
+            cc = c.s(AwtUtil.d_from, -1);
+            if(cc.s("d.1") != null)
+                cLink = (AwtLink)AwtUtil.readZObClone(cc);
+            else
+                cLink = new AwtLink(); 
+            cLink.setCell(cc);
+        } else {
+            cLink = new AwtLink();
+        }
+    }
+
+    public double getWidth() { return width; }
+    public double getHeight() { return height; }
+
+    public double[] getDimension() { return new double[] { width, height }; }
+    public void setDimension(double w, double h) { 
+        width = w;
+        height = h;
+    }
+
+    public AwtLink getCategoryLink() {
+        return cLink;
+    }
+
+    public void setCategoryLink(AwtLink cl) { 
+        cLink = cl; 
+    }    
+
+    public void setCoord(double x, double y) { 
+        cLink.setX(x);
+        cLink.setY(y); 
+    }
+
+    public void setX(double x) {
+        cLink.setX(x); 
+    }
+
+    public void setY(double y) { 
+        cLink.setY(y); 
+    }
+
+    public double[] getCoord() { 
+        return new double[] { cLink.getX(), cLink.getY() }; 
+    }
+
+    public double getX() {
+        return cLink.getX(); 
+    }
+    public double getY() { 
+        return cLink.getY(); 
+    }
+
+    public String getZObName() { 
+        return "Note";
+    }
+
+    /** method for storing ZOb back to structure. 
+     * @param start     quess;)
+     * @param clone     whether or not to make the new central cell a clone of
+     *                  this.cell (default is true). 
+     */
+    public String cellRepr(ZZCell start, boolean clone) 
+    {
+        ZZCell c = start.getOrNewCell("d.1");
+        c.setText(getZObClassName());
+        c.setText("AwtNote");
+        c = c.getOrNewCell("d.1");
+        c.setText("width"); 
+        c.getOrNewCell("d.1").setText(""+getWidth());
+        c = c.getOrNewCell("d.2");
+        c.setText("height");
+        c.getOrNewCell("d.1").setText(""+getHeight());
+        if(clone && !start.equals(getCell())) {
+            getCell().connect(AwtUtil.d_clone, start);
+        } 
+        if(cLink.getCell() != null) cLink.cellRepr();
+        return "";
+    }
+}
+
+// vim: set syntax=java :

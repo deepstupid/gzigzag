@@ -1,0 +1,250 @@
+Some parts of an email exchange between Tjl and Ted, edited.
+(If these were real transclusions, you could jump from here to see the whole email
+exchange. Wouldn't that be just so nice...)
+
+----------------------------------------------------------------------------
+
+>Any progress on the textitems stuff? That is one priority since
+>that would represent an entirely different view of the ZZ structure
+>(vstreams), with interesting connectivity and applications. And I want
+>to use that to write my next pieces of ZZ documentation!
+
+OKAY.  Here's what I think you asked me for.
+- keyboard commands to step around among flying items
+- how to glue them together
+- how to separate one item into two
+
+IN ADDITION, I think we want
+- how to make an item bigger or smaller
+
+- - - - - - - - - -
+Let's call this Item Cloud mode.
+
+I ASSUME the items can be borderless, just flying items of text on a
+ shared background (so in principle two identical items could cover
+ one another textually).
+NOTE THAT since my PC Java won't accept arrow keys, I have to
+ have the letter alternatives esfc ijl, ESFC IJL> and sometimes dD kK.
+ So when I say "arrow" I mean one of those.
+I AM HOPING that Java can receive keystrokes-up-and-down (raw).
+
+The following are keyboard suggestions to try.  They should all be
+ reconfigurable.  The trouble, of course, is making them reconfigurable
+ as sequences rather than as individual strokes.
+
+SELECTING A RIGHT-HAND ITEM:
+- Select by mouse
+OR (once one item is selected)
+- use ijl; arrow keys to select among them.  I suggest that up and down
+ should refer to items within epsilon vertically of the original item,
+ and the same horizontally-- in other words, when using arrow keys,
+ stay roughly near the one you're currently near.  This we'll have to
+ fiddle with parametrically.  (It's also possible to select the next item
+ within unseen vertical and horizontal channels-- an alt. approach.)
+OR
+- use the space bar to select next item IN ORDER OF CREATION.
+
+SELECTING A LEFT-HAND ITEM:
+- Select by mouse
+OR
+- use esfc keys to select among items.
+
+TO MOVE AN ITEM
+- ctrl-esfc or ctrl-ijl,
+TO CEMENT LEFT AND RIGHT ITEMS
+- capital S or E appends the left to the right
+- capital F or C prepends to left to the right
+- capital I or J appends the right to the left
+- capital L or < prepends the right to the left
+(Note that these are like the connection functions in Perl ZZ.)
+
+TO CUT
+I suggest space-!-space.
+Or \.  (We'd go into a Special Mode if you actually want the character--
+ NOT \\ for most people.
+Ctrl-enter would be great, if we could do it in raw mode.
+
+TO ENLARGE the right-hand-item a little (its typeface)
++
+TO SHRINK the right-hand item a little 
+-
+
+----------------------------------------------------------------------------
+
+>> TO MOVE AN ITEM
+>> - ctrl-esfc or ctrl-ijl,
+>
+>And with mouse? For moving things around, the mouse is pretty good.
+
+Oh, of course.  Sorry I forgot to mention.
+
+>Also, how to use the mouse to select - mouses have up to 3 buttons
+>and use of shift/ctrl at the same time.
+
+Right.  Sorry.
+1.  As you said, click and type.  I presume you're typing on a big 2D
+space, and that Items aren't distinct till you end one?
+
+2.  Ah, we haven't talked about how an item ends...  I guess with same
+ "sever" mechanism, no?)
+
+3.  Move by left-mouse (to seize).
+
+The question is-- when should the mouse seize an item, when should
+ the mouse start a new item?  
+-- especially since it may not be exactly clear whether we are on top of
+ an item, since there are no borders
+-- and as the area gets crowded, you want to be able to start an item in
+ the middle of another item.
+
+
+^Õ ^Õ ^Õ ^Õ ^Õ ^Õ ^Õ ^Õ ^Õ ^Õ ^Õ
+But why not use the other mouse buttons for Billowing?
+ That could combine it nicely.
+----------------------------------------------------------------------------
+
+>> SELECTING A LEFT-HAND ITEM:
+>> - Select by mouse
+>> OR
+>> - use esfc keys to select among items.
+>
+>So here you can't use the space? Or use ctrl-space or shift-space?
+>It would be nice to have the same ops for both sides.
+
+ZOWIE!  SHIFT-SPACE!  LOVE IT!  That's perfect.
+ Never thought of spacebar with a control key.  Or at least
+ not in the last five or ten years ...
+
+----------------------------------------------------------------------------
+
+>But how do I append one item on the right to another item on the right.
+>Example: in the left cloud, I've typed a number of ideas I want to put
+>into a text, and in the right cloud, I'm working on the actual text.
+>So most operations would only touch the right-hand cloud.
+
+and also
+
+>> SELECTING A LEFT-HAND ITEM:
+>> - Select by mouse
+>> OR
+>> - use esfc keys to select among items.
+>
+>So here you can't use the space? Or use ctrl-space or shift-space?
+>It would be nice to have the same ops for both sides.
+
+Here we have great examples of WOOOOPS communication.  I didn't
+ notice that you mentioned left and right clouds.  I thought we were dealing
+ with only one cloud.
+
+So anyhow shift-space would be the most consistent.
+
+----------------------------------------------------------------------------
+
+>mouses have up to 3 buttons
+>and use of shift/ctrl at the same time.
+
+I would say that since 90% of the mice in the world have 2 buttons--
+- Mac with 1 button is what, 5%?
+- Linunix is even fewer, I think
+- W98 and W2000, with 3-button mice are rare
+W95 is still way the majority-- and they are an important market.
+
+Thus we DESIGN for 2-button mouse, leave the middle one explicitly
+ to be programmable.
+
+In other words, the third button can only be for shortcuts
+ and extra options.
+
+----------------------------------------------------------------------------
+>> TO CEMENT LEFT AND RIGHT ITEMS
+>> - capital S or E appends the left to the right
+>> - capital F or C prepends to left to the right
+>> - capital I or J appends the right to the left
+>> - capital L or < prepends the right to the left
+>> (Note that these are like the connection functions in Perl ZZ.)
+>
+>But how do I append one item on the right to another item on the right.
+>Example: in the left cloud, I've typed a number of ideas I want to put
+>into a text, and in the right cloud, I'm working on the actual text.
+>So most operations would only touch the right-hand cloud.
+
+Since when I wrote my part of the above I didn't realize you were
+ talking about left and right CLOUDS, I assumed that each hand
+ would be wandering in the one and only cloud.  This is more
+ exciting.
+
+(There's a poem in English that begins, "I wandered lonely as a cloud..."
+ But not otherwise relevant.)
+
+Now how to choose?
+Heh heh ...
+Okay, Tuomas, it's time for MORE CURSORS!
+
+This is where we need the operations
+- cursor fork
+ (Specifying which hand, assuming you're using two.)
+ This creates a new cursor under the chosen hand, pointing at the
+ same place, switches to it.
+- next-cursor-step
+ (Specifying which hand, assuming you're using two.)
+ This switches under the chosen hand to the next cursor in the cycle.
+- cursor kill
+ (Specifying which hand, assuming you're using two.)
+ This annihilates the cursor under the chosen hand,
+ prob. goes *back* to previous cursor in the cycle.
+
+For some wild reason I think qaz (right) QAZ (left) would be
+ the correct respective keys for these functions.  They're in a row
+ and out of the way.  So--
+qQ - cursor fork
+aA - next-cursor-step
+zZ - cursor kill
+
+So let's say you have two cursors.  Left is in the left cloud,
+ right is in the right cloud.  You want to start cementing items
+ on the right.
+
+Do
+q- makes a new cursor (and new color) on the right;
+AA- switches the left hand to that cursor (since presumably
+ the list is left-right-new-(loop back to left)
+aa- switches right hand back to right cursor
+
+Now you can move and cement items as I suggested above.
+
+When you want to go back to 2-cloud operation, you can
+ either kill the third cursor or switch from it.
+
+ChrzT
+----------------------------------------------------------------------------
+u sez
+
+>> 1.  As you said, click and type.  I presume you're typing on a big 2D
+>> space, and that Items aren't distinct till you end one?
+>
+>Sorry, the last sentence again?
+
+Sorry. 
+You're in mid-item.  Item is on big virtual sheet of paper but began
+ somewhere other than at top of paper.  Item becomes distinct
+ when you end it somehow, presumably beginning another item.
+
+>> 2.  Ah, we haven't talked about how an item ends...  I guess with same
+>>  "sever" mechanism, no?)
+>
+>Escape?
+
+Could do.  In the ASCII charworld, backslash also good.
+
+Anyway, if it's one character, it's easily reconfigured.
+ However, I'd also like an alphanumeric sequence, ideally
+ (just my preference), 
+sp-!-sp
+ and that means some deeper recognizer, eh?
+
+
+
+
+
+
+

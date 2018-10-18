@@ -1,0 +1,111 @@
+<html>
+<head>
+   <title>The zaubertrank applitude</title>
+</head>
+<body>
+
+<h1>
+The zaubertrank applitude</h1>
+
+<div align=right><i>by Benjamin Fallenstein (<a href="mailto:b.fallenstein@gmx.de">b.fallenstein@gmx.de</a>)</i></div>
+
+<h2>
+Name issues</h2>
+The zaubertrank is pronounced TSAU-ber-trunk. The name means "magic potion"
+in German.
+<h2>
+Raison d'&ecirc;tre</h2>
+"Programming for people." As
+<a href="http://www.erasmatazz.com/team_bios/chris.html">Chris
+Crawford</a> argues in his book
+<i><a href="http://www.erasmatazz.com/book.html">Understanding
+Interactivity</a></i> (2000), computers can expand our capabilities of
+thought as much as the written word, but in a different direction: while
+writing improved our sequential thinking (thinking in complex chains of
+ideas), computers can improve what Chris calls subjunctive thinking (thinking
+in many different possibilities). While the book allowed us to bring together
+many different ideas, the computer program allows us to explore the countless
+permutations resulting from a fixed set of rules. Instead of explaining
+the effects of every single possible action to a recipient, we can write
+a simulation they can experiment with.
+<p>Write a simulation? We need to be able to program for that, right?
+<p>The zaubertrank aims to be what the alphabet was (following Chris' line
+of thought) for the Greeks: the very tool that made writing easy to learn,
+that was the necessary prerequisite for a culture in which 'everybody'
+(every free grown-up male) was supposed to be able to read and write. Before
+the alphabet, there were thousands and thousands of signs which one needed
+to know by heart in order to produce a written text, or even understand
+one. Scribes where a very special class of people who had gotten a lot
+of training. The alphabet reduced these signs to a small number which,
+once learned, resembled the spoken language. Something people already knew.
+<p>So what does the zaubertrank do? In a way, the same. The complex world
+of signs and abbrevations programming languages consist of is translated
+into natural language (albeit not everyday language). Sentences like "Put
+the selected card on top of the stack the user clicked on" replace cryptic
+formulas like "selected.put(clickStack)," formulas which need time to understand
+and more time to actively write. The user doesn't enter these sentences;
+that would require a natural language parser far beyond our reach. Rather,
+they put it together from fragments functionally equivalent to the tokens
+of a programming language: "Put (which card?) on (which stack?)," "the
+selected card," and "the stack the user clicked on." This putting together
+with menus and mouses also ensures that there can't be any syntax errors:
+the computer won't allow the user to enter anything wrong.
+<p>Will this make computer programming trivial? No, unfortunately not.
+Creating a program will still be a complex task needing some thought. But
+hopefully, the barriers will be lowered, the learning curve will be better,
+and a program won't look as cryptic to non-programmers.
+<h2>
+My aim right now</h2>
+In 2001, I will be teaching a course on Interactive Storytelling, which
+uses the computer for interactive literary narrative. The interaction here
+is not between author and reader or even different authors; rather, it's
+between the reader and their computer. Stories take the form of interactive
+simulations. Ever read a <i>Choose Your Own Adventure</i> book? Well, if
+you imagine a more intelligent behind-the-scenes system than "flip to a
+different page," you have the idea of what we'll be dealing with at first.
+<p>As the people in this course won't be computer science students, I need
+some good way to teach them programming easily without wasting <i>too</i>
+much time on it.
+<p>So right now, I'm working on a first version of the zaubertrank, which
+shall be suitable for the needs of my course. The goals are: user interaction
+in "turns;" relative freedom in the internal workings of the literary simulation;
+easy to use for some simple structures, without the need of understanding
+the internals right off; an interface showing some text and some possible
+reactions (which you can click on). Of course, I need some good editing
+tools for the programs, too.
+<p>I want to realize this as a <a href="http://www.gzigzag.org">GZigZag</a>
+applitude or <i>zone of functionality.</i> ZigZag(tm) is a new "world"
+for computing, designed by
+<a href="http://www.sfc.keio.ac.jp/~ted/">Ted Nelson</a>,
+the inventor of computer-based hypertext. It aims to be a replacement for
+the file system, for the common user interfaces, for confining structures
+like lists, tables, and hierarchies, and for many other things most people
+take for granted in their everyday computer use. GZigZag is a free implementation
+of the system, lead by Tuomas Lukka at the University of Jyv&auml;skyl&auml;,
+Finland. An applitude is to ZigZag what an application is to the common
+computer world, with the difference that applitudes are combinable -- that
+is, they live in the same bigger structure and can share parts of their
+substructures. One way to look at applitudes is to say they're a way to
+interpret a part of the structure. Applitudes can contain custom views,
+that is views of the structure which look (somewhat) like the text editors
+or other programs we know so well. At the same time, the underlying structure
+can be viewed in generic views, which show the "bare metal" in useful ways,
+so that it's easy to see how things are stored.
+<p>Why, you ask, would anyone choose a completely different computer world
+they have trouble explaining as the basis for a new system of computer
+programming which shall function as the core of a new form of literature
+they have even more trouble explaining? Well, because the trouble with
+today's programming languages is not only in their cryptic syntax, but
+also in the non-visibility of their inner workings. A whole mental model
+needs to be build of variables, objects and so on, which can never be shown
+on the screen (or only with sophisticated tools written for the classroom).
+ZigZag makes this simple. If the underlying design is right, it will be
+easy to show what's going on when a program is executed. Besides, once
+the ZigZag model is learned, modeling otherwise complex structures in programs
+will be easy, because the ZigZag model makes them easy: that's why Tuomas,
+the technical leader of the GZigZag project, calls it a "hyperstructure
+kit," a toolkit for creating structures beyond lists, tables, and hierarchies.
+<h2>
+Components I need</h2>
+</body>
+</html>

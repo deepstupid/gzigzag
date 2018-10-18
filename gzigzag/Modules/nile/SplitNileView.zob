@@ -1,0 +1,71 @@
+/*   
+SplitNileView.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+ 
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+
+/** A view that shows two Nile streams side-by-side. */
+
+public class SplitNileView implements FlobView, ZOb {
+public static final String rcsid = "$Id: SplitNileView.zob,v 1.1 2000/12/26 20:15:50 bfallenstein Exp $";
+    /** Should we print out debugging info? */
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) pa(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** The space to leave between the two Nile streams. */
+	int margin
+	    = 20;
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+                       ZZCell win, String[] dims, ZZCell accursed) {
+	ZZCell leftc = accursed.s("d.nile-pair", -1);
+	ZZCell rightc = accursed.s("d.nile-pair");
+	if(leftc != null && rightc == null)
+	    rightc = accursed;
+	else if(leftc == null && rightc != null)
+	    leftc = accursed;
+	else
+	    throw new ZZError("HELP! Strange d.nile-pair arrangement XXX");
+	
+	ZZCell leftacc = ZZCursorReal.get(leftc);
+	ZZCell rightacc = ZZCursorReal.get(rightc);
+		
+	Dimension size = new Dimension(into.getSize());
+	size.width = (size.width - margin) / 2;
+	FlobSet left = into.create(size), right = into.create(size);
+	
+	Nile1View view = new Nile1View(); 
+	view.init__zob();
+	SimpleBeamer bmr = new SimpleBeamer();
+	
+	view.raster(left, fact, leftc, dims, leftacc);
+	view.raster(right, fact, rightc, dims, rightacc);
+	
+	into.fetch(left, 0, 0, 0);
+	into.fetch(right, size.width + margin, 0, 0);
+	
+	bmr.decorate(into, "", null);
+    }
+}

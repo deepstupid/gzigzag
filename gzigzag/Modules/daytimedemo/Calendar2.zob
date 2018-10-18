@@ -1,0 +1,162 @@
+/*   
+Calendar2.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+import java.io.*;
+
+public class Calendar2 implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    static public ZZModule module = new ZZModule() {
+	public ZOb newZOb(String id) {
+	    if(id.equals("R"))
+		return new Calendar2();
+	    return null;
+	}
+    };
+
+    STRUCTPARAMS {
+	Font nfont 
+	    = new Font("SansSerif", Font.PLAIN, 16);
+
+	Font bfont 
+	    = new Font("SansSerif", Font.BOLD, 16);
+    }
+
+    FontMetrics nfm, bfm;
+
+    INITIALIZE {
+	nfm = FONTMETRICS(nfont);
+	bfm = FONTMETRICS(bfont);
+    }
+
+    final String[] txts = new String[] {
+	"Vk", "M", "T", "K", "T", "P", "L", "S"
+    };
+	
+    public void raster(FlobSet into, FlobFactory fact,
+	ZZCell view, String[] dims, ZZCell accursed) {
+
+	Dimension s = into.getSize();
+
+	final int x = s.width/2 / 10;
+	final int y = s.height / 10;
+	final int w = s.width/2 - 2 * x;
+	final int h = s.height - 2 * y;
+
+	final int x2 = x + s.width/2;
+
+	final int xm = w / 8;
+	final int ym = h / 7;
+
+	Dimension c = fact.getSize(null, 1);
+	int cw = c.width;
+	int ch = c.height;
+
+	// Find the first day of the month
+
+	ZZCell curday = accursed.h("d.event").h("d.events");
+	ZZCell mfirst = curday.h("d.day");
+
+
+
+
+	if(mfirst.s("d.weekday") == null) {
+	    into.add(new Renderable() {
+		{ d = 1; }
+		public void render(Graphics g) {
+		    g.setColor(Color.red);
+		    g.setFont(new Font("SansSerif", Font.BOLD, 32));
+		    g.drawString("Not calendar data", 20, 40);
+		}
+	    });
+	    return;
+	}
+	int day = Integer.parseInt(mfirst.s("d.weekday").t());
+	final int week = Integer.parseInt(mfirst.s("d.weekday",2).t());
+
+	into.add(new Renderable() {
+	    { d = 50; }
+	public void render(Graphics g) {
+	    Color old = g.getColor();
+	    g.setColor(Color.gray);
+	    g.setFont(nfont);
+	    g.drawRect(x, y, w, h);
+	    g.drawLine(x+xm, y, x+xm, y+h);
+	    g.drawLine(x, y+ym, x+w, y+ym);
+	    int fh = nfm.getHeight();
+	    for(int i=0; i<8; i++) {
+		int tw = nfm.stringWidth(txts[i]);
+		g.drawString(txts[i], x+(xm-tw)/2+i*xm, y+(ym+fh)/2);
+	    }
+	    for(int i=0; i<6; i++) {
+		int tw = nfm.stringWidth(""+(i+week));
+		g.drawString(""+(i+week), x+(xm-tw)/2, y+(ym+fh)/2+(i+1)*ym);
+	    }
+	    g.setColor(new Color(0xb0b0b0));
+	    for(int i=0; i<5; i++) {
+		g.drawLine(x, y+(2+i)*ym, x+w, y+(2+i)*ym);
+	    }
+	}
+	});
+
+	LoopDetector l = new LoopDetector();
+	int row = 0;
+	for(ZZCell mday = mfirst; mday != null; mday = mday.s("d.day")) {
+	    l.detect(mday);
+	    boolean hasEv = (mday.s("d.events") != null);
+
+	    fact.makeFlob(into, mday, mday, (hasEv ? (float)1.8 : 1), 
+		x+1+(1+day)*xm, y+1+(1+row)*ym, 2, xm-2, ym-2);
+
+	    if(mday == curday) {
+		// Ring it
+
+	    }
+	    day += 1;  
+	    if(day >= 7) row ++;
+	    day %= 7;
+	}
+
+	row = 0;
+	int fh = nfm.getHeight();
+	for(ZZCell curev = curday.s("d.events");
+	    curev != null && curev != curday; 
+	    curev = curev.s("d.events")) {
+	    fact.makeFlob(into, curev, curev, 1,
+		x2 + 10, y + (ch+2)*row, 1, w-10-cw, ch);
+	    ZZCell txt = curev.s("d.event");
+	    fact.makeFlob(into, txt, txt, 1,
+		x2 + w - cw, y + (ch+2)*row, 1, cw, ch);
+	    row ++;
+	}
+
+	
+    }
+}
+// vim: set syntax=java :
+

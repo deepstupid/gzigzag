@@ -1,0 +1,182 @@
+
+<h3>Default bindings for the orthogonal rasters</h3>
+
+<pre>$Id: keybindings.wml,v 1.4 2001/03/02 07:13:37 ajk Exp $</pre>
+
+<p>
+These are still being discussed and are not yet frozen.  Note that there is a
+panic button: if there is no binding for <kbd>ESC</kbd>, it invokes undo.
+
+<grid spacing=3 layout=2x40 border=2>
+ <cell><b>Key(s)</b> </cell>
+ <cell><b>Binding</b> </cell>
+ <cell>Ctrl-<kbd>S</kbd> </cell>
+ 		<cell>Commit the current changes to disk. </cell>
+ <cell><kbd>ijl,kK</kbd> </cell>
+		 <cell>Up-left-right-down-Z+-Z- in view 1. </cell>
+ <cell><kbd>esfcdD</kbd> </cell>
+		 <cell>Up-left-right-down-Z+-Z- in view 0. </cell>
+ <cell><kbd>n</kbd> <var>dir</var> </cell>
+ 		 <cell>Create a new cell in given direction </cell>
+ <cell><kbd>b</kbd> <var>dir</var> </cell>
+ 		 <cell>Break a connection in given direction </cell>
+ <cell><kbd>h</kbd> <var>dir</var> </cell>
+ 		 <cell>Hop the accursed cell in the given direction.
+		 	Hopping means simply switching the places of
+			the accursed and the indicated cells in that 
+			rank, no other ranks are affected by 
+			the operation.</cell>
+ <cell><kbd>xyz</kbd> </cell>
+		 <cell>Show next dimension on list on X/Y/Z in view 1 </cell>
+ <cell>Alt-<kbd>xyz</kbd> </cell>
+		 <cell>Show previous dimension on list on 
+		 	X/Y/Z in view 1 </cell>
+ <cell><kbd>XYZ</kbd> </cell>
+		 <cell>Show next dimension on list on X/Y/Z in view 0 </cell>
+ <cell>Alt-Shift-<kbd>XYZ</kbd> </cell>
+		 <cell>Show previous dimension on list 
+		 	on X/Y/Z in view 0 </cell>
+ <cell><kbd>/</kbd> <var>dir</var> </cell>
+ 		 <cell>Connect the center cells of the right and left views
+		 	in the given direction, if no connections will be
+			broken by this.</cell>
+ <cell><kbd>~</kbd> </cell>
+ 		 <cell>Exchange the cursor positions of the two views (no
+		 	other view parameters are changed).</cell>
+ <cell>Delete</cell>
+ 		<cell>Delete the center cell of view 1 and move the cursor.
+			Cursor move tries following directions in order:
+			X-, X+, Y-, Y+, Z-, Z+ and finally goes to home cell.
+			</cell>
+ <cell><kbd>m</kbd></cell>
+ 		<cell>Mark or unmark the cell in view 1</cell>
+ <cell>Enter</cell>
+ 		<cell>Execute cell in view 0, with the cell in view 1 
+			as parameter</cell>
+ <cell><kbd>v</kbd> </cell>
+ 		<cell>Change raster in view 1.  </cell>
+ <cell><kbd>V</kbd> </cell>
+ 		<cell>Change raster in view 0.  </cell>
+ <cell>Alt-<kbd>v</kbd> </cell>
+ 		<cell>Change raster in view 1 backwards.  </cell>
+ <cell>Alt-<kbd>V</kbd> </cell>
+ 		<cell>Change raster in view 0 backwards.  </cell>
+ <cell>Home</cell>
+ 		<cell> Go home: move view 1 cursor to homecell.  </cell>
+ <cell>Esc</cell>
+ 		<cell> Move both views to home and reset dimensions to first
+			three dimensions on first dimlist.</cell>
+ <cell><kbd>0123456789</kbd></cell>
+ 		<cell> Insert the given number into the number insert buffer
+			for cell IDs. </cell>
+ <cell><kbd>g</kbd></cell>
+ 		<cell>Move view 1 to cell whose ID number was in buffer</cell>
+ <cell><kbd>G</kbd></cell>
+ 		<cell>Move view 0 to cell whose ID number was in buffer</cell>
+ <cell>Backspace</cell>
+ 		<cell>Remove one number from the number insert buffer</cell>
+
+ <cell><kbd>t</kbd> <var>dir</var></cell>
+ 		<cell>Clone the view 1 cursor to given direction (may be
+		      in either view).</cell>
+ <cell><kbd>T</kbd> <var>dir</var></cell>
+ 		<cell>Clone the view 0 cursor to given direction (may be
+		      in either view).</cell>
+
+ <cell><kbd>%</kbd></cell>
+	        <cell>Exchange the X and Y connections of the two
+		      accursed cells with each other. </cell>
+		
+ <cell><kbd>o</kbd> </cell>
+ 		<cell>Go to original (rootclone, cell from which accursed
+		      cell was cloned) in view 1.</cell>
+ <cell><kbd>O</kbd> </cell>
+ 		<cell>Go to original (rootclone, cell from which accursed
+		      cell was cloned) in view 0.</cell>
+
+ <cell>End <var>dir</var></cell>
+ 		<cell>Move to te end of the rank in the given direction.</cell>
+
+ <cell> <kbd>&lt;</kbd> </cell>
+ 		<cell> Set the cursor of the left-hand-view to the cell the
+			right-hand view is pointing to. </cell>
+ <cell> <kbd>&gt;</kbd> </cell>
+ 		<cell> Set the cursor of the right-hand-view to the cell the
+			left-hand view is pointing to. </cell>
+
+ <cell><kbd>-</kbd> <var>dir</var></cell>
+ 		<cell>Connect the current view1 cursor into marked cells
+			in given direction. Direction must be in view 1.</cell>
+			
+ <cell>Alt-<kbd>c</kbd> </cell>
+		<cell> Switch into "curseling" (cursor selection) mode (see
+			below). </cell>
+
+ <cell><kbd>a</kbd> <var>dir</var> <var>dir</var></cell>
+ 		<cell> Monochug: change one connection. See above. </cell>
+</grid>
+
+<h3>Text edit mode</h3>
+
+<grid spacing=3 layout=2x40 border=2>
+ <cell><b>Key(s)</b> </cell>
+ <cell><b>Binding</b> </cell>
+ <cell>Esc or Tab</cell>
+		 <cell>Switch off text edit mode </cell>
+ <cell>Delete</cell>
+		 <cell>Delete one character after cursor</cell>
+ <cell>Backspace</cell>
+		 <cell>Delete one character before cursor</cell>
+ <cell>Left, Right</cell>
+		 <cell>Move the cursor within the current cell</cell>
+ <cell>Home</cell>
+                 <cell>Move the cursor to the beginning of the text in
+                       the current cell</cell>
+ <cell>End</cell>
+                 <cell>Move the cursor to the end of the text in
+                       the current cell</cell>
+ <cell>Ctrl-A</cell>
+                 <cell>Move the cursor to the beginning of the current
+                       line in the text of the current cell</cell>
+ <cell>Ctrl-E</cell>
+                 <cell>Move the cursor to the end of the current line
+                       in the text of the current cell</cell>
+ <cell>Enter</cell>
+                 <cell>Insert a line separator in the text before the cursor</cell>
+ <cell>any key producing a printable character</cell>
+                 <cell>Insert the character in the text before the cursor</cell>
+
+</grid>
+
+
+<h3>Curseling (Cursor selection)</h3>
+
+<p>
+As an intermediate for multiple cursors, there is a key binding mode for
+"curseling:" cursor selection. In the standard keybindings, Alt-c is used
+to go into this mode, which by default supports the following key bindings:
+
+<grid spacing=3 layout=2x40 border=2>
+ <cell><b>Key(s)</b> </cell>
+ <cell><b>Binding</b> </cell>
+ <cell>Tab, Spacebar, Alt-<kbd>c</kbd> or Esc </cell>
+		 <cell>Select this cursor, quit curseling mode. </cell>
+ <cell>Left, Right, <kbd>jl</kbd> </cell>
+		 <cell>Select next/last cursor in system cursor list
+			in view 1.</cell>
+ <cell>Up, Down, <kbd>i,</kbd> </cell>
+		 <cell>Select next/last cursor positioned on the same cell
+			in view 1.</cell>
+ <cell><kbd>sfec</kbd> </cell>
+		 <cell>Like Left/Right/Up/Down, operating on view 0.</cell>
+</grid>
+
+<p>
+Note that you can create four additional cursors through executing the
+CreateCursors command, found in the action list, by centering the left view
+on it and hitting Enter.
+
+
+<!--
+	vim: set syntax=html :
+-->

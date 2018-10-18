@@ -1,0 +1,124 @@
+\documentclass[12pt]{article}
+\usepackage[boldsans]{ccfonts}
+\usepackage{euler}
+
+% This document is not meant to be read by itself.
+% It is a part of dp.wml (dp.html), included as images
+% It exists because writing math in HTML is awful and looks even
+% worse.
+
+\begin{document}
+
+\def\atom#1{{\mathcal #1}}
+
+\thispagestyle{empty}
+\pagestyle{empty}
+
+% Page 1: basic atom interaction
+
+We shall denote sets of quarks by calligraphic font: $\atom A$, $\atom B$.
+Let $\atom X$ be the complete change from version A to version B.
+A set $\atom A$ is atomical w.r.t. $\atom X$ if
+$\atom A \subseteq \atom X$ and for all connections modified in $\atom A$,
+the connections of both ends in both version A and B are included in $\atom A$.
+
+Now, let a $\atom A \subset \atom X$ be atomical.
+Let $S$ be the version A of the ZZ space ($\atom X A$ is version B), 
+and 
+let 
+$F$ be a set of semantically interesting functions of $S$,
+such as $f(S) = \mbox{``headcell of cell $c$''}$.
+
+
+Atomical, nonintersecting changes
+are easily seen to commute: $\atom A \atom B S = \atom B \atom A S$.
+
+We want to define what it means for an atomical set to be independent.
+There are several possibilities. 
+First, we may say that if a semantically interesting property $f$
+is preserved between versions, then applying $\atom A$ to $S$ 
+shall also preserve this property.
+$$
+I_0(\atom A) =
+    \forall f \in F \quad . \quad
+		f(S) = f(\atom X S) \Rightarrow 
+		f(S) = f(\atom A S)
+$$
+A stronger way to define independence is to say
+$$
+I_1(\atom A) =
+    \forall f \in F \quad . \quad
+		f(S) = f(\atom X S) \Rightarrow 
+		    \forall \atom G \subseteq ( \atom X \backslash \atom A)
+			f(\atom G S) = f(\atom A \atom G S)
+$$
+Another possibility for non-boolean properties is to 
+say that a change is performed completely or not at all:
+$$
+I_2(\atom A) = 
+    \forall f \in F \quad . \quad
+	f(\atom A S) = f(S) \vee
+	f(\atom A S) = f(\atom X S)
+$$
+Choosing between these possibilities is not easy.
+
+Now, the remaining task is to divide $\atom X$ into 
+disjoint independent atomical sets.
+Their exact properties seem to depend on the types of functions.
+
+
+\pagebreak
+
+% Page 2: conflicts
+
+Finding conflicts between different molecules is only slightly
+more complicated.
+Here, we take molecules (the groups of dependent atoms) for
+$\atom A$, $\atom B$ etc.
+
+Define the predicate $C_f(\atom B, \atom C, S)$
+to mean that the two atoms $\atom B$ and $\atom C$ conflict
+under function $f$ and space $S$.
+We define this predicate as
+$$
+    C_f(\atom B, \atom C, S) =
+    (
+	((f(S) = f(\atom B S)) \vee (f(S) = f(\atom C S)))
+	    \not \Rightarrow 
+	    (f(S) = f(\atom B \circ \atom C S))
+    )
+$$
+
+The interesting question is whether
+$$
+    ( C(\atom A, \atom B, S) \vee C(\atom A, \atom C, S) )
+	= C(\atom A, \atom B \circ \atom C, S)
+$$
+for all molecules $\atom A$, $\atom B$ and $\atom C$.
+If that is true, then the problem is solved.
+Can this be proved for various groups of
+
+\pagebreak
+
+% Page 3: headcell
+
+Now, consider the function set $H = \{ h(S, c) \}$ 
+meaning the headcells of all cells
+on the dimension under consideration.
+
+The headcell of a cell can only be changed by a change
+occurring in the same rank.
+For $I_0$, we only need to consider the set of all cells in 
+the space whose headcells do not change, and additionally only
+the changes that touch the same rank. 
+
+\pagebreak
+
+% Page 4: before-after
+
+Consider the relation $r(c, d)$, which is $-1$ if $c$ preceeds
+cell $d$ on the given dimension, $1$ in the opposite case
+and $0$ if the cells are on different ranks.
+
+
+\end{document}

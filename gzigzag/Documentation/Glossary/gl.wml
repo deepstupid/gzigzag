@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	This is an article intended for the CyberText yearbook.
+
+	It is written in WML, which is close to HTML while providing 
+	some easier ways to create certain constructions, such as
+	the figure tag.
+
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>GZigZag Glossary</title>
+
+#include '../wmlinc/article.wml'
+
+
+ </head>
+ <body>
+ <substdims>
+<H1>GZigZag Glossary</H1>
+<pre>$Id: gl.wml,v 1.4 2001/05/23 14:56:01 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas Lukka</b> <br>
+ 	<code>lukka@iki.fi</code><br>
+</grid>
+
+<p>
+This is a short glossary of terminology related to GZigZag.
+Only a short definition of each term is given, possibly with
+a reference to more material on the subject.
+
+<warn>
+
+<hr>
+<dl>
+	<dt>ZigZag structure / space
+	<dd>	A simple structure, based on <i>cells</i> and <i>dimensions</i>
+		which the user is able to easily shape into any desired
+		structure. All interrelated pieces of information can be
+		close to each other on some dimension.
+	<dt>cell
+	<dd>	The smallest unit of information in ZigZag.
+		A cell can contain a text string or 
+		a single span in a permascroll; the separation is
+		because a text string can be edited but a span can only
+		be lengthened or shortened: no characters can be 
+		inserted. Cells are connected to each other along
+		dimensions.
+	<dt>dimension
+	<dd>	Connecting cells along dimensions is what ZigZag is
+		about. Locally, dimensions work just like on a spreadsheet:
+		each cell can be connected to one cell in the positive
+		direction and to one cell in the negative direction 
+		along each dimension. However, there are no global constraints
+		between the dimensions.
+		
+	<dt>headcell
+	<dd>	The negend of a rank, <em>or</em>, for
+		circular ranks, a specially designated cell.
+		If a rank of cells has one "special" cell, then
+		it is usually the headcell.
+		
+
+	<dt>neighbour
+	<dd>	Cells that are connected along a dimension are
+		called each other's neighbours. Often, the term
+		posward or negward is used with this term as in
+		"the negward neighbour on d.cursor".
+
+	<dt>posward/negward
+	<dd>	In the positive/negative direction along a rank.
+
+	<dt>posend/negend
+	<dd>	As far as you can go negwards or poswards. 
+		Circular ranks have no ends.
+
+
+	<dt>rank
+	<dd>	A rank on a dimension D is simply a set of cells that are
+		connected to each other on D. A given cell can only
+		be on one rank on a given dimension.
+
+	<dt>raster
+	<dd>	A set of cells selected from the structure
+		by a set of rules, for visualization.
+		For example, the row and column raster select,
+		starting from the cursor,
+		a single rank in one dimension
+		an all ranks in another dimensions that 
+		intersect that rank.
+		The raster for the vanishing view selects all 
+		cells within a given radius of the cursor.
+
+	<dt>relcell, or relation cell
+	<dd>	A cell which exists not for its content but for 
+		expressing a relationship between other cells.
+		For example, the cell between a father and mother
+		in the family tree demo is a relcell.
+
+	<dt>ringrank
+	<dd>    A rank which loops.
+		Ringranks still do have a specific headcell, specified
+		somehow.
+
+	<dt>row/column
+	<dd>	These words simply correspond to ranks
+		<em>being viewed</em> horizontally/vertically.
+		They do not mean anything in the abstract structure,
+		but only in the visualizations.
+
+	<dt>view
+	<dd>	A way of placing the cells in a particular
+		raster on the screen.
+
+</dl>
+<hr>
+<dl>
+
+	<dt>FloatingWorld
+	<dd>	Ted Nelson's design built on top of ZigZag structure,
+		based on <i>flobs</i>.
+	<dt>flob
+	<dd>	A multi-dimensional flying object. That is, an entity
+		representing something that may have any number of 
+		<i>flob coordinates</i>. For example, an email's sender is one
+		flob coordinate, its subject another.
+
+</dl>
+<hr>
+<dl>
+
+
+	<dt>Xanadu88
+	<dd>	A hypertext system, finished in 1988, which works by
+		stable <i>fluid media</i> content instead of URL-like pointers.
+	<dt>fluid media
+	<dd>	Any media types that can be subdivided.
+		Text, audio, video, images.
+	<dt>permascroll
+	<dd>	A storage philosophy for fluid media where
+		each smallest unit (e.g. character of text)
+		is assigned a permanent identifier when
+		it first enters the system. Of course, 
+		references to the smallest units usually happen
+		through <i>span</i>s for efficiency.
+	<dt>span
+	<dd>	A (reference to a) contiguous section of the permascroll.
+	<dt>vstream
+	<dd>	A list of spans that describe a virtual stream of
+	    	fluid media. A "document" or one version of a document.
+		Modifying a document does not modify the permascroll, except
+		by appending new inserted characters. Instead, the spans
+		of the vstream are modified: split apart, new spans
+		inserted etc.
+	<dt>transclusion
+	<dd>	The inclusion of the same material in a permascroll in 
+	    	two different documents. One of the fundamentals of the Xanadu88
+		model is that it is efficient to search for transclusions
+		of a given span.
+	<dt>transpointing windows
+	<dd>	Windows on a computer screen that show the connections or 
+		transclusions between each other.
+
+	<dt>transcopyright
+	<dd>	A copyright scheme where the copyright holder 
+		grants the public a permission to refer to any
+		portion of a given document and publishes the document
+		in a permanent location.
+		This way, anyone can quote the document by referring
+		to it and the reader's browser will then go to the
+		originator's server for the original material so that
+		a micropayment can be made to the original author
+		of the material.
+</dl>
+
+<hr>
+ </substdims>
+ </body>
+</html>
+
+<!--
+	vim: set syntax=html :
+-->
+

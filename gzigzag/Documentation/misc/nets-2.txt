@@ -1,0 +1,102 @@
+GZigZag-teknologian soveltaminen
+
+Taustaa
+
+GZigZagin taustaa on jo selitetty Uudet tiedonhallintamenetelmät
+-hankkeessa.  Tässä kappaleessa esitellään lyhyen tähtäimen käytännön
+kaupallisia sovelluksia varten olennaisimpia piirteitä, ulkoisen tiedon
+tuomista ZigZag-rakenteeseen ja P2P-toiminnallisuutta.
+
+Yksi olennainen asia näille sovelluksille on ulkoisen, esimerkiksi
+tietokannoissa olevan tiedon dynaaminen tuonti ZigZag-rakenteeseen
+ns. virtuaalisina soluina. Tällöin tieto nivoutuu luontevasti muuhun
+ZigZag-rakenteeseen.
+
+Tiedon jakaminen P2P (peer to peer) -mallissa viime aikoina herättänyt
+paljon mielenkiintoa, koska tällöin voidaan välttää nykyisen internetin 
+pahimmat pullonkaulat ja heikoimmat pisteet.  Jos tieto on saatavissa
+vain yhdeltä serveriltä (tai klusterilta), tieto on saavuttamattomissa
+yhteyksien ollessa poikki.  P2P-mallissa tietoa taas voidaan jakaa aina,
+kun on verkkoyhteys jonnekin missä tieto on.
+
+Yksi esimerkki tällaisen tiedon jakamisen eduista on ohjelmistojen 
+versionhallinnasta: GZigZag-projektin lähdekoodi on tällä hetkellä
+säilytyksessä julkisesti sourceforge.net -palvelimilla. Jos palvelimet
+ovat alhaalla tai verkkoyhteys niihin rikkoutuu, GZigZagin kehittäjät
+eivät voi helposti keskenään jatkaa kehitystyötä, koska versionhallinta
+vaatii committauksen keskusserverille. P2P-lähestymistavassa taas
+tiedon jakaminen kehittäjien kesken ei olisi lainkaan riippuvainen
+keskusserveristä ja "virallinen versio" olisi yksinkertaisesti
+pääkehittäjän digitaalisesti allekirjoittama versio.
+
+Kuten edellisestäkin esimerkistä nähdään, digitaaliset allekirjoitukset
+ja siten PKI ovat olennainen osa P2P-järjestelmiä: kun tieto ei tule
+keskusserveriltä, on erittäin tärkeää pystyä varmentamaan sen oikeellisuus.
+
+GZigZagin P2P-tiedonjakamisen lähtökohta on hyvin erilainen kuin freenetin:
+freenetin kaksi päätavoitetta ovat anonyymius ja sensuroimattomuus, kun
+taas GZigZagin päätavoitteet ovat alkuperäisen tekijän tunteminen ja
+käyttäjän kontrolli siihen, mitä hänen koneellaan on. Tämän vuoksi
+GZigZag-projektissa on kehitetty oma yksinkertainen P2P-järjestelmä
+nimeltä Mediaserver.
+
+
+Tavoitteet
+
+Ensimmäisenä tavoitteena on GZigZagin siirtäminen ja kokeileminen
+tulevaisuuden mobiilialustaa vastaavissa laitteissa, esim. Compaqin 
+IPaq-kämmenmikrossa. Tällaisissa laitteissa on n. 32-64MT muistia,
+GSM/GPRS tai 802.11 -verkkoyhteys ja kynäkäyttöliittymä tai pieni 
+näppäimistö. 
+
+Perusideana on osoittaa, että GZigZag-teknologialla pystytään parantamaan
+kyseisten laitteiden yleistä käytettävyyttä ja vasteaikaa pienentämällä
+tarvittavan tiedonsiirron määrää ja käyttämällä P2P-teknologiaan pohjautuvaa
+välimuistia. Lisäksi erillisten käyttöliittymien teko olemassaolevaan tietoon
+on ZigZag-rakenteen pohjalla helpompaa koska rakenne tarjoaa selkeän
+ja homogeenisen alustan erilaisille kehitystyökaluille.
+
+Toinen, hieman toiseen suuntaan tähtäävä tavoite on osoittaa, miten
+GZigZagia voidaan käyttää useista eri dynaamisista lähteistä tulevan
+informaation integroimiseen ja visualisoimiseen sekä rakenteelliseen
+yhteenliittämiseen. Tällä alueella on tarkoituksena tehdä läheistä
+yhteistyötä Endero Oyj:n kanssa, joka on menestynyt tarjoamalla
+integroituja käyttöliittymiä yritysten eri tietojärjestelmiin.
+GZigZagista haetaan tässä projektissa useita erilaisia etuja olemassaoleviin
+tuotteisiin verrattuna, kuten käyttöliittymien helpompi rakentaminen ja 
+joustavuus sekä yhteenliitettävä rakenne.
+
+Toimenpiteet
+
+)
+GZigZag-rakenteen yhdistäminen ulkoisiin tietolähteisiin, 
+spaceparts -teknologian kehittäminen
+
+)
+GZigZagin siirtäminen esim. Compaqin IPaq-laitteeseen tai muuhun vastaavaan
+kynäkäyttöiseen kämmenmikroon
+
+)
+Mediaserver-P2P-järjestelmän sovittaminen pieneen muistikapasiteettiin
+
+)
+Uusien näkymien kehityksen helpottaminen
+
+)
+Mediaserver-arkkitehtuurin tietoturvan lisääminen; PKI-järjestelmän
+käyttöönotto varmenteita varten.
+
+Tulosten hyödyntäminen:
+
+Sonera
+    - seuraavan sukupolven palvelujen kehittäminen seuraavan 
+      sukupolven matkapuhelinlaitteisiin
+
+Endero
+    - GZigZag mahdollisena alustana seuraavan sukupolven 
+      tietojärjestelmien integraatiotuotteille
+
+Resurssointi
+
+Projektin kesto 3v, kunakin vuonna
+2 maisteria, 2 tutkimusapulaista

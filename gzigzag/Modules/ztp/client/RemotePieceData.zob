@@ -1,0 +1,64 @@
+/*   
+RemotePieceData.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Antti-Juhani Kaijanaho
+ */
+package org.gzigzag.ztp.client;
+import org.gzigzag.*;
+
+public class RemotePieceData implements ZOb {
+    public static boolean dbg = false;
+    private static void p(String s) { if(dbg) ZZLogger.log(s); }
+    private static void pa(String s) { ZZLogger.log(s); }
+
+    STRUCTPARAMS {
+        
+        /** Server FQDN. */
+        String serverFQDN = null;
+
+        /** Server port. */
+        int serverPort = -1;
+        
+        /** User name. */
+        String userName = null;
+
+        /** User password. */
+        String userPassword = null;
+
+        /** Subspace name. */
+        String subspaceName = "ALL";
+
+        /** Subspace handle. */
+        ZZCell subspace = null;
+
+    }
+
+    INITIALIZE {
+        if (serverFQDN == null) throw new ZZError("need server FQDN");
+        if (serverPort == -1) throw new ZZError("need server port");
+        if (userName == null) throw new ZZError("need a user name");
+        if (subspaceName == null) throw new ZZError("need a subspace name");
+        p("serverFQDN = " + serverFQDN);
+        p("serverPort = " + serverPort);
+        p("userName = " + userName);
+        p("userPassword = " + userPassword);
+        p("subspaceName = " + subspaceName);
+        p("subspace = " + subspace);
+    }
+
+}

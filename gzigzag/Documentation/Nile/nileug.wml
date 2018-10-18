@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!--
+	NOTE! This file uses WML 2.0.1
+
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+#include "catart.wml"
+#use wml::fmt::xtable
+
+<body>
+<DOCTITLE>Nile User's Guide</DOCTITLE>
+<pre>$Id: nileug.wml,v 1.1 2000/12/09 02:29:35 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas J. Lukka</b> <br>
+ 	<code>lukka@iki.fi</code>
+ </cell>
+</grid>
+
+<substdims>
+
+<p>
+A short introduction to using Nile, mostly for explaining the
+keybindings.
+
+<p>
+{#MYTOC#}
+
+<s1>Warning</s1>
+
+	<p>
+	This document may be out of date. If this seems to be the case,
+	please contact the author.
+
+<s1>Keystrokes</s1>
+
+	<p>
+	Unlike most current word processors,
+	Nile has several different modes.  
+	This may seem complicated but the modes are fairly natural.
+	The most commonly used modes are the character, word and
+	sentence modes, through which the user can move with the 
+	TAB key. In these modes, the following cursor keys apply:
+
+	<!-- xtable (freetable) doesn't work with more than 10 rows
+	 (yucks!). So we split... -->
+
+	<xtable border=2 spacing=3>
+	(=,1) colspan=2
+		<b>Moving and hopping text</b>
+	(+,1) 
+	Left/Right
+		(=, 2)
+		Move the cursor
+	(+,1)
+	Shift-Left/Right
+		(=, 2)
+		Extend the cursor
+	(+,1)
+	Ctrl-Left/Right
+		(=, 2)
+		Shrink the cursor
+	(+,1)
+	Alt-Left/Right
+		(=, 2)
+		Hop the selected text
+
+	</xtable>
+
+	<xtable border=2 spacing=3> 
+	(=,1) colspan=2
+		<b>Deleting text</b>
+	(+,1)
+	Backspace
+		(=, 2)
+		Delete the previous unit.
+	(+,1)
+	Delete
+		(=, 2)
+		Delete the selected text.
+	</xtable>
+
+	<xtable border=2 spacing=3> 
+	(=,1) colspan=2
+		<b>Inserting text and changing modes</b>
+	(+,1)
+	[text]
+		(=, 2)
+		Insert the letter and move to character mode.
+
+	(+,1)
+	Enter
+		(=, 2)
+		Break the paragraph.
+	(+,1)
+	Tab
+		(=, 2)
+		Move to the next mode.
+
+	</xtable>
+
+</substdims>
+
+</body>
+</html>
+
+
+
+<!--
+	vim: set syntax=html :
+-->

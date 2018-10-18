@@ -1,0 +1,117 @@
+Projektisuunnitelma
+
+GZigZag-projekti tutkii ja soveltaa käytäntöön nykyistä edistyneempiä
+tiedonhallintamenetelmiä käyttäen pohjana Ted Nelsonin ZigZag- ja
+Xanadu-malleja. Lähtökohtana on, että nykyiset tiedonhallintamenetelmät 
+ovat riittämättömiä vastaamaan tulevaisuuden haasteisiin. Ryhmän olennaisia 
+tutkimusalueita ovat käyttöliittymät ja informaation varastointi 
+hyperrakenteisiin, sekä näiden tutkimusten tulosten soveltaminen käytäntöön.
+
+Suurten tietomäärien hallinta on nykyjärjestelmillä hyvin hankalaa,
+koska tiedostojärjestelmässä ainut tiedostojen välinen tieto on
+hakemistorakenne. Hakemistorakenne on hierarkia, eikä siksi sovellu
+kuin yksinkertaiseen kategorioihin jakamiseen. HTML:ssä hakemistorakenteen
+puutteita on korjattu linkeillä, jotka on varastoitu tiedoston sisälle.
+Nämä linkit ovat yksisuuntaisia ja rikkoutuvat helposti.
+
+Tietokannat ovat paljon tiedostojärjestelmiä edistyneempi tapa hallita
+tietoa.  Ne ovat kuitenkin kovin jäykkiä järjestelmiä: tietokanta
+suunnitellaan yleensä yksittäisen sovelluksen käyttöön, eikä sovellu
+yleisen tiedon varastointiin; tietokantajärjestelmät eivät tarjoa sen
+enempää mahdollisuuksia tietokantojen väliseen linkitykseen kuin
+tiedostojärjestelmät; ja tietokantoihin on harvoin pääsyä ulkopuolelta
+- usein ainoastaan WWW-käyttöliittymä on saatavilla.  Tietokantojen
+merkittävimmät edut tiedostojärjestelmiin nähden ovat mahdollisuudet
+tiedon tehokkaaseen hakuun ja tietojen välisten suhteiden tallennukseen,
+mutta ne eivät ole tarpeeksi joustavia yleiseen tiedonhallintaan.
+
+Projektin päätavoitteena on luoda GZigZag-ohjelmisto, jonka
+päälle voidaan helposti rakentaa tiedon esitys-, haku- ja
+käyttöominaisuuksiltaan nykyistä parempia ohjelmia. Ohjelmiston pohjana
+on ZigZag-rakenne, joka koostuu soluista ja eri ulottuvuuksia pitkin
+tehdyistä kytkennöistä. Rakenteessa tieto on soluissa, joista
+kukin sisältää paljon pienemmän osan tiedosta kuin nykyiset tiedostot;
+yksi solu sisältää suunnilleen saman verran tietoa kuin
+taulukkolaskennan solu. Toisin kuin taulukkolaskennassa, solut on kytketty 
+toisiinsa moniulotteisessa, joustavassa rakenteessa, jossa jokainen solu 
+voi olla kytkettynä mihin tahansa soluihin. Rakenteen ulottuvuuksilla voi 
+olla eri merkityksiä, kuten esimerkiksi "pöytäkirjan 3141S sisältö", 
+"viittaus", "tarkennus asiasta kiinnostuneille", tai "hakemistorakenne".
+Ulottuvuuksilla ei myöskään ole samanlaisia rajoituksia kuin reaalimaailmassa:
+kuljettaessa ensin ylös ja sitten oikealle voidaan päätyä eri paikkaan kuin
+kuljettaessa ensin oikealle ja sitten ylös.
+
+Kytkentöjen kaksisuuntaisuus on eräs ZigZag-rakenteen tärkeimmistä
+ominaisuuksista. WWW:ssä, jossa on käytössä yksisuuntaiset linkit, ei ole
+mahdollista esimerkiksi lisätä omia reunahuomautuksia sivuihin, tai selata
+niitä sivuja, jotka viittaavat tai lainaavat jonkin kappaleen dokumentista.
+ZigZag-järjestelmässä nämä asiat ovat helppoja, ja oheisinformaation
+mahdollistaman suodatuksen avulla vältetään myös asian hukkuminen erilaisten
+reunahuomautusten ja tarkennusten viidakkoon.
+
+GZigZag-ohjelmistoa kehitettäessä on tarkoitus tutkia erilaisten visuaalisten
+menetelmien etuja, kun niitä käytetään koko järjestelmän laajuisesti.
+Ryhmä pyrkii parantamaan sovellusten käyttöliittymiä jättämällä pois
+perinteisen "ikkunat, valikot ja painonapit"-mallin: tieto on
+esitettävä kontekstissaan, ei pilkottuna laatikoihin, joilla ei ole
+minkäänlaisia keskinäisiä yhteyksiä. Menetelmistä ehkä tärkein onkin
+Focus+Context, jonka pääideana on tuoda käyttäjää kullakin
+ajanhetkellä kiinnostava tieto (Focus) mahdollsimman korostetusti
+esille, ja siihen liittyvät asiat (Context) sen mukaan, miten tärkeitä
+ne ovat fokuksen kannalta. Focus+Contextiin liittyy läheisesti
+animaatio: kun käyttäjä liikkuu tietorakenteessa, on hyvin tärkeää
+näyttää, miten uusi tieto liittyy edelliseen, ja paras tapa näyttää se
+on animointi.
+
+Ryhmä kirjoittaa tutkimusten tuloksista artikkeleja kansainvälisiin
+konferensseihin ja julkaisuihin, mm. UIST, HICSS.
+
+GZigZag-ohjelmiston kehitys on julkista, ja ohjelmistoa levitetään
+menestyineiden Linuxin ja Apachen tavoin vapaalla lisenssillä (GNU LGPL). Tällä
+hetkellä toteutus on prototyyppiasteella, ja on saatavissa verkosta
+osoitteesta http://www.gzigzag.org/.
+
+Vuoden 2001 loppuun on asetettu seuraavat tavoitteet:
+* Viesti-, kalenteri-, yms. järjestelmän prototyyppi (Sonera).
+* Uudenlaisen tekstinkäsittelyohjelman (Nile) prototyyppi. Nile eroaa
+  nykyisistä ohjelmista mm. siten, että tekstiä voidaan lainata
+  niin, että lainauksen vieressä näkyy dokumentti, josta lainaus
+  on.  Dokumenttiin liittyvät asiat, kuten kuvat, kelluvat tekstin
+  vieressä, jolloin pitkäänkin tekstiin liittyvä kuva pysyy koko
+  ajan näkyvissä, vaikka tekstiä selaa eteenpäin. Versiointi takaa
+  sen, että vanhoja versioita pääsee aina lukemaan, ja
+  lainauslinkit (transkluusiot) sen, että intertekstuaaliset
+  yhteydet voidaan esittää käyttäjälle ymmärrettävällä tavalla.
+
+Vuoden 2002 loppuun mennessä on tarkoitus toteuttaa GZigZag-ohjelmisto
+solukielillä ("bootstrap").  Tämä vaatii ensin tehtävään soveltuvien
+solukielten kehittämisen, ja on eräs tärkeimmistä kehitystyön
+vaiheista. Solukieliin siirtyminen mahdollistaa selkeän
+ZigZag-rakennetta käsittelevän ohjelmakoodin nopean kirjoittamisen,
+ja siksi tämä vaihe on hyvin olennainen sekä tutkimustyön että
+GZigZag-ohjelmiston kehityksen kannalta.
+
+Projektista vastaa FT Tuomas J. Lukka. Tehtävät on jaettu projektin
+työntekijöille seuraavasti:
+
+Tuukka Hastrup:         ZigZag in teoria.
+Antti-Juhani Kaijanaho: Soluavaruuksien versionhallinta, tietoverkot,
+                        solukielet ja ZigZagin teoria.
+Janne Kujala:           ZigZag-rakenteen matemaattiset ominaisuudet
+Tuomas Lukka:           Projektin johto ja kokonaisuuden hallinta.
+Tero Mäyränen:          ZigZagin käyttö multimediasovelluksissa ja solukielet.
+Vesa Parkkinen:         ZigZagin hyödyntäminen kämmenmikroissa ja multimedia.
+Rauli Ruohonen:         Solukielet, ZigZagin teoria ja kämmenmikrot.
+Kimmo Wideroos:         Kirjoittamisprosessin tukeminen GZigZag-pohjaisella 
+                        työvälineellä
+
+Ryhmä tekee yhteistyötä professori Ted Nelsonin (Keion yliopisto, Japani;
+Xanadu, Inc.) ja saksalaisen opiskelijan Benjamin Fallensteinin
+kanssa. Professori Nelson yhdessä tohtori Lukan kanssa kehittää
+ZigZag- ja Xanadu-malleja eteenpäin, ja Fallenstein on mukana
+GZigZag- ohjelmiston kehitystyössä.
+
+GZigZagia ja sen perusajatuksia voidaan periaatteessa hyödyntää minkä tahansa
+loppukäyttäjälle suunnatun ohjelmiston tuottamisessa, mutta erityisen hyvin
+se soveltuu tietoverkoissa toimiviin järjestelmiin ja integroituihin
+järjestelmiin.

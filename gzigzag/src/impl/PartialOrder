@@ -1,0 +1,193 @@
+
+/*   
+PartialOrder.java
+ *    
+ *    Copyright (c) 2000-2001, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.impl;
+import org.gzigzag.*;
+import java.util.*;
+
+
+/** A partial ordering of cells. 
+ * Used for reasoning about the successor-predecessor relationships
+ * stored.
+ */
+public class PartialOrder {
+
+    static boolean dbg = false; 
+    static void p(String s) { if(dbg) System.out.println(s); }
+
+    /** A directed pair of cell ids.
+     */
+    static public class Pair { 
+	String neg, pos; 
+	Pair(String neg, String pos) { 
+	    this.neg = neg; this.pos = pos; 
+	}
+	public boolean equals(Object o) {
+	    Pair p2 = (Pair)o;
+	    return p2.neg.equals(neg) && p2.pos.equals(pos);
+	}
+	public int hashCode() {
+	    return neg.hashCode() ^ pos.hashCode();
+	}
+	public String toString() {
+	    return "PAIR("+neg+" "+pos+")";
+	}
+	public String toString(Space s) {
+	    return "PAIR("+Merge1.t(neg,s)+" "+Merge1.t(pos,s)+")";
+	}
+    }
+
+    Set cells;
+
+    Set pairs = new HashSet();
+
+    void addRel(String neg, String pos) {
+	Pair p = new Pair(neg, pos);
+	pairs.add(p);
+    }
+
+    /** Create a new partial order between the given cells.
+     */
+    public PartialOrder(Set cells) {
+	this.cells = new HashSet();
+	for Object o through cells {
+	    if(o instanceof Cell)
+		this.cells.add(((Cell)o).id);
+	    else
+		this.cells.add(o);
+	}
+    }
+
+    public PartialOrder(Set cells, Dim d) {
+	this(cells);
+	addRelations(d);
+    }
+
+    Set getCells() { return cells; }
+
+    int compare(Cell c1, Cell c2) {
+	return compare(c1.id, c2.id);
+    }
+
+    int compare(String c1, String c2) {
+	Pair p = new Pair(c1, c2);
+	if(pairs.contains(p)) return 1;
+	p.neg = c2; p.pos = c1;
+	if(pairs.contains(p)) return -1;
+	return 0;
+    }
+
+    /** Add the relations on the given dimension.
+     */
+    public void addRelations(Dim d) {
+	Set done = new HashSet();
+	p("ADDRELATIONS "+d+" "+cells);
+	iterate String initial through Merge1.existingCells(d.getSpace(), cells) {
+	    if(done.contains(initial)) continue;
+	    done.add(initial);
+	    List l = new RankList(d.getSpace().getCell(initial), d);
+	    if(d.s(d.h(d.getSpace().getCell(initial), -1), -1) != null) {
+		for Cell c1 through l {
+		    if(!cells.contains(c1.id)) continue;
+		    for Cell c2 through l {
+			if(!cells.contains(c2.id)) continue;
+			if(c1.equals(c2)) continue;
+			addRel(c1.id, c2.id);
+		    }
+		}
+	    } else {
+		Set curPred = new HashSet();
+		// Go through the rank
+		p("Go through rank");
+		for Cell c through l {
+		    p("Cell "+c.id);
+		    if(!cells.contains(c.id))
+			continue;
+		    p("IN: ");
+		    for String prev through curPred {
+			p("IN: "+prev);
+			addRel(prev, c.id);
+		    }
+		    curPred.add(c.id);
+		}
+		done.addAll(curPred);
+	    }
+	}
+    }
+
+    /** Give a partial ordering that contains only the relations
+     * that are in both this and the parameter.
+     */
+    public PartialOrder intersection(PartialOrder p) {
+	if(!cells.equals(p.cells)) 
+	    throw new Error("Must have cells equal to do intersection");
+	PartialOrder res = new PartialOrder(cells);
+	res.pairs = new HashSet(pairs);
+	res.pairs.retainAll(p.pairs);
+	return res;
+    }
+
+    /** Find violations on the given dimension snapshot.
+     * @param d The dimension snapshot whose violations should
+     *		be found.
+     * @param shortestOn The dimension used for finding the 
+     *		shortest of the violations.
+     *			This dimension <b>must</b>
+     *		obey all the limitations of this PartialOrder.
+     */
+    public Pair shortViolation(Dim d, Dim shortestOn) {
+	PartialOrder obey = new PartialOrder(cells, d);
+	Set viols = new HashSet(pairs);
+	viols.removeAll(obey.pairs);
+	if(viols.isEmpty()) return null;
+
+	p("VIOLS: "+viols);
+	// Now, viols contains all our violations.
+	// We want a short one.
+	Pair p = (Pair)viols.iterator().next();
+	// First, move negend poswards
+	
+	Cell c = shortestOn.getSpace().getCell(p.neg);
+	c = shortestOn.s(c, 1);
+	while(c != null && !c.id.equals(p.pos) && !c.id.equals(p.neg)) {
+	    if(!cells.contains(c.id)) continue;
+	    Pair testp = new Pair(c.id, p.pos);
+	    if(viols.contains(testp)) p = testp;
+	    c = shortestOn.s(c, 1);
+	}
+	if(c == null) throw new Error("PosEnd not found on shortestOn");
+
+	c = shortestOn.getSpace().getCell(p.pos);
+	c = shortestOn.s(c, -1);
+	while(c != null && !c.id.equals(p.neg) && !c.id.equals(p.pos)) {
+	    if(!cells.contains(c.id)) continue;
+	    Pair testp = new Pair(p.neg, c.id);
+	    if(viols.contains(testp)) p = testp;
+	    c = shortestOn.s(c, -1);
+	}
+	// Now, p should be the shortest
+	return p;
+    }
+}
+
+// vim: set syntax=java :

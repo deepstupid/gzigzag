@@ -1,0 +1,153 @@
+/*   
+SimpleFlobRaster.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A simple but powerful raster which uses flob coordinates.
+ * Z is the selection dimension, X and Y are the flob dimension
+ * specifications.
+ */
+ 
+public class SimpleFlobView implements FlobView, ZOb {
+public static final String rcsid = "$Id$";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+
+	/** Whether the selection dimension is always d.2 or
+	 * whether it is the Z dimension.
+	 */
+	boolean selectd2 
+	    = true;
+      
+	/** The connectors.
+	 */
+	ZOb decorator
+	    = null;
+    }
+
+    Component comp;
+
+    static class FlobDim {
+	String name;
+	ZZPath num;
+	ZZPath txt;
+	FlobDim(ZZCell c) {
+	    name = c.getText();
+	    c = c.s("d.1", 1);
+	    if(c==null) throw new ZZError("Invalid flobdim 1");
+	    ZZCell ps = c.s("d.2", 1);
+	    if(ps==null) throw new ZZError("Invalid flobdim 2");
+	    num = ZZPath.createFromStructure1(ps);
+	    
+	    c = c.s("d.1", 1);
+	    if(c==null) throw new ZZError("Invalid flobdim 3");
+	    ps = c.s("d.2", 1);
+	    if(ps==null) throw new ZZError("Invalid flobdim 4");
+	    txt = ZZPath.createFromStructure1(ps);
+	}
+	/**  Find the zoom record for this dimension and use
+	 * it to scale the output coordinates.
+	 */
+	public void findZoom(ZZCell c) {
+	}
+	float ozero = 0, omax = 1;
+	int zero, max;
+	public void setFinalRange(int zero, int max) {
+	    this.zero = zero; this.max = max;
+	}
+	public int getNO(ZZCell c) {
+	    ZZCell r = num.readFrom(c, false);
+	    if(r == null)
+		return -1;
+	    float f = Float.valueOf(r.getText()).floatValue();
+	    return (int)(((f-ozero)/omax) * max + zero);
+	}
+    }
+
+    public SimpleFlobView() { }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+	Dimension size = into.getSize();
+	FlobDim x, y;
+	String z = null;
+	ZZCell di = view.s("d.dims", 1);
+	x = new FlobDim(ZZCursorReal.get(di));
+	di = di.s("d.dims", 1);
+	y = new FlobDim(ZZCursorReal.get(di));
+	if(selectd2)
+	    z = "d.2";
+	else {
+	    di = di.s("d.dims", 1);
+	    z = ZZCursorReal.get(di).getText();
+	}
+
+	// Find ZOOM factors
+	ZZCell fz = ZZDefaultSpace.findInheritableParam(view, "FlobZoom");
+	if(fz == null) {
+	    fz = view.N("d.2", 1);
+	    fz.setText("FlobZoom");
+	    fz.N("d.1", 1);
+	}
+	ZZCell zl = fz.s("d.1", 1);
+
+	x.findZoom(zl); x.setFinalRange(0, size.width);
+	y.findZoom(zl); y.setFinalRange(0, size.height);
+
+    // XXX better
+	// This is all our cells. 
+	ZZCell[] cells = accursed.h(z, -1).readRank(z, 1, true);
+
+	final int w = 4;
+	final int h = 4;
+
+	// Now get the coordinates.
+	for(int i=0; i<cells.length; i++) {
+	    ZZCell c = cells[i].h("d.ref", -1);
+	    int xc = x.getNO(c);
+	    int yc = y.getNO(c);
+	    p("C: "+xc+" "+yc);
+
+	    fact.makeFlob(into, cells[i], c,
+		    1, xc-w/2, yc-h/2, 1, w, h);
+	}
+
+	if(decorator != null) {
+	    if(!(decorator instanceof FlobDecorator))
+		throw new ZZError("FlobDim decorator must be FlobDecorator: "+
+			decorator);
+	    ((FlobDecorator)decorator).decorate(into, "", view);
+	}
+	    
+
+    }
+
+}
+
+
+// vim: set syntax=java :

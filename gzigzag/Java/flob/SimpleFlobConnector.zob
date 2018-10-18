@@ -1,0 +1,109 @@
+/*   
+SimpleFlobConnector.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A simple but powerful raster which uses flob coordinates.
+ * Z is the selection dimension, X and Y are the flob dimension
+ * specifications.
+ */
+
+public class SimpleFlobConnector implements FlobDecorator, ZOb {
+public static final String rcsid = "$Id: SimpleFlobConnector.zob,v 1.9 2000/09/19 10:31:59 ajk Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+
+	/** Whether the selection dimension is always d.2 or
+	 * whether it is the Z dimension.
+	 */
+	boolean selectd2 
+	    = true;
+
+	/** The path from one handle cell to another.
+	 */
+	ZZPath connection
+	    = null;
+    }
+
+    int count;
+    // public SimpleFlobConnector() { }
+
+    // Always middle - to - middle.
+    public void decorate(final FlobSet f, final String path,
+	final ZZCell view) {
+
+	p("SIMPLEFLOBCNNETOR DECORATE!");
+	count = 0;
+
+	final Hashtable done = new Hashtable();
+
+	if(connection == null)
+	    throw new ZZError("Must provide value for FlobConnector connection");
+
+	final ConnectionLineDecor.Builder clb = new 
+		ConnectionLineDecor.Builder(f, null);
+	clb.startl(100, 1);
+
+	f.iterDepth(new FlobSet.DepthIter() {
+	    public void act(Flob[] flobs, int start, int n) {
+		
+		for(int i=start; i<start+n; i++) {
+		    Flob cur = flobs[i];
+		    if(cur.c == null || !cur.flobPath.equals(path))
+			continue;
+		    // Now, cur.c is the HANDLE cell. So we know
+		    // we can go from it to another handle and
+		    // search the flobset for that.
+
+		    // XXX Should also show non-existing parents or
+		    // children as stubs.. ???
+
+		    ZZCell ohandle = connection.readFrom(cur.c, false);
+		    if(ohandle == null) continue;
+
+		    Flob parent = f.findFlob(path, ohandle);
+		    if(parent == null) continue;
+
+		    count++;
+		    clb.l(parent, 128, 128, cur, 128, 128);
+
+		}
+	    }
+	}, true);
+
+	p("SIMPLEFLOBCNNETOR DECORATED "+count);
+
+	clb.endl();
+    }
+
+}
+
+
+// vim: set syntax=java :
+
+

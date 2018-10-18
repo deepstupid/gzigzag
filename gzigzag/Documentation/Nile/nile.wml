@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!--
+	NOTE! This file uses WML 2.0.1
+
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+#include "catart.wml"
+
+<body>
+<DOCTITLE>The nile (nile is a literate editor) applitude</DOCTITLE>
+<pre>$Id: nile.wml,v 1.4 2000/12/08 23:05:20 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas J. Lukka</b> <br>
+ 	<code>lukka@iki.fi</code>
+ </cell>
+</grid>
+
+<substdims>
+
+<p>
+This is a short, living (hopefully) description of the Nile applitude
+and issues related to it.
+
+<p>
+{#MYTOC#}
+
+<s1>Note</s1>
+
+	<p>
+	Writing this document is bothersome, because now that the idea
+	of Nile exists in my head, using conventional writing tools is
+	annoying, to put it mildly. I can now very easily sympathize
+	with the Xanadu group not publishing too much about their work -
+	describing a much easier system for writing using a much more
+	difficult system seems almost a sacrilege.
+
+	<p>
+	However, this must be done. If there is no conversation 
+	and no exchange of ideas, there is nothing.
+
+<s1>Introduction</s1>
+
+	<p>
+	The idea of nile is to experiment with doing "word processing"
+	(for want of better term) in ZigZag.  It is by no means a final
+	system but already the plans for it contain several features
+	not found in current products.
+
+	<p>
+
+<s1>Units</s1>
+
+	<p>
+	Here, we define Nile's units for the following sections.
+	For each unit, the unit itself and the <dfn>insertion points</dfn>
+	are described. The insertion points are simply the points
+	in the stream where units of this type may be inserted.
+
+	<p>
+	XXX Should discuss also cutting and pasting behaviour here.
+
+    <s2>Characters</s2>
+
+    	<p>
+	Not much to say - pretty usual stuff.
+	Characters may be inserted anywhere.
+
+    <s2>Words</s2>
+    	
+	<p>
+	A word is defined either as a sequence of alphanumeric characters,
+	or a single punctuation character.
+	Words are usually separated by spaces.
+
+	<p>
+	This definition is not yet complete - e.g. the handling of
+	smileys is incorrect, but it will do for the first version.
+
+	<p>
+	Words may be inserted before any other word, or at the end
+	of a paragraph.
+
+	<p>
+	Cutting and pasting words is not terribly simple because
+	of the way people expect them to behave.
+	The following drafts are rudimentary and may be in need
+	of significant adjustment.
+
+	<p>
+	When words are cut away, 
+<pre class="algorithm">
+if the word is only punctuation,
+	do nothing.
+if there is a following space or two spaces,
+	cut them along
+else, if there is a preceding space,
+	delete it.
+</pre>
+	Deleting the preceding space seems an easier alternative than
+	having to test for it later, at paste time.
+
+	<p>
+	When words are pasted,
+<pre class="algorithm">
+if there is a space or paragraph break
+   preceding the paste location
+	paste at that location and make 
+	sure the last pasted character
+	is a space (insert if necessary)
+else if there is a space after the paste location
+	SHOULD NOT HAPPEN
+else if one of the adjacent characters is alphanumeric,
+	make sure there is a space on its side.
+</pre>
+
+	<p>
+	Except that it isn't quite that easy when punctuation 
+	is involved. This is because we need to remember where
+	the punctuation was but still leave a space.
+	If the span to be cut away starts with punctuation, cut
+	all spaces before it as well as after, but insert an extra
+	space after having cut, <b>if there was a space
+	in the end of the cut-away piece</b>. This is still
+	a bit under development...
+
+	<p>
+	Probably I should enumerate all the possible cases here...
+	Brackets are the part cut away, Parentheses are the
+	original selected part, and an asterisk means a space added
+	after the cut.
+	<pre>
+	A [(B) ]C
+	A B[(, C) ]*D
+	...
+	</pre>
+
+    <s2>Sentences</s2>
+    
+    	<p>
+	A sentence is defined as a sequence of alphanumeric characters,
+	punctuation and spaces that does not contain a double space anywhere
+	inside itself and does not start or end in a space.
+	Sentences are usually separated by double spaces, or alternatively
+	paragraph edges.
+
+	<p>
+	The choice of the double space is meaningful, but no time to
+	go into that here.
+
+	<p>
+	Sentences may be inserted before any other sentence, or at the end
+	of a paragraph.
+
+	<p>
+	When sentences are cut, cut the spaces after the last sentence along.
+	When they are pasted, make sure there are two spaces or
+	a paragraph beginning before the start.
+
+
+    <s2>Paragraphs</s2>
+
+	<p>
+	The beginning of a paragraph is marked by a special (empty) cell
+	in the Nile stream. Another cell, connected to the cell in the
+	stream tells which level of paragraph it is (H1..H6 or P, as in HTML).
+
+	<p>
+	Paragraphs may be inserted before any paragraph or at 
+	the end of the stream.
+
+	<p>
+	Cutting and pasting paragraphs is simple: 
+	when cutting, it must be from the initial marker cell,
+	up to either the end of the stream or just before another marker
+	cell. 
+	When pasting, it has to go just before another marker cell
+	or at the end of the stream, and then everything works out.
+
+<s1>Modes</s1>
+	
+	<p>
+	One of the special features of nile is that it is more 
+	explicitly aware of the nature of text than conventional 
+	word processors.
+	While e.g. recent versions of MS-Word take a mouse selection
+	to be at word boundaries by default, Nile goes much further
+	and allows the user special movement modes.
+
+	<p>
+	One of the underlying ideas (which Ted has been talking
+	about for a LONG time) here is that once a text is initially
+	written, there is a long period of rearrangement and revision --
+	often longer than the initial writing.
+	In that phase, the most of the editing actions are concerned with
+	rearranging words, phrases, sentences, paragraphs and sections.
+
+	<p>
+	However, most current programs, such as e.g. Mozilla's composer,
+	only deal with characters and force the user to exactly aim at the word
+	boundaries himself. Support for words and sentences is small;
+	double-clicking on a word selects that word but selecting two words
+	requires careful aim.  In MS-Word, selecting two words is fairly easy 
+	-- but selecting two sentences again requires more aiming.
+
+	<p>
+	Also, after selecting the part of text, we come to one of Ted's
+	favorite gripes: cut&amp;paste. To move the text to another location,
+	it will first have to be vanished from the screen and then 
+	vomited out at another location.
+
+    <s2>The Nile solution</s2>
+
+    	<p>
+	The solution used in Nile is the <dfn>hop</dfn> operation.
+	This operation, available for cells in the usual cell view
+	of GZigZag performs rearrangements such as 
+	AB<b>C</b>DE into ABD<b>C</b>E.
+
+	<p>
+	The hops happen along the natural units: when word or several
+	words are selected, they hop one word at a time, when sentence(s)
+	are selected, they hop one sentence at a time etc.
+	Of course, a super-hop operation can also be useful, which would
+	hop words a sentence at a time etc.
+
+	<p>
+	One of the reasons why hop is natural is that all text is visible
+	at all times. This is especially true in the GZigZag implementation,
+	where the infrastructure provides animation between frames.
+	So hopping a word causes a smooth animation to happen where the
+	words exchange places.  This visibility makes it easier
+	for the user to orient to the new way the text is laid out.
+	There is no abrupt rebreaking of lines either: the words which 
+	jump from one line to another also smoothly glide over.
+
+	<p>
+	It is important that the hop operation be reversible:
+	hopping left and then right should ALWAYS produce the
+	same text as the original, unless the hop left command 
+	bumped into the left edge of the document. 
+	Someone should probably go over the definitions of the word
+	operations mathematically to think about how to ensure
+	that this property works always.
+
+
+</substdims>
+
+</body>
+</html>
+
+
+
+<!--
+	vim: set syntax=html :
+-->

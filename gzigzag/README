@@ -1,0 +1,70 @@
+gzigzag - an implementation of Ted Nelson's ZigZag structure
+============================================================
+ 
+NOTE!!! If you are wondering what to do, use the code in the
+src/ subdirectory. Go to the src/ subdirectory and type 'make'.
+If there are any problems, read src/README.
+
+What is gzigzag ? 
+================= 
+
+gzigzag is an implementation of the ZigZag(tm)* structure, which
+was originally conceived by Ted Nelson. For more information about
+ZigZag structure see Tuomas Lukka's 'A Gentle Introduction to Ted
+Nelson's ZigZag Structure', which is included in the distribution as
+Documentation/Gentle_Introduction. gzigzag was originally developed as a
+student project in the Department of Mathematical Information Technology
+at the University of Jyväskylä, Finland.
+
+It has been agreed that the gzigzag name and distribution are under
+the care of Ted Nelson, and are currently maintained for him by the
+Jyväskylä group.
+
+Directories
+===========
+
+Documentation/   -- Documentation
+src/             -- the new 0.8 tree
+
+
+The old 0.6 tree: 
+
+Java/            -- Java version, standalone and network client.  
+Modules/	 -- Various modules for the Java gzigzag
+
+C++/             -- The C++ standalone clientserver. OLD, NOT USEFUL ANY MORE
+Perl/            -- Perl code for network. NOT YET FUNCTIONAL
+
+Currently, the Java version is the one undergoing most development
+and having the most functionality (much that is not found in the
+C++ version). The C++ version has not been 
+touched since the last millennium and the Perl code is waiting
+to be tested with the updated Java code (as a TCP/IP cellserver).
+
+License
+=======
+
+You may use and distribute under the terms of either the GNU Lesser
+General Public License, either version 2 of the license or,
+at your choice, any later version. Alternatively, you may use and
+distribute under the terms of the XPL.
+
+See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+the licenses.
+
+
+Getting gzigzag
+===============
+
+The latest version of the gzigzag can be obtained through:
+
+http://gzigzag.sourceforge.net
+
+Compiling gzigzag
+=================
+
+The individual directories have instructions regarding how to install
+that version.
+
+------------------------------------------------------------------------------
+* ZigZag is the trademark of Ted Nelson, used with permission

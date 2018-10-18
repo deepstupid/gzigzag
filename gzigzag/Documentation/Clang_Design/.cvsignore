@@ -1,0 +1,12 @@
+clasm-ns4.html
+clasm-tutorial-ns4.html
+clasm-tutorial.html
+clasm.html
+thales-ns4.html
+thales.html
+*.xyc
+*.aux
+*.dvi
+*.ps
+*.log
+design.tex

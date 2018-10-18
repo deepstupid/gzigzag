@@ -1,0 +1,179 @@
+Date: Tue, 14 Jul 1998 19:35:41 +0900
+To: zzdev@xanadu.net
+From: Ted Nelson <ted@xanadu.net>
+Subject: :zz: ZigZag Design Notes: SLICE LOGIC 1  (d6
+Cc: ted
+
+zzSliceLogic.d6
+98.07.14
+
+[illustration accompanying this email: zzSliceLogic.bmp]
+
+SLICE LOGIC 1
+
+The main objective of the ZigZag Slice system is to be able to combine
+pieces of zzstructure.  Relatively fixed material (ends of rows, ends of
+columns, titles) are expected to stay in RAM, with other stuff coming and
+going.
+
+Further objectives: 
+- to limit RAM usage without going to some system of virtual memory
+- to allow the user to select the portions being worked on
+- to allow slices to slide into the middle of other slices according to the
+user's desire.  (Thus slices should be connectable anywhere, even in the
+middle of ranks.)
+
+MANY logics and rule-sets are possible for this.  I have thought about this
+for some years.  
+
+What follows is the simplest method I could work out that does the job
+neatly.  It is called "Slice Logic 1" because it's the easy one that I
+think we should implement first.  (Last week I produced a document with a
+more complex system, possibly for implementation later, and quite
+interesting technically-- I think-- but I want you to see this one first.)  
+
+This system need not be implemented all at once.  For instance, we can
+forbid Part II at first.  
+
+- - - - -
+PART 0.  SKIP ON FIRST READING.
+
+0000.  (If a rank has a leading edge, it cannot be a ringrank and
+necessarily has a trailing edge.)  
+
+000.  ASSUME that the user can neatly divide the world into slices.
+Slices, like dimensions, may have any names, but with a prefix: slices
+begin with "s.".  Lexical order thereafter will be significant.  
+
+
+00.  There may be a d.slice and d.slicelist, not discussed here.
+(Eventually-- or now if there is a need-- the list of slices can be
+maintained along d.slice, and the cells of a slice can be connected on a
+list in d.slicelist.  Still under consideration.)  
+
+- - - - -
+PART I.  PREFLET LOGIC.
+
+0.  A ZigZag slice is a data set with cells which may be connected to each
+other in the ordinary ZZ way.  But not necessarily; there may also be loose
+cells in the slice.  
+
+1.  Slice 0  (s.0) is always resident.
+
+Other slices may be called in as needed.  
+
+2.  Slices are independent structures.  CONNECTIONS BETWEEN SLICES ARE NOT
+OF THE USUAL KIND, with doubly-linked cells.  Instead, they have
+*preferred* points of attachment.
+
+3.  PREFERENCE OF ATTACHMENT IS EXPRESSED BY MEANS OF A 'PREFLET'-- a piece
+of information in the cell specifying a cell in another slice to which it
+would *like* to be attached, negward, in a specified dimension.  
+
+In the current design, a cell may have only one preflet in a given
+dimension.  
+
+4.  The process of resolving preflets determines the way in which the
+slices are attached.  However, once attached, the slices are stitched
+together doubly-linked in RAM somehow as ordinary zzcells.  (Implementation
+is not significant; eventually different slices should be storable by
+different databases or other methods.)  
+
+5.  When a slice is brought in, only the preflets of its leading edge-- all
+the negend cells-- are considered.  (This could be done thusly: test all
+cells to see if they are negends; test all negends for preflets.)
+
+6.  Any cell with a preflet for a cell already resident, and not contested
+by any other cell's preflet, gets to insert/attach itself to the specified
+cell.
+
+7.  If a cell has a preflet for a cell which is not currently resident, the
+preflet is ignored. 
+
+8. Two cells may have to be separated to honor a preflet specifying one of
+them.  These two cells will rejoin when the slice is swapped out, if
+appropriate.  
+
+IF THEY HAVE A LOCKED LINK (not yet implemented), they may not be separated.
+
+9.  If two leading cells in two slices both have a preflet for the same
+cell in another slice which is resident, the slice with lower lexical order
+wins-- and the second slice attaches itself *indirectly*, to the trailing
+edge (posend) of the winning cell's rank.  See illustration.
+
+10.  If two leading cells in the same slice A have a preflet for the same
+cell in a second slice B which is resident, the slice with lexically lower
+cellname wins-- and the second slice attaches itself *indirectly*, to the
+trailing edge (posend) of the winning cell's rank.  See illustration.
+(This would probably lead to the two ranks in A later becoming a single
+rank, due to rule 12.)
+
+11.  Whenever a slice is swapped in or out, the preflets of all current
+slices must be resolved again.
+
+12.  Whenever a slice is swapped out, its detached negends are given
+preflets again.  These preflets will normally be to the cells from which
+the cell has just been detached in s.0-- either directly or indirectly.
+
+13.  If swapping a slice out severs a rank in some other slice (usually
+s.0), that rank is reconnected where the swapped-out cells have just been
+taken away.  (This will re-attach cells which were separated by the
+incoming slice, unless they have been moved.)
+
+- - - - -
+EXAMPLE.
+
+Consider the illustration.  Assume that the x-axis is d.1 and the y-axis is
+d.2.  
+
+Not shown is s.0, which contains cells 16, 42, 131, 265 and 22.  These are
+not necessarily negends. 
+
+Shown are two slices, s.2 and s.4.  They have leading-edge preflets for
+some of the same cells in s.0.
+
+The preflets for 13 and 22 take effect without conflict.  What follows is
+about resolving the others.
+
+Both s.2 and s.4 have a leading-edge preflet in d.2 for cell 16.  s.0 wins.
+ The cell in s.4 with a preflet for 16 connects to the *trailing* edge of
+the same rank in s.2 (cell 68).  
+
+Similarly, both slices share a preflet for cell 42 in d.2.  s.2 wins, and
+s.4 connects to the trailing cell in the same rank, cell 4.
+
+Similarly, both slices share a preflet for cell 265 in d.1.  s.2 wins, and
+s.4 connects to the trailing cell in the same rank, cell 31.
+
+If s.2 is swapped out, preflets are considered again at the leading edges
+of all slices (except s.0).  Thus s.4's preflets for 16, 42 and 265 then
+cause them to be directly attached to 16, 42 and 265.
+
+If s.4 is then swapped out, each rank of s.4 which is extracted from within
+a rank in s.0 causes that rank in s.0 to be reconnected.
+
+- - - - -
+PART TWO: CROSSING OF CELLS BETWEEN SLICES.  (May be disallowed in Phase 1.)  
+
+13.  (The user somehow knows where the slice boundaries are.)
+
+14.  If a cell is moved / hopped / connected into a different slice, and
+has *no* other connections to its former slice, all its contents are moved.
+ The information that travels with it includes its contents, processor of
+origin, cell of origin, and which slice the cell of origin is on.
+
+15.  If a cell is moved / hopped / connected / cloned into a different
+slice,  and retains connections to its former slice, a Remote Clone is
+made.  The information that travels with it includes its contents,
+processor of origin, cell of origin, and which slice the cell of origin is on.
+
+16.  When a cell is swapped in, Remote Clones must be resolved.
+
+If a Remote Clone's connections in all slices are consistent with each
+other, it is considered to be one with its origin, and they are shown as
+only one cell.  However, if they are inconsistent-- more than one
+connection posward or negative in a given dimension-- the second instance
+is deemed to be a clone.  After each operation its connections should be
+checked for compressibility to one cell.  
+
+

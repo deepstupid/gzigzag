@@ -1,0 +1,143 @@
+===============================                                     -*- Text -*-
+User-visible changes in GZigZag
+===============================
+
+
+CVS trunk
+=========
+
+Support for the old "PersistentDimSpace" file format has been removed.
+
+The following new features have been added:
+   - A preliminary ZigZag Transfer Protocol (ZTP) implementation
+   - space dump and slurp functionality (for disaster recovery
+     and format conversions)
+   - accessing past versions of the space
+   - a panic button
+   - demo module: associative writing tool - a multilayered concept map
+   - a -help option to the command line
+   - a multiline cell view
+   - support for cell-view specific bindings: when a cell view is associated
+     with a cell in the structure (per d.cellview connection), in the cell
+     edit mode bindings associated with that cellview can be used (so that
+     content which isn't plain text can be edited easily)
+
+The following features have been improved:
+   - the user's guide
+   - the multimedia module
+   - the virtual community module
+   - sound support
+   - view infrastructure
+
+The following notable bug fixes have been made:
+   - the new UTF-8-based string scroll format actually works now
+
+
+The 0.5 Series
+==============
+
+The following new features have been added:
+   - Notemap Star view, a view showing a map of cells connected in a network
+     structure
+   - Parallel (Split) Nile View, a view which places two Nile streams next to
+     each other and shows transclusions with beams
+   - A preliminary multimedia module
+   - A prototype virtual community module
+
+
+The 0.4 Series
+==============
+
+The following new features have been added:
+   - A new UTF-8-based string scroll format (used in new scrolls;
+     existing scrolls continue to use the old format)
+   - a prototype NILE (NILE Is A Literary Editor)
+   - Zaubertrank
+   - F1 is help
+
+
+The 0.3 Series
+==============
+
+
+Release 0.3.0 (2000-11-21)
+-------------
+
+The following new features have been added:
+   - a new user's guide (work in progress, but already very useful)
+   - Heraclitus Clang
+   - XOR mode cursors
+   - Text find
+   - Flowing Clang
+   - Internationalization
+   - Calendar demo
+   - IC View
+   - Cursor View
+   - Rewritten XML import / export
+   - Wordnet applitude
+   - ball&stick model
+   - split vanishing into vanishing and rowcol
+	- nicer geometry for rowcol
+	- new, interesting parameters for vanishing: revper, halign
+	*** REQUIRES RECREATION OF SYSTEM PART ***
+   - ZOb's names are now class names.
+
+The following internal changes have been made
+   - huge API change to shorter core function names in ZZCell
+
+
+The 0.2 Series
+==============
+
+The 0.2 series was never released.
+
+
+The 0.1 Series
+==============
+
+
+Release 0.1.5 (2000-11-02)
+-------------
+
+This release contains the following bug fixes:
+   - Undoing a cell creation no longer throws an exception
+   - Compass and Presentation Views are now in AllViews list
+
+
+Release 0.1.4 (2000-10-25)
+-------------
+
+This release contains the following user-visible changes: 
+   - The keys Ctrl-A, Ctrl-E, Home, End and Enter now work in edit
+     mode
+   - There is a new -recrmdim option, which will recreate a damaged
+     master dimension list (useful in converting old spaces)
+   - XML export and import bug fixes, including a new -xmlencoding
+     option for specifying the XML character encoding to use at export
+     time.
+
+
+Release 0.1.3 (2000-10-09)
+-------------
+
+This release contains the following bug fixes:
+   - The Mbox module works again
+   - Edit view background is now all-white
+
+
+Release 0.1.2 (2000-09-28)
+-------------
+
+This release fixes a packaging goofup in 0.1.1.
+
+
+Release 0.1.1 (2000-09-28)
+-------------
+
+This release contains no user-visible changes.
+
+
+Release 0.1.0 (2000-09-26)
+-------------
+
+This is the first public release.

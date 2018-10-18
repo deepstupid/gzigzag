@@ -1,0 +1,78 @@
+/*   
+SplitView.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+ 
+package org.gzigzag;
+import java.awt.*;
+
+/** A view that shows the ctrl and data windows in one. */
+
+public class SplitView implements FlobView, ZOb {
+public static final String rcsid = "$Id: SplitView.zob,v 1.1 2000/12/26 15:20:42 bfallenstein Exp $";
+    /** Should we print out debugging info? */
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) pa(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {}
+
+    public void raster(FlobSet into, FlobFactory fact,
+                       ZZCell win, String[] dims, ZZCell accursed) {
+	Dimension size = new Dimension(into.getSize());
+	size.width = size.width / 2;
+	FlobSet set = into.create(size), otherset = into.create(size);
+	
+	FlobView view = new VanishingView();
+	view.raster(set, fact, win, dims, accursed);
+	
+	boolean isctrl = false;
+	ZZCell otherwin = win.s("d.ctrlview", -1);
+	if(otherwin == null) { otherwin=win.s("d.ctrlview"); isctrl=true; }
+	if(otherwin == null)
+	    throw new ZZError("SplitView invoked for a window which is " +
+			      "not in a control/data pair!");
+	
+	String[] otherdims = ZZDefaultSpace.getDimList(otherwin);
+	ZZCell otheracc = ZZCursorReal.get(otherwin);
+	
+	ZZCell c = ZZDefaultSpace.findInheritableParam(otherwin, "View");
+	ZZCell rastname = ZZCursorReal.get(c);
+
+	ZOb frz = ZZDefaultSpace.readZOb(rastname);
+	FlobView otherview = null;
+	if(frz != null && frz instanceof FlobView) {
+	    otherview = (FlobView)frz ;
+	} else {
+	    System.out.println("getScene: invalid type: "+frz);
+	    otherview = new NullView();
+	}
+	
+	otherview.raster(otherset, fact, otherwin, otherdims, otheracc);
+	
+	if(isctrl) {
+	    FlobSet tmp = set;
+	    set = otherset;
+	    otherset = tmp;
+	}
+	
+	into.fetch(otherset, 0, 0, 0);
+	into.fetch(set, size.width, 0, 0);
+    }
+}

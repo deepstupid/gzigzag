@@ -1,0 +1,396 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>Versioning and Merging in GZigZag</title>
+#include '../wmlinc/article.wml'
+ </head>
+ <body>
+<H1>Versioning and Merging in GZigZag</H1>
+<pre>$Id: vm.wml,v 1.2 2001/07/21 12:33:33 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas Lukka</b> <br>
+ 	<code>lukka@iki.fi</code><br>
+        Dept. of Mathematical Information Technology <br>
+	University of Jyväskylä 
+ </cell>
+</grid>
+
+<h2>Introduction</h2>
+
+<p>
+Versioning is one of the most difficult problems in defining a ZZ space.
+
+    <h2> Mediaserver blocks </h2>
+
+    <h2> Merging </h2>
+
+    <figure img="DifficultMerge.jpg" width="295px">
+	A situation where merging is difficult.
+    </figure>
+
+    <p>
+    Merging in different users' changes is difficult.
+    The simplest case is having a common root (A) and merging two
+    different sets (B, C) of changes to it, producing a new, composite version
+    (D). This is relatively easy: it is only necessary to look at what to do in
+    conflicting spots.
+
+    <p>
+    However, things get difficult when, at the same time, someone creates
+    a new version (E) starting from (C). We naturally want to merge (D) and (E),
+    but here some of the changes in (E) may depend on parts of (C) that were 
+    done differently in (D). For example, a new cell in (E) created next to 
+    a new cell in (C) which was not included in (D).
+
+    <p>
+    ZZ merging is inherently more difficult than versioning in situations
+    where the model is clearly defined to be a tree or even simpler, a list
+    (which is the case with most versioning systems).
+    Those systems map a rearrangement into a deletion and an insertion,
+    which 
+    <ul>
+     <li> makes things very simple for implementors
+     <li> creates a lot of spurious deletions and insertions upon
+	  rearrangements, creating more conflicts than would be absolutely
+	  necessary.
+    </ul>
+
+	<h3> Practical considerations </h3>
+
+	<p>
+	Ted reports that people from Lotus told him that as long as the user is
+	informed about the conflicts, they are usually not a problem. Because
+	of this, the problem may not be as bad in practice as it is in theory.
+
+	<p>
+	Judging from our experiences with CVS, this would seem to be true:
+	conflicts are relatively rare and easy to handle, especially
+	when checkins are done frequently.
+
+	<h3> Human editing </h3>
+
+	<p>
+	Another point driven in by Ted is that 
+	there needs to be a human in the loop;
+	when two users make different changes, an editorial decision, either 
+	by one of the users (in CVS, the one who commits later) or
+	another person is needed.
+
+	<p>
+	Thus, the system doesn't need to try to resolve conflicts; it needs
+	to provide tools for humans to do so, 
+	understanding the differences between
+	the versions.
+
+
+	<h3> Large-scale reorganizations; Why any localized approach fails. 
+	  </h3>
+
+	<figure img="LargeScaleRearrange.jpg" width="95px">
+	    A large-scale rearrangement. Even though only three connections
+	    are changed, the overall structure is altered.
+	    A text at G may be affected by the change through
+	    semantics ("as we shall see below").
+	</figure>
+
+	<p>
+	Large-scale reorganizations are often overlooked by
+	existing versioning systems, with the result that they
+	are actively avoided by users (e.g. with CVS).
+
+	<p>
+	Now, any model for merging large-scale reorganizations
+	is superior to e.g. CVS, where a
+	reorganization is reduced to a deletion and an insertion.
+	This line of thought leads to an interesting point: a small,
+	simple operation should only have small, simple consequences
+	in the structure. Otherwise, something is wrong and the
+	low-level versioning <b>will</b> get screwed up. 
+
+	<rtr>
+	(This is
+	natural and proper: the structure should reflect the semantics
+	of the data, and if it does not, the design is faulty and
+	needs -- nay, <b>must</b> -- not work.)
+
+	<tjl>
+	Hmm.. what about the situation where we have e.g. a search-and-replace,
+	replacing all instances of one word with another?
+	That's a small semantic operation.
+	It may not be even <b>possible</b> to design a system so
+	that all changes that seem simple to humans are small
+	without actual artificial intelligence.
+
+	<rtr>
+	At least for Clangs there won't be much, if any, search and replace
+	operations. Variable names are in one place, the structure
+	allows powerful macros, and transclusions are possible (if needed).
+	It would be cute to extend this to text by "use that base, then make it
+	accusative", but perhaps that's way too impractical. Still,
+	things that are most likely to change (names, addresses, ...) could
+	be done that way, and it would be quite useful. If the search & replace
+	operation is practical, then the word is usually in its basic form,
+	or in "base+suffix" form, which is considerably simpler than
+	"accusative form of [x]".
+
+	    <h4> Semantic interactions </h4>
+	    <p>
+	    E.g. a nile stream allows considerable reorganizations 
+	    of the text through
+	    few cellular changes. 
+	    Changes far away from each other can implicitly
+	    interact (i.e. saying "as we saw above" or 
+	    "as we shall see below", and someone changing the ordering).
+
+	    <p>
+	    It is probably not necessary to do anything technical about this; 
+	    however, this is good to keep in mind.
+
+	    <p>
+	    We cannot, of course, say that all rearrangements of the same
+	    rank are conflicts; that would lead to too many conflicts,
+	    especially since one of our principles is to encourage
+	    large-scale rearrangements.
+	    Potential semantic
+	    conflicts should be left to the humans. 
+
+	    <h4> Linked-list approach fails </h4>
+
+	    <p>
+	    However, there is a more important aspect here.
+	    If a rank is treated and versioned as a linked list,
+	    it is possible to cause problems by overlapping large-scale 
+	    rearrangements.
+
+	    <p>
+	    For instance, it is possible to accidentally cut
+	    a rank apart to a closed piece and a ringrank.
+	    For certain applitudes, this would be catastrophic.
+
+	    <figure img="LLMergeProblem.jpg" width="306px">
+		A simplistic merge yields <b>two</b> ringranks
+		from merging two simple rearrangements. BAD.
+	    </figure>
+
+	    <p>
+	    The deepest problem here is that if the connections of
+	    the cells are treated independently, then this can easily
+	    happen without any detected conflicts.
+
+	    <p> <span class=statement>
+	    Therefore, on the level of single dimensions, the whole rank
+	    must be treated as a unit!
+	    </span>
+
+	    <p>
+	    This raises the difficult question: what about more than
+	    one dimension?
+	    This of course depends on the invariants of the structure;
+	    above, the problem was that merging two sets of changes
+	    in a simplistic model broke the invariant of there being
+	    only one rank (both changes retained that separately but
+	    combined they did not).
+	    
+
+
+	<h3> Change chunks. </h3>
+
+	<p>
+	In order to report the conflicts to the user, the changes
+	should be grouped in a meaningful, semantic way (possibly
+	hierarchically?).
+
+	<p>
+	The goal is that each chunk represent a complete, meaningful
+	change (e.g.~switch chapters 1 and 2) and can be applied 
+	by itself without causing inconsistencies in the structure.
+
+	<figure img="LargeScaleRearrange.jpg" width="95px">
+	    Change chunks.
+	    This time, G is a point where a different change occurs.
+	    The large-scale rearrangement is in one chunk, and G in another.
+	</figure>
+
+	<p>
+	Consider again the large-scale rearrangement figure
+	seen before.
+
+	<p>
+	Let's start from AB
+	in the figure.
+	That connection changes to AD and EB.
+	Therefore, D and E are part of the chunk.
+	Their connections, on the other hand, have changed from C and F,
+	so those are also in the same chunk.
+	Thus, the chunked changes are AB-AD, CD-CF, EF-EB
+	The different change at G is not part of the same chunk.
+
+	<p>
+	The minimum chunk is defined just for this:
+	the minimum one-dimensional structural change chunk includes 
+	a single new connection (possibly to an empty cell), 
+	and the changes to the cells that were connected to these
+	cells in the previous version, and the changes to those cells
+	that are connected to these in the current version etc.
+
+	<p>
+	However, this is most likely not enough. 
+	Anyway, let us define the following hierarchy to have some
+	terminology:
+
+	<dl>
+	<dt> Quark
+	    <dd> A single cell's single connection change; single
+		dimension, single direction.
+		A-B to A- -B is two quarks,
+		A- -B to A-B is one.
+	<dt> Atom
+	    <dd> (formerly minichunk) 
+	         All directly related atoms: the transitive closure
+		 of taking the previous neighbour's new neighbour
+		 and the new neighbour's previous neighbour.
+		 Note: still only to one direction from a given cell.
+	<dt> Molecule
+	    <dd> All changes on a single dimension that interact
+		 with each other. 
+		 For example, if the rearrangements in two atoms overlap
+		 each other in certain ways, performing only one
+		 of the atoms would result in an unreasonable 
+		 state.
+	<dt> Cluster
+	    <dd> All atoms over all dimensions that have any cell in common.
+	<dt> ...
+	    <dd> "changes in the same document / close by" - ??? - hierarchy?
+	</dl>
+
+	<p>
+	It may be that we will have to put some more classes in
+	but let's start with these.
+
+	<p>
+	Note that atoms are, directly from the definition, independent
+	of each other <b>only</b> on the linked-list level. 
+	This does not mean that they are truly independent:
+	consider two overlapping rearrangements performed one after another.
+	If atom of the first one is then left out, the disconnections and
+	connections performed by the second one can wreak serious havoc.
+
+	<h3> 1:n:o dimensions. </h3>
+
+	<p>
+	Intuitively, 1:n:o dimensions (1-to-n ordered dimensions)
+	are the most common case in ZZ structures.
+	The important invariants w.r.t. these dimensions are
+
+	<dl>
+	 <dt>Number of ranks.
+	 <dt>Identities of headcells.
+	 <dt>Loops.
+	 <dt>Long-range relations (precedes / succeeds).
+	</dl>
+
+	<p>
+	The basic idea is that if two atoms together preserve
+	these properties, they are only independent if they do so
+	separately as well.
+	Conversely, if two chunks each preserve these properties,
+	they conflict if they do not preserve these properties together.
+
+	<tjl>
+	The connections between the interacting atoms and conflicting
+	chunks are interesting - room for some logic here?
+
+	<p>
+	What we need is simple, cheap algorithmic tests for each of
+	these properties. 
+
+
+	    <h4> Interesting predicates </h4>
+
+	    <p>
+	    h(c) is the headcell of a given cell.
+
+	    <p>
+	    a(c, d) is true iff d is on the same rank with c and after it.
+
+	    <p>
+	    Whether handling loops separately is necessary is not 
+	    yet known.
+
+	    <p>
+	    Now, the question is how to do this efficiently.
+	    The trivial algorithm for h(c) is O(N) which is 
+	    marginally acceptable but for a(c,d) the trivial O(N^2)
+	    is too much. 
+	    
+	    <p>
+	    The most important optimization is probably to group cells
+	    into <i>unchanged blocks</i>, which none of the changes under
+	    consideration touch.
+
+
+	    <h4> Interacting atoms </h4>
+	    <p>
+	    <img src="mergemath001.png">
+
+	    <p>
+	    <figure img="../diagrams/Molecule1.jpg" width="200px">
+	    </figure>
+	    Now, some examples.
+	    First, consider inserting a piece into a rank.
+	    This is an atom, since the two ends of the insertion
+	    were together originally.
+	    However, if at least one cell is deleted from the
+	    insertion point, i.e. something is replaced by the insertion,
+	    the situation is different.
+	    The two changes do not belong to the same atom
+	    but by all the above rules, they belong to the same molecule.
+
+	    <figure img="../diagrams/Molecule2.jpg" width="400px">
+	    </figure>
+
+	    <p>
+	    Next, consider exchanging two pieces between two ranks.
+	    The changes are combined into two molecules as in the image:
+
+	    <h4> Algorithms </h4>
+
+	    <p>
+	    Designing an algorithm for finding 
+
+
+	    <h4> Choosing between different rules </h4>
+
+	    <p>
+	    <figure img="../diagrams/Molecule3.jpg" width="200px">
+	    </figure>
+
+	    One interesting case is when a rank is split to several
+	    parts. Here, rule I2 joins the changes into a
+	    molecule but the others do not.
+	    This is because the headcell of the part after B is at B,
+	    but if A is performed, the headcell of the part after B would
+	    be at A, so by rule I2, these changes belong together.
+
+	    <p>
+	    Is this semantically desirable?
+
+	    <h4> Conflicting clusters </h4>
+	    <p>
+	    <img src="mergemath002.png">
+
+
+</body>
+</html>
+<!--
+	vim: set syntax=html :
+-->

@@ -1,0 +1,5 @@
+#!/bin/sh
+# A shell script to show the relevant parts of a kaffe profiler output
+
+sort -n +1 prof.out | awk '{ if ($1 > 40000) print }' |l
+

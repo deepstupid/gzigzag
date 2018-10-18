@@ -1,0 +1,406 @@
+\documentclass[a4paper]{article}
+
+
+\usepackage[boldsans]{concmath}
+\usepackage{euler}
+\usepackage[latin1]{inputenc}
+
+\usepackage{amsmath}
+
+\ifx\dontdraft\undefined
+%Draft
+\newcommand{\marginaali}[1]{\marginpar{#1}}
+
+\setlength{\marginparwidth}{3cm}
+\setlength{\textwidth}{13cm}
+\setlength{\oddsidemargin}{1.3cm}
+\else
+%Non-draft
+\newcommand{\marginaali}[1]{}
+\linespread{1.6}
+\fi
+
+\newcommand{\nakki}[1]{\marginaali{\textbf{\small Nakki: #1}}}
+\newcommand{\ajk}[1]{\marginaali{\small ajk: #1}}
+\newcommand{\benja}[1]{\marginaali{\small Benja: #1}}
+
+\DeclareMathOperator{\pos}{pos}
+\DeclareMathOperator{\out}{out}
+\DeclareMathOperator{\outmid}{outmid}
+\DeclareMathOperator{\outdepth}{outdepth}
+\DeclareMathOperator{\nsib}{nsib}
+\DeclareMathOperator{\child}{child}
+\DeclareMathOperator{\fchild}{fchild}
+\DeclareMathOperator{\lchild}{lchild}
+\DeclareMathOperator{\mchild}{mchild}
+\DeclareMathOperator{\mchildren}{mchildren}
+
+\begin{document}
+
+\title{Rasters(?) and constraints}
+
+\author{Tjl}
+
+\maketitle
+
+\begin{abstract}
+  XXX
+\end{abstract}
+
+\begin{verbatim}
+$Revision: 1.23 $  
+$Date: 2001/03/20 09:45:12 $
+$Author: tjl $
+\end{verbatim}
+
+
+\section{Introduction}
+
+What
+metapost does that makes life easier for graphics programmers is actually
+quite simple - it solves linear equations. 
+The power here comes from the simple idea
+in metapost that you specify the \emph{constraints} of the problem, not the solution.
+There's much literature in the field of constraint-solving and constraint problems,
+some of it graphical. 
+The Tk (of Tcl/Tk) packer is one example of such a system
+as well, quite succesful in its own space. So is \TeX's box and glue system.
+\nakki{Literature!}
+
+Another place for constraints would b
+
+Ted Nelson's idea of rasters...
+
+
+In ZigZag, all information is represented as an amorphous hyperconnected
+network of cells. \nakki{Dimensions bla bla bla}
+\nakki{Most views have been defined for data with simple schemas!}
+
+
+The concept of a raster is taking a part of the structure that fits some 
+simple schema
+and leaving the rest out --- from the current view. This operation is
+intrinsically tied with the focus+context nature of the views.
+
+The raster is described as a graph with labeled arcs and nodes (XXX???
+Trouble ahead...).
+The labels and the graph obey some simple structural rules,
+which makes handling them easier than just plain general ZZ structure.
+
+One cell in the structure may correspond to more than one nodes
+in the raster. This has no effect on the raster itself, as
+the raster is seen as the main structure here.
+Often rasters will have two variants based on this: one where
+multiple instances are allowed and another where they are
+forbidden and breadth-first search is used to see which instance
+to keep.
+
+Fitting the raster onto the screen is easily described using 
+constraints.
+For the constraints, we define general functions of the nodes and
+pairs of the nodes to integers, reals or vectors and
+describe the constraints between them.
+The functions between pairs of nodes are generally from \emph{unordered}
+pairs, for reasons we shall see below.
+
+Constraints have recently been used in graphical applications
+by Badros\cite{badrosthesis, badros99constraint, badros98cassowary},
+see also references in these papers to earlier work.
+
+\section{Rasters}
+
+A raster is a set of nodes, one or more relations on the nodes
+and zero or more mappings from the nodes to something else (e.g.~integers).
+
+This definition is slightly vague, since the nature of rasters
+can vary widely. 
+
+Essentially, a raster is a structured set of nodes, where
+the structure is not completely rigid.
+
+\section{Common raster structures}
+
+\subsection{The centered rank raster component}
+
+The centered rank raster component (CRRC)
+is usually too simple to be used as a raster 
+\emph{per se}, but it is used as a component of several rasters.
+It is simply a linear finite, semi-infinite or infinite
+list of cells, with one cell being designated as the center.
+Therefore, each connection has a \emph{direction} associated
+with it: if we take the center as the origin, then all 
+the connections are away from the origin in this sense.
+
+It becomes easy to express thing in a declarative way if
+we can address the set of all connections in different ways.
+Let us first name the nodes by $r_i$ where $i$ is the index 
+of the node on this rank. The symbol $R$ represents the whole
+raster.
+Then, we define the following
+sets of pairs of indices:
+\begin{align}
+        \pos(R) &=  \bigl \{\, (r_i, r_j) \bigm| j = i+1 \, \bigr \} \\
+        \out(R) &=  \bigl \{\, (r_i, r_j) \bigm| |j| = |i|+1 
+                                \text{ and } |i-j| = 1 \, \bigr \}
+\end{align}
+so that  $\pos$ is the set of poswards links on the rank and $\out$ is the
+set of links on the rank outwards from the center cell.
+
+This structure is one of the reasons why using procedural code
+to handle view is complex: in procedural code, the special
+nature of the center node has to be accounted for explicitly,
+as do the directions of the connections. This requires
+duplication of the same loop or including a direction variable
+in several places inside the loop.
+
+An example view using this raster could be as follows.
+The behaviour of having the size of the cells and the length
+of the interval between them shrinking from the center
+can be described by the constraints among the functions
+$x(t)$, the location of the cell, $w(t)$, the width of the cell
+and $s(p)$, the distance between a pair of cells.
+\begin{align}
+        \forall (r, s) \in \out(R) \;&:\;
+                w(s) = C w(r) \\
+        \forall (r, s) \in \out(R) \;&:\;
+                s((r, s)) = D w(r) \\
+        \forall (r, s) \in \pos(R) \;&:\;
+                x(s) = x(r) + w(r) + s((r, s)) 
+\end{align}
+The procedural representation for the same layout is not as simple.
+The notable idea is the transfer of the width $w$ outwards onto
+the edge between $r$ and $s$ and then the use of this information
+in the poswards-moving condition on the coordinates $x$.
+This corresponds well to the 
+conceptual structure and allows the simple expression of this structure.
+
+The centered rank is usually simply a whole or a part of a rank
+in the ZigZag structure but may also be something else.
+
+The view in GZigZag that shows a single stream of text can be
+seen as being based on this raster.
+
+\subsection{The grill raster}
+
+The grill raster consists of one \emph{backbone} CRRC and a 
+\emph{rib}
+CRRC for each element of the backbone. The element of the backbone
+is the center element of the corresponding rib.
+\nakki{Parempi nimi?}
+
+The definitions here are similar, except that we define 
+the sets
+$\pos_b(R)$  and
+$\pos_r(R)$ separately for the backbone and the rib (similarly
+for out.
+
+
+\subsection{The centered rank tree raster}
+
+The CDTree raster is used e.g.~in GZigZag's Vanishing View. \nakki{Fig}
+Here, the raster is tree-shaped in the same way as the grill raster,
+but it is continuing.
+Say we have a $d$-dimensional CDTree raster. 
+Then each cell can be on $d$ different CRRCs, and it will be 
+the center on all but one of them (except for the center cell
+which is the center cell on all its ranks).
+For each index of dimension $i$ we define
+$\pos_i(R)$  and
+$\out_i(R)$.
+
+
+\subsection{The tree raster}
+
+The tree raster is different from the above rasters since
+it is not as directly connected with the ZigZag structure.
+Therefore, the CRRC will not find as much use here.
+
+The tree raster is somewhat different from a normal tree graph:
+the children of a node are ordered. Also, the parent-child relationship
+is separate from the ``center'' cell in the sense of the ZigZag cursor.
+
+There are several different ways in which the visual
+\nakki{improve. These relations suck.}
+parent-child relations may be desirable to express. 
+Because of this, we have to define more sets of relations for this
+raster.
+%
+\begin{description}
+\item[$\nsib(R)$] is the set of child --- next child relations.
+\item[$\child(R)$] is parent --- child relation.
+\item[$\fchild(R)$] is parent --- first child relation.
+\item[$\lchild(R)$] is parent --- last child relation.
+\item[$\mchild(i, R)$] is parent --- middle child relation; $i$ is
+the index $0$, $1$ or $2$: if there are an odd number of children,
+$0$ gives the middle one, otherwise $1$ and $2$ give the upper and
+lower children.
+\item[$\mchildren(R)$] gives a relation between
+the upper middle and lower middle children.
+\item[$\outmid(R)$] is analogous to $\out$ above: 
+it is a relation from the middle children outwards.
+\item[$\outdepth(R)$] gives the relation outwards
+from the cursor in the strict tree sense: parent is one step away,
+siblings two steps etc.
+\end{description}
+
+
+
+\section{Descriptions of specific rasters}
+
+The specific mapping of a ZigZag structure onto a raster,
+starting from a given cell must also be described.
+
+
+\section{CellViews in constraints}
+
+In GZigZag, cellviews are an important concept. They determine
+how a particular node will be shown.
+
+Integrating cellviews to the constraint framework is not quite trivial
+since there are different variants of rasters where the width for a cell
+comes from the outside or from the cellview.
+
+Another is that cellviews may demand the implementation of a constraint
+hierarchy: given a fractional size, a cellview may detemine an optimum
+width and height, but also a relationship between width and height
+when one of them is determined.
+
+Also, cellviews determine the location of the "alignment point" inside
+the cell, used for the location of the connections.
+
+In the initial, simple model we shall only treat cellviews using the
+simple constraints
+\begin{align}
+	w &= C_w s \\
+	h &= C_h s \\
+	x_a &= l_x(s, w, h) \\
+	y_a &= l_y(s, w, h) 
+\end{align}
+where $s$ is the size fraction, and $l_x$ and $l_y$ are 
+affine functions. The constants $C_w$ and $C_h$ as well as $l_x$ and $l_y$
+are allowed to depend on the current node.
+
+The Vanishing and StretchVanishing views of GZigZag differ essentially
+on the part of $C_w$ and $C_h$, not the actual view.
+
+The above model is too simple, though: most fonts' fontmetrics
+do not shrink linearly with the font. the above constraints
+can be replaced with the directed assignments
+\begin{align}
+	w &\leftarrow f_w(s) \\
+	h &\leftarrow f_h(s) 
+\end{align}
+but this assumes that $s$ has been determined. Usually this is not a problem.
+
+\section{Constraints}
+
+Local-Neighbour-Init-Global !!!
+
+
+\section{Practical implementation}
+
+The systems of constraints described here are relatively 
+different from the usual literature. In the literature,
+it is usually assumed that the system of constraints is relatively
+stable and new constraints may be added or old ones removed or changed
+on a one-by-one basis.
+
+In the raster to screen problem, the raster changes completely between
+the frames so the whole system needs to be rebuilt. This requires different
+types of optimizations and because of this, we define some restricted
+classes of view constraints below that are possible to implement efficiently.
+
+\subsection{Propagatable constraints}
+
+Algorithms that create rasters are able to use less space if 
+all nodes' variable assignments need not be memorized.
+This is possible if the constraints are structured  so that 
+the value of all variables of a node can be determined given
+a particular set of nodes.
+
+Formally, we have a set-valued function of nodes $f(t)$, and 
+the given constraint program is propagatable under $f$, iff
+all values for node $t$ can be exactly determined from 
+the values for the nodes in $f(t)$.
+
+This restriction does not allow constraint hierarchies and is
+relatively restrictive but on the other hand, for carefully
+chosen $f$ it is quite simple to implement.
+
+
+
+\subsection{Two-pass propagatable constraints}
+
+
+\section{Once again}
+
+{\bf This section discusses the same topics as the previous ones
+from a different POV. This whole manuscript will be completely
+reorganized at a later point}
+
+Constraints on a view built on top of a raster can be 
+grouped into four distinct groups:
+\begin{description}
+\item[Local]
+	Constraints between different functions' values on the
+		same node $x$.
+\item[Neighbour]
+	Constraints between nodes $x$ and $y$ which are
+		related by some raster relation.
+\item[Init]
+	Constraints on one or more nodes that define values
+		of some functions initially.
+\item[Global]
+	Constraints that place non-local restrictions on the values.
+\end{description}
+
+The distinction between init and global constraints
+has to do with the nature of propagation of constraints:
+a constraint that places one end of a rank at a given point
+and gives the cells a size is Init, but a constraints
+that place two ends of a rank, implicitly defining the sizes
+of the cells, are Global.
+
+Local constraints are related to cellviews.
+
+Except for Global constraints, which are usually related to the
+Neighbour constraints, the different constraints can be good points
+to split the constraint sets apart as modules. For instance,
+the Local constraints can define whether the cells' sizes grow
+with increasing amount of text.
+
+
+
+% \begin{itemize}
+% \end{itemize}
+
+\section{Conclusion}
+
+The concept of a raster doesn't make much sense in procedural languages.
+However, in constraint-based XXX the concept acquires a new depth...
+
+
+
+
+%$$
+%\{ \{ {A\rightarrow
+%{{\frac{-2\,{{\left( -1 \right) }^{-k - m}}\,\left( c - 1 \right) \,
+%{{\left( -k + c\,\left( k - m - 1 \right)  + m -
+%{\sqrt{4\,\left( c - 1 \right) \,k\,m +
+%{{\left( k + m - c\,\left( k + m - 1 \right)  \right) }^2}}} \right)
+%}^k}\,{{\left( k - m + c\,\left( -1 - k + m \right)  -
+%{\sqrt{4\,\left( c - 1 \right) \,k\,m +
+%{{\left( k + m - c\,\left( k + m - 1 \right)  \right) }^2}}} \right)
+%}^m}\,{{\left( k + m - c\,\left( k + m - 1 \right)  +
+%{\sqrt{4\,\left( c - 1 \right) \,k\,m +
+%{{\left( k + m - c\,\left( k + m - 1 \right)  \right) }^2}}} \right)
+%}^{-k - m}}}{2 - k - m + c\,\left(  k + m - 1 \right)  +
+%{\sqrt{4\,\left(  c - 1 \right) \,k\,m +
+%{{\left( k + m - c\,\left(  k + m - 1 \right)  \right) }^2}}}}}}}\} \}
+%$$
+
+\bibliographystyle{alpha}
+\bibliography{gzigzag}
+
+\end{document}
+

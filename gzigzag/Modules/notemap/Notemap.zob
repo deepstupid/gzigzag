@@ -1,0 +1,212 @@
+/*   
+Notemap.zob
+ *    
+ *    Copyright (c) 2000-2001 Ted Nelson and Tuomas Lukka
+ *    Copyright (c) 2000-2001 Benjamin Fallenstein
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.util.*;
+import java.awt.*;
+
+/** The Map view
+ */
+
+public class Notemap implements FlobView, ZOb {
+public static final String rcsid = "$Id: Notemap.zob,v 1.3 2001/01/06 21:32:18 bfallenstein Exp $";
+    public static boolean dbg = true;
+    static void p(String s) { if(dbg) System.out.println(s); }
+    static void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** The maximum depth */
+	int maxdepth
+	    = 2;
+    }
+
+    static public String dim1 = "d.map-1", dim2 = "d.map-2";
+
+    /** A typed link between two cells. */
+    static public class Link {
+	/** The direction of the link. May be 0, in case of no direction. */
+	int dir;
+	ZZCell link, to, linkRoot;
+	Color col = Color.blue;
+	
+	/** Constructor sets dir to zero if there is no direction. */
+	public Link(ZZCell link, int dir, ZZCell to) {
+	    this.link = link; this.to = to;
+//	    linkRoot = link.getRootclone();
+//	    if(linkRoot.s("d.map-directed") != null) 
+		this.dir = dir;
+//	    else 
+//		dir = 0;
+	}
+    }
+
+    /** Get the links from a given cell. */
+    static public Link[] getLinks(ZZCell from, ZZCell fromLink,
+				  boolean[] tilt) {
+	Vector v = new Vector();
+	ZZCell c, d;
+	int offs = -1;
+	for(c = from.s(dim2); c != null && !c.equals(from); c = c.s(dim2)) {
+	    d = c.h(dim1, -1, true);
+	    if(d != null) {
+		if(!c.equals(fromLink))
+		    v.addElement(new Link(c, -1, d));
+		else
+		    offs = v.size();
+	    } else
+		ZZLogger.log("link without neg target: "+c);
+	}
+	
+	tilt[0] = (fromLink == null) && (v.size() % 2 == 1);
+	int negmiddle = v.size() / 2;
+
+	for(c = from.s(dim1); c != null && !c.equals(from); c = c.s(dim1)) {
+	    d = c.h(dim2, -1, true);
+	    if(d != null) {
+		if(!c.equals(fromLink))
+		    v.addElement(new Link(c, 1, d));
+		else
+		    offs = v.size();
+	    } else
+		ZZLogger.log("link without pos target: "+c);
+	}
+	
+	if(fromLink == null) offs = negmiddle;
+	else if(offs < 0) throw new ZZError("fromLink not found");
+
+	Link[] res = new Link[v.size()];
+	if(offs == res.length) offs = 0; // end of array = beginning of array
+	
+	for(int i=offs; i<res.length; i++) 
+	    res[i-offs] = (Link)v.elementAt(i);
+	for(int i=0; i<offs; i++)
+	    res[i+res.length-offs] = (Link)v.elementAt(i);
+	return res;
+    }
+
+    public void part(FlobSet into, FlobFactory fact,
+		     ZZCell from, ZZCell fromLink, int x0, int y0, int dpt,
+		     int lx, int ly, double arcs, double arce, int xd, int yd,
+		     boolean firstRound) {
+	boolean tilt[] = new boolean[1];
+	Link[] links = getLinks(from, fromLink, tilt);
+	
+	p("part dpt "+dpt+" arcs/pi "+arcs/Math.PI+" arce/pi "+arce/Math.PI+" from "+from+" exc "+fromLink);
+	
+	int count = links.length;
+//        if(firstRound && count == 1) {
+//	     double arcq = (arce - arcs) / 4;
+//	     arcs += arcq; arce -= arcq;
+//        } else if(firstRound && count == 2) {
+//             arcs += Math.PI / 2;
+//        }
+	
+	double arcd = (arce-arcs) / count;
+	double arcdh = arcd / 2;
+	
+	Point p = new Point();
+	LineDecor.Builder lb = new LineDecor.Builder(into, Color.black);
+	lb.startl(count*4, 2);
+	ArrowDecor.Builder ab = new ArrowDecor.Builder(into, Color.blue);
+	ab.startl(count*4, 2);
+	
+	double arc = arcs;
+	if(firstRound && tilt[0]) arc -= arcdh;
+	
+	for(int i=0; i<count; i++, arc += arcd) {
+	    p.x = x0 + (int)Math.round(Math.sin(arc+arcdh)*xd*dpt);
+	    p.y = y0 + (int)Math.round(Math.cos(arc+arcdh)*yd*dpt);
+	    int dx = p.x - lx, dy = p.y - ly, mx = lx + dx/2, my = ly + dy/2;
+	    int ax, ay; 	// Half the size of the arrow
+	
+	    if(dx == 0) { ax = 0; ay = dy > 0 ? 10 : -10; }
+	    else if(dy == 0) { ax = dx > 0 ? 10 : -10; ay = 0; }
+	    else {
+		double raise = dy / (double)dx;
+	        ax = (int)Math.sqrt(100/(raise*raise+1));
+		if(dx < 0) ax = -ax;
+		ay = (int)(raise*ax);
+	    }
+
+	    fact.centerFlob(into, links[i].to, links[i].to, 1, p, 0, 0, 1);
+	    lb.l(lx, ly, p.x, p.y);
+	    
+	    if(links[i].dir < 0)
+		ab.ar(mx+ax, my+ay, mx-ax, my-ay);
+	    else if(links[i].dir > 0)
+		ab.ar(mx-ax, my-ay, mx+ax, my+ay);
+
+	    if(dpt < maxdepth)
+	        part(into, fact, links[i].to, links[i].link, x0, y0, dpt+1, 
+		     p.x, p.y, arc, arc+arcd, xd, yd, false);
+	}
+	
+	lb.endl();
+	ab.endl();
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+	    ZZCell view, String[] dims, ZZCell accursed) {
+	Dimension size = into.getSize();
+	int x0 = size.width/2, xd = size.width / (2 * maxdepth);
+	int y0 = size.height/2, yd = size.height / (2 * maxdepth);
+	fact.centerFlob(into, accursed, accursed, 1, 
+			new Point(x0, y0), 0, 0, 1);
+	part(into, fact, accursed, null, x0, y0, 1, x0, y0,
+	     -Math.PI/2, (Math.PI/2)*3, xd, yd, true);
+    }
+
+    static public ZZModule module = new ZZModule() {
+	public void action(String id,
+		ZZCell code, 
+		ZZCell target,
+		ZZView view, ZZView cview, String key, Point pt, ZZScene xi) {
+	    if(id.equals("NEW")) {
+		ZZCell vc = view.getViewcell();
+		ZZCell c = ZZCursorReal.get(vc).N(dim1).N(dim2, -1);
+		ZZCursorReal.set(vc, c);
+	    } else if(id.equals("CNCT")) {
+		ZZCell vc = view.getViewcell();
+		ZZCell acc = ZZCursorReal.get(vc);
+		ZZCell[] marks = vc.readRank("d.mark", 1, false);
+		for(int i=0; i<marks.length; i++) {
+		    ZZCell m = marks[i];
+		    ZZCell to = m.h("d.mark-set");
+		    m.excise("d.mark"); m.excise("d.mark-set");
+		    acc.insert(dim1, 1, m);
+		    to.insert(dim2, 1, m);
+		}
+	    } else {
+		pa("Unknown Map module action: "+id);
+	    }
+	}
+
+	public ZOb newZOb(String id) {
+	    if(id.equals("Star"))
+		return new Notemap();
+	    else
+		return null;
+	}
+    };
+}

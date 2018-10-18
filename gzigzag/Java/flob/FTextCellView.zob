@@ -1,0 +1,179 @@
+/*   
+FTextCellView.zob
+ *    
+ *    Copyright (c) 2001, Benja Fallenstein
+ *    Copyright (c) 2000-2001, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benja Fallenstein
+ */
+
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A cell view showing some FText.
+ *  This class exists in order to make it easy to create cell views which
+ *  just take an FText for a cell somehow and then render it on the screen.
+ *  Subclasses have to implement getFText(ZZCell, int). Default: render the
+ *  cell's content in the specified string.
+ *  <p>
+ *  XXX Don't use scene flobs. Instead, just place the split cell flobs in the
+ *      higher level flob set and create a BoxedFlob 'round them.
+ */
+ 
+public class FTextCellView implements FlobFactory, ZOb {
+public static final String rcsid = "$Id: FTextCellView.zob,v 1.4 2001/04/02 20:20:54 bfallenstein Exp $";
+    public static boolean dbg = false;
+    private static void p(String s) { if(dbg) ZZLogger.log(s); }
+    private static void pa(String s) { ZZLogger.log(s); }
+
+    // WHAT SUBCLASSES NEED TO OVERRIDE
+
+    /** Get the FText for this cell at the given scale.
+     *  scale == fract * 1000.
+     */
+    protected FText getFText(ZZCell c, int scale) {
+	return new FText(new FText.Part[] {
+		new FText.CellPart(c, 0, -1, f(scale), fm(scale), null, null)
+	});
+    }
+
+
+
+    // IMPLEMENTATION
+
+    /** Get the font for a given scale. */
+    protected final Font f(int sc) { return font.getFont(sc); }
+
+    /** Get the font metrics for a given scale. */
+    protected final FontMetrics fm(int sc) { return font.getFontMetrics(sc); }
+
+    STRUCTPARAMS {
+	/** The string to use to get the default cell width.  */
+	String widthstr
+	    = "0000000000";
+
+	/** The default background color. 
+	 * XXX Currently, because of color mixing, the foreground
+	 * comes from FlobSet. This should maybe change - check later.
+	 */
+	Color bg
+	    = Color.white;
+
+	/** The font for the default enlargement.  */
+	ScalableFont font
+	    = new ScalableFont("SansSerif", Font.PLAIN, 12);
+
+	ZOb ftextlayouter
+	    = new FTextLayouter(false);
+
+	/** The x and y margins
+	 */
+	int[] margins
+	    = new int[] {2, 1};
+    }
+
+    protected int getScale(float fract) {
+	return (int)(fract*1000);
+    }
+
+    public Dimension getSize(ZZCell c, float fract) {
+	if(c != null) {
+	    FText ftxt = getFText(c.getRootclone(), getScale(fract));
+	    return new Dimension(FText.Part.width(ftxt.parts) + margins[0]*2,
+				 FText.Part.height(ftxt.parts) + margins[1]*2);
+	} else {
+	    String str = widthstr;
+	    if(str == null) str = "";
+	    FontMetrics fm = fm(getScale(fract));
+	    return CellFlob1.getSize(fm, str, margins[0], margins[1]);
+	}
+    }
+
+    public Flob getFlob(FlobSet into, ZZCell c, FText ftxt,
+			int x, int y, int d, int w, int h) {
+	int xm = margins[0], ym = margins[1];
+
+	BoxedFlob box = new BoxedFlob(x, y, d, w, h, c);
+
+	CellFlobFactory1.addSolidColors(into, box, box);
+	
+	Rectangle rect = new Rectangle(x+xm, y+ym, w-xm, h-ym);
+	((FTextLayouter)ftextlayouter).place(into, ftxt, rect, d, 1, y+ym, 0, 
+					     true, box);
+
+	// Add the box last, so that it is shown under the text.
+	into.add(box);
+	return box;
+    }
+
+    public Flob makeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+			 float fract, int x, int y, int d, int w, int h) {
+	FText ftxt = getFText(c.getRootclone(), getScale(fract));
+	return getFlob(into, c, ftxt, x, y, d, w, h);
+    }
+
+    public Flob placeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		    float fract, 
+			int x, int y, int depth,
+			float xfract, float yfract) {
+	FText ftxt = getFText(c.getRootclone(), getScale(fract));
+	int w = FText.Part.width(ftxt.parts) + margins[0]*2;
+	int h = FText.Part.height(ftxt.parts) + margins[1]*2;
+	return getFlob(into, c, ftxt,
+			(int)(x-xfract*w),
+			(int)(y-yfract*h),
+			depth, w, h);
+    }
+
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign,
+		int depth, Dimension d) {
+	if(d == null) return centerFlob(into, c, handleCell, fract, p, xalign,
+					yalign, depth);
+	int x, y;
+	x = p.x - d.width/2; y = p.y - d.height/2;
+	
+	if(xalign < 0) x = p.x;
+	if(xalign > 0) x = p.x - d.width;
+	if(yalign < 0) y = p.y;
+	if(yalign > 0) y = p.y - d.height;
+	p("centerFlob "+p+" "+d+" at "+x+" "+y+" align "+xalign+" "+yalign);
+	return makeFlob(into, c, handleCell, fract, x, y, 
+			depth, d.width, d.height);
+    }
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign, int depth) {
+	int x, y;
+
+	FText ftxt = getFText(c.getRootclone(), getScale(fract));
+	int w = FText.Part.width(ftxt.parts) + margins[0]*2;
+	int h = FText.Part.height(ftxt.parts) + margins[1]*2;
+
+	x = p.x - w/2; y = p.y - h/2;
+	if(xalign < 0) x = p.x;
+	if(xalign > 0) x = p.x - w;
+	if(yalign < 0) y = p.y;
+	if(yalign > 0) y = p.y - h;
+	p("centerFlob "+p+" at "+x+" "+y+" "+w+" "+h+" align "+xalign+" "+yalign);
+
+	return getFlob(into, c, ftxt, x, y, depth, w, h);
+    }
+}
+
+// vim: set syntax=java :

@@ -1,0 +1,164 @@
+/*   
+Prez.java
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+import java.io.*;
+ 
+/** A simple presentation raster.
+ * The structure is described along three dimensions: 
+ * hierarchy, sibling and cross-reference (d.1, d.2 and d.3 by default).
+ * On these, the hierarchy is arranged as a corner list with an empty
+ * corner cell, and the cross-references are simply siblings 
+ * connected.
+ */
+
+public class PrezRaster implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** The vstream raster used for the header.  */
+	ZOb hdrvs // VStreamRaster
+	    = new RankTextView() {{
+		width = 650;
+		dim = "d.foo";
+	    }};
+	/** The vstream raster used for the items. */
+	ZOb txtvs // RankTextView
+	    = new RankTextView() {{
+		width = 500;
+		dim = "d.foo";
+	    }};
+	/** The vstream raster used for the crossrefs. */
+	ZOb xrefvs // RankTextView
+	    = new RankTextView() {{
+		width = 500;
+		dim = "d.foo";
+	    }};
+	
+	/** The amount to shift the header. */
+	int hdrindent
+	    = 30;
+
+	/** The amount to shift the items. */
+	int indent
+	    = 50;
+
+	/** The amount to space the items. */
+	int space
+	    = 30;
+
+	int topmargin 
+	    = 120;
+
+	int afterhdr
+	    = 0;
+
+	ScalableFont hdrfont 
+	    = new ScalableFont("SansSerif", Font.PLAIN, 32);
+
+	ScalableFont txtfont 
+	    = new ScalableFont("SansSerif", Font.PLAIN, 24);
+
+	ScalableFont xreffont 
+	    = new ScalableFont("SansSerif", Font.PLAIN, 10);
+
+	int hdrwidth
+	    = 650;
+	int txtwidth
+	    = 500;
+    }
+	
+    static final String next = "d.2";
+    static final String hier = "d.1";
+    static final String cross = "d.3";
+
+    public void raster(FlobSet into, FlobFactory fact,
+	ZZCell view, String[] dims, ZZCell accursed) {
+
+	ZZCell hdr = null;
+
+	if(accursed.s(next, -1) == null) {
+	    if((hdr = accursed.s(hier, -1)) == null)
+		hdr = accursed;
+	} else
+	    hdr = accursed.h(next, -1).s(hier, -1);
+
+	if(hdr == null) {
+	    pa("Null hdr for prez - bailing out");
+	    return;
+	}
+
+	RankTextView hdrvs = (RankTextView)this.hdrvs;
+	RankTextView txtvs = (RankTextView)this.txtvs;
+	RankTextView xrefvs = (RankTextView)this.xrefvs;
+
+	hdrvs.font = hdrfont;
+	txtvs.font = txtfont;
+	xrefvs.font = xreffont;
+
+	hdrvs.width = hdrwidth;
+	txtvs.width = txtwidth;
+
+	hdrvs.readParams(null);
+	txtvs.readParams(null);
+	xrefvs.readParams(null);
+
+	int y = topmargin;
+	Rectangle bds = hdrvs.raster(into, hdr, 0, false, 
+	    hdrindent, y);
+	p("Raster 1: "+bds);
+	
+	y += bds.height + afterhdr;
+
+	ZZCell cur = hdr.s(hier, 1);
+	if(cur == null) return;
+
+	LoopDetector l = new LoopDetector();
+	while(true) { 
+	    cur = cur.s(next, 1);
+	    if(cur == null) break;
+	    l.detect(cur);
+	    bds = txtvs.raster(into, cur, 0, false, indent, y);
+	    p("Raster n: "+bds);
+	    // indicate that there is more
+	    if(cur.s(hier, 1) != null) {
+		into.add(new LineDecor(bds.x+bds.width, bds.y, 
+				bds.x+bds.width, bds.y+bds.height,
+				Color.blue, 1));
+	    }
+	    if(cur.s(cross, -1) != null)
+		xrefvs.raster(into, cur.s(cross,-1),
+				0, false, 400, bds.y-15);
+	    if(cur.s(cross, 1) != null)
+		xrefvs.raster(into, cur.s(cross,1),
+				0, false, 400, bds.y+bds.height+5);
+		
+	    y += bds.height + space;
+	}
+    }
+}
+// vim: set syntax=java :

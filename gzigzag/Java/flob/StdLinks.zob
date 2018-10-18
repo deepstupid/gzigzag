@@ -1,0 +1,204 @@
+/*   
+StdLinks.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+ 
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+public class StdLinks implements FlobDecorator {
+public static final String rcsid = "$Id: StdLinks.zob,v 1.13 2000/11/01 00:39:06 tjl Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+
+    /** Whether to draw badly directioned links as splines.
+     */
+    boolean splines
+	= true;
+
+    /** Spline radius.
+     */
+    float splinvec
+	= 50;
+
+    /** Whether the tight-brick mode is used for cells with 
+     * non-shown links.
+     */
+    boolean tightDefault
+	= false;
+
+    /** Whether to draw the links the old way, between corners.
+     */
+    boolean useCorners
+	= false;
+
+    }
+
+    static int[] xoffs = new int[] {1, 0, 1};
+    static int[] yoffs = new int[] {0, 1, 1};
+
+    public void decorate(final FlobSet f, final String path, 
+	    final ZZCell view) {
+	final String[] dims = ZZDefaultSpace.getDimList(view);
+	p("DECORATE STDLINKS");
+	// Cells whose connections were done.
+	final Hashtable done = new Hashtable(); 
+	final Point p1 = new Point(), p2 = new Point();
+
+	final LineDecor.Builder ldb = new LineDecor.Builder(f, null);
+
+	f.iterDepth(new FlobSet.DepthIter() {
+	    public void act(Flob[] flobs, int start, int n) {
+		p("STDLINKS ACT "+start+" "+n+" "+flobs[start].d);
+
+		ldb.startl(4*n, flobs[start].d+1);
+
+		for(int i=start; i<start+n; i++) {
+		    Flob cur = flobs[i] ;
+		    // p("Do flob ");
+		    if(cur.c == null || !cur.flobPath.equals(path))
+			continue;
+		    ZZCell c = cur.c;
+		    p(" cell: "+c);
+		    for(int d=0; d<dims.length; d++) {
+			if(d >= xoffs.length) break;
+			// p(" Dim: "+dims[d]);
+
+			for(int dir=-1; dir<=1; dir += 2) {
+			    ZZCell neigh = c.s(dims[d], dir);
+			    p(" Neigh: "+neigh+" "+
+				(neigh!=null?neigh.getText():"")+
+				    " "+(neigh==null? 
+			 	    "nothing" : done.get(neigh)));
+			    if(neigh == null ||
+			       done.get(neigh) != null) continue;
+			    Flob nfl = f.findFlob(path, neigh);
+			    // p(" Found: "+nfl);
+                            // show connections to non-shown cells
+                            // XXX: is this tight-brick? if so, this should be
+                            // made conditional
+			    if(nfl == null) {
+				// XXX UseCorners!!!
+                                int xo = xoffs[d];
+                                int yo = yoffs[d];
+                                int xh = (xo==0 ? 1 : 0);
+                                int yh = (yo==0 ? 1 : 0);
+                                int df = (dir > 0 ? 1 : 0);
+                                int x1 = cur.x + ((2*xo + xh)*cur.w) / 2;
+                                int y1 = cur.y + ((2*yo + yh)*cur.h) / 2;
+				int len = 1; // Stub length
+				int wid = 5; // Stub width
+				if (dir < 0) {
+                                    int cx = cur.x + cur.w / 2;
+                                    int cy = cur.y + cur.h / 2;
+                                    x1 = x1 - 2 * (x1 - cx) + dir*xo;
+                                    y1 = y1 - 2 * (y1 - cy) + dir*yo;
+                                }
+				int x2 = x1 + dir * xo * len ;
+				int y2 = y1 + dir * yo * len ;
+                                ldb.l(x1, y1, x2, y2);
+				ldb.l(x2+dir*yo*wid/2, y2-dir*xo*wid/2,
+				      x2-dir*yo*wid/2, y2+dir*xo*wid/2);
+				continue;
+                            }
+
+			    // Now, find line coordinates.
+			    Flob from=null, to=null;
+			    if(dir > 0) {
+				from = cur; to = nfl;
+			    } else {
+				from = nfl; to = cur;
+			    }
+			    if(useCorners) {
+				int xo = xoffs[d];
+				int yo = yoffs[d];
+				int xh = (xo==0 ? 1 : 0);
+				int yh = (yo==0 ? 1 : 0);
+				ldb.l(
+				    from.x + (2*xo + xh)*from.w / 2,
+				    from.y + (2*yo + yh)*from.h / 2,
+				    to.x + (xh)*to.w / 2,
+				    to.y + (yh)*to.h / 2
+				);
+			    } else {
+				from.getCenter(p1);
+				to.getCenter(p2);
+				// Check the direction.
+				// XXX abstract out!
+				int dx = p2.x - p1.x;
+				int dy = p2.y - p1.y;
+				boolean curve = false;
+				if(splines) {
+				    if(d == 0) { // X
+					curve = (dx/(2*dy+1) == 0 || dx < 0);
+				    } else if(d == 1) { // Y
+					curve = (dy/(2*dx+1) == 0 || dy < 0);
+				    } else if(d == 2) { // Z
+					curve = (
+					    dx / (2*dy+1) != 0 ||
+					    dy / (2*dx+1) != 0 ||
+					    dx < 0 ||
+					    dy < 0
+					);
+				    }
+				}
+				if(curve) {
+				    p("SPLINE! "+d+" "+dx+" "+dy);
+				    int aw = from.w + to.w;
+				    int ah = from.h + to.h;
+				    aw *= 2;
+				    ah *= 2;
+				    int[] curv = ZZUtil.bulgeCurve(
+					p1.x, p1.y, 
+					    xoffs[d] * aw, yoffs[d] * ah,
+					p2.x, p2.y, -xoffs[d] * aw, 
+							-yoffs[d] * ah,
+					9
+				    );
+				    for(int p=2; p<curv.length-1; p+=2) {
+					p(curv[p-2]+" "+curv[p-1]);
+					ldb.l(curv[p-2], curv[p-1],
+					    curv[p], curv[p+1]);
+				    }
+				} else 
+				    ldb.l(p1.x, p1.y, p2.x, p2.y);
+			    }
+			}
+		    }
+		    done.put(c, c);
+		}
+
+		ldb.endl();
+	    }
+	},false);
+	p("DECORATED STDLINKS");
+    }
+}
+
+
+
+
+// vim: set syntax=java :

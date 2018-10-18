@@ -1,0 +1,444 @@
+/*   
+VirtualCommunity.zob
+ *    
+ *    Copyright (c) 2001 Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Vesa Parkkinen
+ */
+
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.util.*;
+import java.awt.*;
+
+/** A simple cell factory that gives the cells as one-line strings.
+ * Variable length is possible.
+ * UGLY: ALL PARAMS HERE.
+ */
+ 
+public abstract class VirtualCommunity implements FlobView, ZOb {
+    public static final String rcsid = "$Id: VirtualCommunity.zob,v 1.36 2001/02/28 10:18:20 tjl Exp $";
+    public static boolean dbg = false;
+    private static void p(String s) { if(dbg) ZZLogger.log(s); }
+    private static void pa(String s) { ZZLogger.log(s); }
+    
+    // some parameters would be needed, propably
+    STRUCTPARAMS {
+	Font font 
+	    = new Font("SansSerif", Font.PLAIN, 11);
+
+	ZOb ftextlayouter
+	    = new FTextLayouter();
+
+	double left
+	    = 0.1;
+
+	double middle 
+	    = 0.4;
+
+	double right 
+	    = 0.3;
+
+	double middleHeight
+	    = 0.5;
+
+	int xpad
+	    = 5;
+
+	int ypad
+	    = 5;
+
+	Color linecol
+	    = Color.white;
+
+	float magfract
+	    = 0.8f;
+
+	float rotunit
+	    = 0.0f;
+
+	int view2depth 
+	    = 4;
+
+	float[] view2ctr // 2..2
+	    = new float[] {0.35f, 0.5f};
+
+	float view2wid
+	    = 0.22f;
+
+	float view2fract
+	    = 1.4f;
+
+
+    }
+    
+
+    /** Bold and italic derivatives of the font given.
+     * The first index is the level of the text i.e.
+     * from paragraph to H1.
+     */
+    Font[][][] bifonts;
+    FontMetrics[][][] bifontms;
+
+    INITIALIZE {
+	bifonts = new Font[7][2][2];
+	bifontms = new FontMetrics[7][2][2];
+	for(int l = 0; l < bifonts.length; l++) {
+	    int size = font.getSize();
+	    if(l > 0 && l < 5) size += l-1;
+	    if(l == 5) size += 6;
+	    if(l == 6) size += 9;
+	    bifonts[l][1][0] = new Font(font.getName(), 
+					Font.BOLD, size);
+	    bifonts[l][1][1] = new Font(font.getName(), 
+				    Font.BOLD | Font.ITALIC, size);
+
+	    if(l == 0) {
+		bifonts[l][0][0] = new Font(font.getName(), 0, size);
+		bifonts[l][0][1] = new Font(font.getName(), 
+					Font.ITALIC, size);
+	    } else { // All bold for headers
+		bifonts[l][0][0] = bifonts[l][1][0];
+		bifonts[l][0][1] = bifonts[l][1][1];
+	    }
+	    for(int b = 0; b<2; b++)
+	     for(int i = 0; i<2; i++)
+		bifontms[l][b][i] = FONTMETRICS(bifonts[l][b][i]);
+	}
+    }
+
+    Color linkcolor = Color.red;
+    Color default_bgcolor = Color.white;
+
+    static String text         = "d.text";
+    static String handle       = "d.kahva";
+    static String author       = "d.author";
+    static String replies      = "d.replies";
+    static String replies_list = "d.replies-list";
+    
+    static protected class Foobar implements ZZObs  {
+	private void add() {
+	    vc.h("d.cursor-cargo", -1, this).
+		h("d.cursor-list", -1, this).s("d.cursor", -1, this);
+	}
+	public void chg() {
+	    ZZCell targ = ZZCursorReal.get(vc).h(text);
+	    ZZCell hist = ZZDefaultSpace.findInheritableParam(vc,"history");
+	    if (targ.h("d.1").equals(hist)) {
+		p("Historical item");
+		histpos = targ;
+		add();
+		return;
+	    }
+	    ZZCell it = hist.s("d.1");
+	    while (!it.equals(histpos) && !ZZCursorReal.get(it).equals(targ))
+		it = it.s("d.1");
+	    if (!it.equals(histpos)) {
+		histpos = it;
+		ZZCursorReal.set(vc, histpos);
+	    } else if (!targ.equals(ZZCursorReal.get(histpos))) {
+		if (histpos.s("d.1") != null) histpos.disconnect("d.1",1);
+		histpos = histpos.N("d.1");
+		ZZCursorReal.setcursor(histpos, targ);
+	    }
+	    add();
+	}
+	public void init(ZZCell _vc, ZZCell hilite) {
+	    if (inited == false || !_vc.equals(vc)) {
+		vc = _vc;
+		histpos = hilite;
+		inited = true;
+	    }
+	    add();
+	}
+	boolean inited = false;
+	ZZCell vc;
+	public ZZCell histpos;
+    }
+    static protected Foobar histobs = new Foobar();
+    
+    // flobFactories
+    MessageFlobFactory blobs  = new MessageFlobFactory();
+    MessageFlobFactory center = new MessageFlobFactory();
+    MessageFlobFactory sibl = new MessageFlobFactory(this);
+    FlobFactory history = new MessageFlobFactory();
+    boolean nohistory = true;
+
+    /** Cut fracts into reasonable range.
+     */
+    protected final float cfr(float fr) {
+	if (fr < 0.7f) return 0.7f;
+	if (fr > 2.0f) return 1.5f;
+	return fr;
+    }
+
+    abstract public void raster( FlobSet into, FlobFactory fact,
+			ZZCell view, String[] dims, ZZCell accursed);
+    static public ZZModule module = new ZZModule() {
+	    public void action(String id,
+			       ZZCell code, 
+			       ZZCell target,
+			       ZZView view, ZZView cview, 
+			       String key, Point pt, ZZScene xi) {
+		if(id.equals("NEW")) {
+		    
+		} else {
+		    p("Unknown VC module action: "+id);
+		}
+	    }
+	    public ZOb newZOb(String id) {
+		if(id.equals("View"))
+		    return new VCView2();
+		if(id.equals("View2"))
+		    return new VCView2();
+		if(id.equals("View3"))
+		    return new VCView3();
+		if(id.equals("View4"))
+		    return new VCView4();
+		else
+		    return null;
+	    }
+	    
+	    
+	};
+    
+    class VCLinker implements FlobDecorator{
+	
+	public void decorate(FlobSet f, String path, ZZCell view) {
+	    
+	    
+	}
+    }
+ 
+    class LinkFlob extends Flob {
+	int n = 4;
+	int[] xs = new int[n];
+	int[] ys = new int[n];
+	
+	// Color fg = new Color(0xa6dbac);
+	Color fg = new Color(0x86bbac);
+
+	public LinkFlob(int x, int y, int x1, int y1, int x2, int y2) {
+	    super(x,y,1,x1-x,y2-y1,null);
+	    xs[0] = x;
+	    xs[1] = x1;
+	    xs[2] = x2;
+	    
+	    ys[0] = y;
+	    ys[1] = y1;
+	    ys[2] = y2;
+
+	    n = 3;
+	}
+
+	public LinkFlob(int x, int y, int x1, int y1, int x2, int y2, int x3, int y3) {
+	    super(x,y,1,x1-x,y2-y1,null);
+	    xs[0] = x;
+	    xs[1] = x1;
+	    xs[2] = x2;
+	    xs[3] = x3;
+	    
+	    ys[0] = y;
+	    ys[1] = y1;
+	    ys[2] = y2;
+	    ys[3] = y3;
+
+	    n = 4;
+	}
+
+
+	public void render(Graphics g, int mx, int my, int md,
+			   int mw, int mh) {
+	    Color old = g.getColor();
+	    g.setColor(fg );
+	    g.fillPolygon(xs, ys, n);
+	    g.setColor(old);
+	}
+
+    }
+
+    
+    Hashtable prods;
+    
+    class Dfoo{
+	int d;
+	Dfoo(int d){
+	    this.d = d;
+	}
+    }
+    
+    /**
+     * 
+     */
+
+    void product(ZZCell c, Point p){
+	if(c == null ) return;
+	if( prods == null) prods = new Hashtable();
+	// XXX overwrites...
+	prods.put(c, p);
+    }
+
+
+    public void messagesFromProd(FlobSet into, ZZCell c, float fract){
+	messagesFrom(into,c,fract,handle);
+	
+    }
+    
+    public void messagesFrom(FlobSet into, ZZCell c, float fract, 
+				 String dim){
+	ZZCell d = c.h(text,-1);
+	
+	int xpad = 5;
+	int ypad = 5;
+	int y = ypad;
+	int w = 100;
+	int h = into.getSize().height;
+	int x = into.getSize().width - w - xpad;
+	int l = d.getRankLength(dim) -1; 
+	pa("L = " + l);
+
+	if( l < 1 ) return;
+	int hd = h/l;
+	hd -= ypad;
+	int depth = 1;
+        Flob flob = sibl.getSFlob().getFlobSet().findFlob(null,c); 
+        Point pnt = flob.getPoint(1,0);
+        int cx = pnt.x;//into.getSize().width/2;
+        int cy = pnt.y;
+	
+	d = d.s(dim,1);
+	ZZCell tmp = d;
+	while(d != null){
+	    // make flob
+	    tmp = d.h(text,-1);
+	    sibl.makeFlob(into, tmp, tmp, cfr(fract),
+			  x, y, depth, w,hd, 
+			  0, false);
+	    
+	    // draw link
+	    into.add(new LinkFlob(cx,cy,
+                                  x,y+ypad,
+                                  x,y+hd-ypad));
+            
+
+	    d = d.s(dim,1);
+	    y+=hd + ypad;
+	    
+	}
+    }
+    
+
+
+    boolean isProd(ZZCell c){
+	p("isProd: " + c);
+	c = c.h(text,-1);
+	if( c == null ) return false;
+	if( c.h(handle,-1) == c && c.s(handle,1) != null){
+	    p("TRUE");
+	    return true;
+	}
+	return false;
+    }
+    
+    boolean isAuthor(ZZCell c){
+	
+	if( c.h(author,-1) == c && c.s(author,1) != null ) 
+	    return true;
+	
+	return false;
+    }
+
+
+    ZZCell getAuthor(ZZCell c){
+	ZZCell d = c.h(text,-1);
+	d = d.h(author,-1);
+	return d;
+    }
+
+
+    void addAuthor(FlobSet into, ZZCell c, float fract){
+	if( isAuthor(c) ) return;
+	p("add author");
+	if( c==null) return;
+	ZZCell a = getAuthor(c);
+	if( a == null ) return;
+	Dimension d = into.getSize();
+	int xpad = 5;
+	int ypad = 5;
+	int w = d.width / 5;
+	int h = d.height / 5;
+	int x = 0+xpad;
+	int y = d.height - h-ypad;
+	int depth = 1;
+	sibl.makeFlob(into,a,a, fract,
+		      x,y,depth,w,h,0,false);
+	Flob fl = into.findFlob(null, c);
+	Point p = fl.getPoint(-1,0);
+	into.add(new LinkFlob(p.x+5, p.y, p.x,p.y, x+w, y,x+w+5,y));
+    }
+
+
+
+    /**
+     *
+     */
+    public void drawProducts(FlobSet into, float fraction,
+			     Dimension dp){
+	// draw products from cells
+	p("cells");
+	if( prods == null || prods.size() < 1 ) return ;
+
+	int nprods = prods.size();
+
+	int upperH = dp.height;
+	int w      = into.getSize().width;
+	int ypad   = 5;
+	int y      = ypad;
+	int xpad   = 10;
+	int x      = xpad/2;
+	int wd     = w/(nprods);
+	int d      = 1;
+	int dprod  = 1;
+	if( wd > w/2 ) wd = w/2;
+	//FlobSet fs = sibl.getFlobSet();
+	
+	wd -= xpad;
+
+	for(Enumeration e = prods.keys();
+	    e.hasMoreElements();){
+
+
+	    ZZCell cell = (ZZCell)e.nextElement(); 
+	    Point p = (Point)prods.get(cell);
+    
+	    //Dimension pd = blobs.getSize(cells[i], fraction);
+	    //if ( pd == null ) continue;
+	    sibl.makeFlob(into, cell, cell, fraction,x,y,d,
+			  wd,upperH, 0, false);
+	    
+	    int center = x+wd/2;
+
+	    into.add(new LinkFlob(center+5, upperH, center, upperH, 
+				  p.x,p.y,p.x+5,p.y));
+
+	    x += wd + xpad;
+	} 
+    }
+}
+
+// vim: set syntax=java :

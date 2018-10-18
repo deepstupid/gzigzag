@@ -1,0 +1,1222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+#include "catart.wml"
+
+<body>
+<DOCTITLE>Instructions for the Use of GZigZag</DOCTITLE>
+<pre>$Id: newug.wml,v 1.6 2001/02/07 10:29:44 cat Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Katariina Ervasti</b> <br>
+ 	<code>cat@gzigzag.org</code>
+ </cell>
+</grid>
+
+<substdims>
+<p>This is the third version of <cite>Instructions for the Use of
+GZigZag</cite>, written by Katariina Ervasti, who is working with this document whenever
+she has time. (Documentation is only ONE of my tasks.)
+<p>
+Last update on 7th of February, 2001.
+<p>
+
+{#MYTOC#}
+
+<s1>About this document</s1>
+
+<p>
+The purpose of this document is to <strong>explain how to use the current
+version of GZigZag</strong> (0.1.4).
+
+<p> If this is the first document you read about GZigZag, please read
+<a href="http://www.gzigzag.org/ct/ct-ns4.html">GZigZag - A Platform
+for Cybertext Experiments</a> before continuing. The popularized
+article deals with the reasons for developing GZigZag as well as the
+main concepts and the advantages of the system. We assume that the
+reader of this document has read the article, especially the definitions of the main
+concepts, which will not be repeated here.
+
+<p>
+We are interested in describing the use of GZigZag as clearly as
+possible. Any comments on the content of this document are welcome
+and can be sent to <a href="mailto:cat@gzigzag.org">cat@gzigzag.org</a>.
+
+<p>
+And, since GZigZag is constantly being developed, also this document
+is always under construction. We are doing our best to inform users
+of the latest features of GZigZag!
+
+<p>
+<s1>About using GZigZag</s1>
+
+<p> At this stage of the development <strong>GZigZag can be used as an
+information manager</strong>. Using GZigZag as an information manager
+does not require any programming skills. Yet, if you want to build a
+specific view for a certain GZigZag structure, you need to know some
+Java.
+
+<p>
+The following structures (among others) have been made with GZigZag:<p>
+<ul>
+<li>a family tree
+<li>a timeline of the most important happenings of the history.
+<li>a personal information manager, combining e.g. contact information
+of people with e-mail messages received from them
+<li>a presentation about GZigZag
+<li>an "organizational finder", which is a combination
+of a telephone book of an organization, an organizational chart and
+lists of employees involved in certain projects
+</ul>
+
+<p>
+Naturally, we have build these structures just to test the
+functionality of the current version of GZigZag. In the future
+GZigZag will be a foundation for - as Ted Nelson expresses it -
+"a high-power personal and media system, with editing and presentation
+systems that expand the state of art".
+<p>
+
+If you're interested in visualizations of the future system, see Nelson's page dealing with
+<a href="http://www.xanadu.com/FW99/">Floating World</a>.
+<p>
+<s1>Downloading GZigZag</s1>
+
+<p>
+You can download the recommended version of GZigZag for users on the
+<a href="http://www.gzigzag.org/download.html">Downloading GZigZag</a>-page.
+The page also includes instructions for
+downloading and the commands needed for starting GZigZag.
+
+<p>
+<s1>Building a GZigZag structure</s1>
+<p>
+In <docref doc="CyberText/ct">GZigZag - A
+Platform for Cybertext Experiments</docref> we use a combination
+of an address book and a family tree to make the main concepts of
+GZigZag more clear.  This section of the guide focuses on explaining
+how the example was made.<p>
+ <p>
+<s2>Designing a GZigZag structure</s2>
+ <p>
+We started making the structure by drawing our ideas on the paper.
+ <p>
+We planned <strong>the structure of the address book</strong> to be
+simple: it is a list of names and addresses. The names are listed
+along a dimension in alphabetical order. We decided to use d.2
+for that purpose.  The addresses are connected to the names along
+another dimension, and we chose d.1 for that. (<a
+href="addressbook.png">Figure 1</a>)
+ <p>
+We didn't have to design <strong>the structure of the family tree</strong> from
+the beginning, since we decided to use Ted Nelson's design made
+for his Holm Family Demo. In this design siblings are connected
+along d.children, and married couples along d.marriage.
+An extra cell ("+") is used on d.marriage to make the structure symmetric,
+and the list of children from the marriage on d.children starts
+from that cell. (<a href="familytree.png">Figure 2</a>)
+ <p>
+Thus, <strong>designing a GZigZag structure is basically just thinking
+about the ways cells can be connected along dimensions</strong>.
+The most important thing to keep in mind is that on each dimension each cell
+has two ends, a negative end and a positive end, and on each dimension
+only one cell can be connected to one end. This means that
+<strong>on each dimension a cell can have at most two neighbours</strong>: a predecessor,
+which is connected on the negative end of the cell, and a successor,
+which is connected on the positive end of the cell.
+ <p>
+If you want to use the same cell on the same dimension many times,
+you can use a mechanism called cloning (which is explained in
+ <ref cloning>).
+  <p>
+<s2 buildingstruct>Functions needed for building a GZigZag structure</s2>
+<p>
+<s3>Moving in GZigZag</s3>
+<p>
+Before you can start building a structure, you need some information
+of how to move in the GZigZag space.
+<p>
+When you first start GZigZag, you see two windows showing the
+GZigZag structure. <a href="alku.png">Figure 3</a> represents a
+window showing the GZigZag structure after starting.  As it can be
+seen, in GZigZag cells are represented by rectangles and neighbours
+along a dimension by a line.
+<p>
+The number of dimensions in GZigZag is infinite, but <b>only three dimensions
+(x, y, z) can be shown on the screen at the same time</b>. The dimensions used
+can be seen in the top left corners of both windows. If you look at these
+corners, you'll see that the default dimensions are d.1 (on the X axis),
+d.2 (on the Y axis) and d.3 (on the Z axis).
+<p>
+Now, there are two cursors you can use to move in the GZigZag space,
+the left (green) and the right (blue) cursor. If you look at the uppermost cell,
+which is called <strong>the homecell</strong>, you can see that the both cursors
+are currently on the same cell.
+<p>
+<strong>The blue cursor defines the center of the right window. The speciality
+of this cursor is that in addition to navigation,  it can be used for manipulating data,
+for example typing text in a cell </strong>. You can use the following keys to move the blue cursor:
+<p>
+<grid layout="2x6" width="600">
+<cell><kbd>i</kbd></cell>
+<cell>up/to the negative direction along the dimension on the Y axis</cell>
+
+<cell><kbd>,</kbd></cell>
+<cell>down/to the positive direction along the dimension on the Y axis</cell>
+
+<cell><kbd>j</kbd></cell>
+<cell>left/to the negative direction along along the dimension on the X axis</cell>
+
+<cell><kbd>l</kbd></cell>
+<cell>right/to the positive direction along the dimension on the X axis</cell>
+
+<cell>Shift-<kbd>k</kbd></cell>
+<cell>up/to the negative direction along the dimension on the Z axis</cell>
+
+<cell><kbd>k</kbd></cell>
+<cell>down/to the positive direction along the dimension on the Z axis</cell>
+</grid>
+
+<p>
+As you press the buttons, you can see the cursor moving in both windows
+and the center of the right window changing.
+<p>
+<strong>The green cursor defines the center of the left window. The speciality
+of this cursor is that in addition to navigation, it can be used for excuting commands,
+for example starting an applitude.</strong>.
+You can use the following keys to move the green cursor:
+<p>
+<grid layout="2x6" width="600">
+<cell><kbd>e</kbd></cell>
+<cell>up/to the negative direction along the dimension on the Y axis</cell>
+
+<cell><kbd>c</kbd></cell>
+<cell>down/to the positive direction along the dimension on the Y axis</cell>
+
+<cell><kbd>s</kbd></cell>
+<cell>left/to the negative direction along along the dimension on the X axis</cell>
+
+<cell><kbd>f</kbd></cell>
+<cell>right/to the positive direction along the dimension on the X axis</cell>
+
+<cell>Shift-<kbd>d</kbd></cell>
+<cell>up/to the negative direction along the dimension on the Z axis</cell>
+
+<cell><kbd>d</kbd></cell>
+<cell>down/to the positive direction along the dimension on the Z axis</cell>
+</grid>
+<p>
+As you press the buttons, you can see the cursor moving in both windows
+and the center of the left window changing.
+<p>
+If you look at the keyboard, you can see that the keys are arranged
+in diamond patterns on the keyboard, one for the left and another for
+the right hand use.
+<p>
+You can also use the arrow keys to move the blue cursor and both
+green and the blue cursor can be moved by pointing a cell with
+the cursor of the mouse and clicking at the button of the mouse. If
+you use the mouse to point & click at a cell on the right window,
+the blue cursor will move. If you use the mouse to point & click at
+a cell on the left window, the green cursor will move.
+<p>
+If you get lost, <strong>press <kbd>ESC</kbd> to return to the home cell</strong>.
+<p>
+<s3 enter>Creating new cells and entering text</s3>
+<p>
+We started building the combination of the address book and the
+family tree by building an address book. First, we created new cells
+for the names of the relatives along d.2.
+<p>
+<strong>The key used for creating a new cell is
+<kbd>n</kbd></strong>. After pressing the <kbd>n</kbd> key, you have
+to press <strong>one of the direction keys</strong> discussed above to
+indicate to which direction the new cell is created.  For example, to
+create a new cell up from the blue cursor's location, press
+<kbd>n</kbd> and <kbd>i</kbd>. To create a new cell up from the green
+cursor's location, press <kbd>n</kbd> and <kbd>e</kbd>.
+<p>
+The new cells for the names of the relatives (<a href="creation.png">Figure 4</a>)
+where created by pressing <kbd>n</kbd> and <kbd>i</kbd> five times, when the
+blue cursor was on the home cell.
+<p>
+<strong>To type a name (or any other text) in a cell, you need the
+blue cursor and the tab key</strong>. For example, to type the name of
+your mother to the cell above the home cell, move the blue cursor on
+the cell, press the tab key, type  the name of your mother and then
+press the tab key again. (The result of this operation can be seen
+in <a href="mutsi.png">Figure5</a>.)
+<p>
+
+After typing the names of the relatives we wanted to add the
+addresses to our address book. To add  the addresses we created
+new cells which were connected to the cells containing the names
+along d.1.  For example, to create a new cell for the address of your
+mother, go to the cell containing the name of your mother and
+press <kbd>n</kbd> and <kbd>l</kbd>. <a href="mutsiosoite.png">Figure 6</a>
+represents the example structure after adding a cell for the address
+of the mother.
+
+<p>
+The addresses are added to the cells in the manner described
+above.  To add the address of your mother, move the blue cursor
+on the cell ment for it, press the tab key, type  the address
+and then press the tab key again. <a href="wallstreet.png">Figure 7</a>
+shows the example structure after typing the address of the mother.
+<p>
+<strong>If you want to make typing text easier, you can use the Edit-
+window</strong>. To get the edit window on the screen, move the green
+cursor on the cell, which contains the text EDITVIEW and press
+enter. To find the EDITVIEW cell go to the homecell (press ESC)
+and move to the positive direction  from the home cell on d.2 until you get
+to the cell containing the text 'Actions'. When you move to the
+one step to the positive direction on  d.1 from this cell you
+end up in the Actions list, to which the 'EDITVIEW'-cell is connected.
+<p>
+<s3 cloning>Cloning</s3>
+<p>
+If you want to use a cell on the same dimension
+many times, a mechanism called cloning is needed.
+<p>
+If you want to clone a cell, on which the green cursor is, press
+<strong>Shift-<kbd>t</kbd> and one of buttons indicating a
+direction</strong> (in which you want to place the clone). If you want
+to clone a cell, on which the blue cursor is, press <b>'t' and one of
+the buttons indicating a direction</b> (in which you want to place the
+clone).
+<p>
+For example, if your mother and father have the same address, you
+might want to make a clone of the address cell. You could do this for
+example by moving the blue cursor on the address cell and the green
+cursor on the cell containing the name of your father. After doing
+this, you would press <kbd>t</kbd> and <kbd>f</kbd>.  The result of
+these functions can be seen in <a href="klooni.png">Figure
+8</a>. Notice that the colour of a cloned cell is light yellow and the
+colour of a clone is dark yellow.
+<p>
+<strong>The advantage of cloning is that it makes updating easy</strong>. When
+you update one of the cells containing the same information,
+the change can be seen everywhere. For example, if you
+change the text on either the cloned cell or the clone containing
+the address of your parents, the changes can be seen in both
+cells.
+<p>
+<s3>Creating new dimensions</s3>
+<p>
+After finishing the address book, we started building the
+family tree.
+<p>
+Now, two new dimensions are needed for the family tree:
+d.children for connecting the siblings and d.marriage for
+connecting the married couples. (When you're making new
+dimensions any name will do, but we are used to naming
+the dimensions d.something.)
+<p>
+To add new dimensions, move to the positive direction  from the home cell
+along d.2 until you get to the cell containing the text 'DimLists'. When
+you move one step to the positive direction along d.1 from this cell you
+end up in the dimension list. The dimension list contains a cell for each
+dimension, which are connected to each other in a cyclical manner.
+The dimesions that are currently used (d.1, d.2 and d.3) are pink.
+<p>
+<strong>Making a new dimension simply means adding a new cell on a
+dimension list and typing the name of the dimension in the
+cell</strong>. <a href="dimensio.png">Figure 9</a> shows the
+dimension list after adding d.marriage and d.children.
+<p>
+<s3>Rotating the dimensions</s3>
+<p>
+Before we can continue our study of  making the family tree,
+rotating the dimensions has to be explained. The number of dimensions
+in GZigZag is infinite, but only three dimensions can be shown on
+the screen at the same time. This is why knowing how to rotate
+dimensions is necessary.
+<p>
+The following keys are used for rotating the dimensions in the right
+window:
+<grid layout="2x6" width="600">
+<cell width="100"><kbd>x</kbd></cell>
+<cell>changes the dimension on the X axis</cell>
+
+<cell><kbd>y</kbd></cell>
+<cell>changes the dimension on the Y axis</cell>
+
+<cell><kbd>z</kbd></cell>
+<cell>changes the dimension on the Z axis</cell>
+</grid> <p>
+
+The following keys are used for rotating the dimensions in the left
+window: <p>
+<grid layout="2x6" width="600">
+<cell width="100">Shift-<kbd>x</kbd></cell>
+<cell>changes the dimension on the X axis</cell>
+
+<cell>Shift-<kbd>y</kbd></cell>
+<cell>changes the dimension on the Y axis</cell>
+
+<cell>Shift-<kbd>z</kbd></cell>
+<cell>changes the dimension on the Z axis</cell>
+</grid>
+<p>
+For example, to rotate the d.marriage dimension to the X axis of the
+right window, press x until you can see the text d.marriage in the top
+left corner of the window.  <a href="rotate.png">Figure 10</a> shows
+the right window after rotating d.marriage to the X axis.
+<p>
+<s3>Connecting existing cells along new dimensions</s3>
+ <p>
+<s4>Marking and unmarking a cell</s4>
+<p>
+
+Before explaining how the cells containing the names of the relatives
+were connected along d.marriage and d.children, you have to understand
+how to <strong>choose the cells you want to connect</strong>. In
+the GZigZag language this is called <b>marking</b>.
+
+<p>
+
+To mark a cell, <strong>move the blue cursor on the cell you want to
+mark and press <kbd>m</kbd></strong>. The cell that you have marked is
+now coloured red. <a href="mark1.png">Figure 11</a> shows
+the example structure after marking <kbd>Hippy Chick</kbd>.
+
+ <p>
+
+Many cells can be marked at the same time. To mark another cell, move
+the blue cursor on the cell you want to mark and press <kbd>m</kbd>.
+You can now see two red cells. <a href="mark2.png">Figure
+12</a> shows the example structure after marking  <kbd>Hippy Chick</kbd> and
+<kbd>Happy Man</kbd>.
+
+<p>
+
+To unmark a cell, move the blue cursor on the cell you want to
+unmark and press <kbd>m</kbd>.
+
+<p>
+<s4>Connecting cells</s4>
+<p>
+If you want to connect two cells to each other, mark one
+cell and point the other one with the blue cursor. (If you mark both
+cells, they will be connected into a loop.)
+<p>
+If you want to connect three cells, mark two cells and point
+the third one with the blue cursor.   (If you mark all cells, they will be
+connected into a loop.)
+ <p>
+
+<strong>After choosing the cells</strong> (in the manner explained
+above), all you need to know is the key binding for connecting the
+cells.  So, to connected the chosen cells, <strong>press the
+<kbd>-</kbd> and then a key indicating a direction of the
+connection</strong>.
+
+<p>
+
+Connecting cells requires a lot of practice. If you make a mistake,
+you can use the <kbd>u</kbd>-key ('undo') to delete the latest connection.
+
+<p>
+
+Next we explain how the cells of the family members used in
+the address book can be connected to the family tree structure.
+The same result can be achieved in various ways. The method
+of connecting cells explained here is just an example.
+
+<p>
+
+First, we rotated d.marriage to the X axis to connect the married
+couple. Then, <kbd>Happy Man</kbd> was marked and the blue cursor was moved on
+<kbd>Hippy Chick</kbd>. (<a href="markconnect.png">Figure 13</a>.)
+
+ <p> The key needed for connecting the cells is <kbd>-</kbd>. After
+pressing the <kbd>-</kbd>-key one of the direction keys has to be
+pressed to indicate the direction in which the cells are connected. In
+our example the connection, which can be seen in <a
+href="connection1.png">Figure 14</a>, was made by pressing
+<kbd>-</kbd> and <kbd>j</kbd>.
+
+ <p>
+
+If <kbd>-</kbd> and <kbd>l</kbd> had been pressed the result would
+have been the connection seen in <a href="wrongconn.png">Figure
+15</a>. Since in the family tree design the 'dad' cell (<kbd>Happy Man</kbd>)
+is on the left and the 'mum' cell (<kbd>Hippy Chick</kbd>) on the right, this
+is not the connection we want.
+
+ <p>
+
+After this we added an extra cell (<kbd>+</kbd>) between <kbd>Happy Man</kbd> and
+<kbd>Hippy Chick</kbd> to indicate that they are married.  ( <a href="extra.png">Figure 16</a>)
+
+ <p>
+
+Then we wanted to connect the extra cell to the children of the couple
+along d.children To do this, we rotated d.children to the Z axis. (We
+kept d.marriage on the X axis and d.2 on the Y axis.) We marked <kbd>Lost
+Boy</kbd>, <kbd>Athena Dean</kbd> and <kbd>Big Brother</kbd> and moved the blue cursor to
+<kbd>+</kbd>. ( <a href="child1.png">Figure 17</a>)
+
+ <p>
+
+We pressed <kbd>-</kbd> and <kbd>k</kbd> which indicates that the cells
+should be connected to the positive direction along d.children,
+which was on the Z axis.
+
+ <p>
+
+Finally, to view the family tree we rotated d.marriage to the X axis,
+d.children to the Y axis and d.3 to the Z axis. The final result can
+be seen in <a href="child2.png">Figure 18</a>.
+
+ <p>
+
+One of the advantages of having two windows is that the left and
+the right window can show different dimensions of the same GZigZag
+space. The same cells used in the family tree can be viewed in the
+address book in another window.
+
+ <p>
+<s3 views>Changing views</s3>
+<p>
+There are several different visualizations (views) of the
+GZigZag structure. The name of the active view
+can be seen in the top right corner of a window. All the
+figures used in this guide so far show the address book and the
+family tree using the vanishing view.
+<p>
+<strong>You can change the view of the right window by pressing the
+<kbd>v</kbd> and the view of the left window by pressing
+shift-<kbd>v</kbd></strong>. <a href="row.png">Figure 19</a> shows
+the family tree in the row view.
+ <p>
+As you keep pressing <kbd>v</kbd> (or shift-view), you notice that
+the current version of GZigZag shows four views: the vanishing
+view, the strecth vanishing view, the row view and the column
+view.
+ <p>
+Yet, these are not the only views available. The views that are used
+when the user presses <kbd>v</kbd> or shift-<kbd>v</kbd> are listed in
+the Views list, which can be found by moving to the positive direction
+ from the home cell along d.2 until getting to the cell containing the
+ text 'Views'.  If you move one step to the positive direction on d.1
+ from this cell, you are in the Views list.
+ <p>
+ To see a listing of all views, go to the cell containing
+ the text 'AllViews' (that is connected to the 'Views'-cell on d.2).
+The list of all views is connected to this cell along d.1.
+ <p>
+If you want to use one of  the views listed in the 'AllViews'
+list, clone the cell of the view you want to use to the Views
+list. <a href="htree.png">Figure20</a> shows the AllViews list after
+cloning HTree. The HTree view can now be used by pressing
+<kbd>v</kbd> (or SHIFT-v).
+ <p>
+Most of the views of the 'AllViews' list are designed for specific
+purposes. Section <ref views> deals with views in more detail.
+ <p>
+<s3>Making changes to the structure</s3>
+<p>
+When you are making a structure of your own, you may sometimes make
+mistakes or want to change the structure afterwards. The current
+version of GZigZag offers some possibilities for this.
+ <p>
+<s4>Undo</s4>
+ <p>
+Undo (=cancelling the last move(s)) was already briefly mentioned before. The
+<strong><kbd>u</kbd>-key</strong>,  for example, removes the last
+move of the cursor, the last connection made, the last hop,
+alpha-shear or cell exchange. (The last three are explained later in
+this document.) It also brings back a deleted cell.
+ <p>
+<s4>Disconnecting cells</s4>
+ <p>
+If you notice that you have connected the cells in a wrong way and are
+no longer able to use undo to break the connection, <strong>you can
+use use the <kbd>b</kbd>-key and one of the direction keys</strong>
+(indicating the direction of the connection you want to remove).
+<p>
+For example, when making the family tree structure you may notice that
+you have connected your cousin along d.children as if he was your
+brother. In  <a href="kafka.png">Figure21</a> <kbd>Franz Kafka</kbd>
+is the cousin in the wrong place. <kbd>Franz Kafka</kbd> can be removed by
+pressing <kbd>b</kbd> and <kbd>,</kbd> (when the blue cursor is on
+<kbd>Big Brother</kbd>). The result of this can be seen in <a
+href="breakkafka.png">Figure 22</a>.
+ <p>
+If a cell is used on many dimensions, the other connections
+still remain after breaking a connection on one dimension. In
+the example given above the cell of the cousin maintains its
+place in the address book.
+ <p>
+<s4>Deleting a cell</S4>
+ <p>
+If you have created a useless cell, you can delete it. To do this,
+move the blue cursor on the useless cell and <b>press  <kbd>delete </kbd></b>.
+
+<p>
+Don't delete a cell on which the green cursor is! If you
+do that, you'll get a 'RASTER ERROR'.
+
+ <p>
+<s4>Hopping</s4>
+ <p>
+When building a GZigZag structure you notice quite often that you
+have a useful cell, but it is in the wrong place in the structure.
+<strong>Hopping is an operation that - as the name indicates - makes a cell
+hop over one of its neighbours along a chosen dimension</strong>.
+  <p>
+For example, if you have arranged the names in your address book
+in alphabetical order and notice that one of the names is in
+the wrong place, you can move it to the right place by using the
+hopping function.
+ <p>
+<strong>The key used for hopping is <kbd>h</kbd> after which you have
+to press one of the direction keys</strong> to indicate the direction
+of the hop.  In <a href="hop1.png">Figure 23</a> <kbd>Lost Boy</kbd> is in the
+wrong place. <kbd>Lost Boy</kbd> can be moved to the right place by moving the
+blue (or) the green cursor on <kbd>Lost Boy</kbd> and then pressing
+<kbd>h</kbd> and a direction key.  We moved <kbd>Lost Boy</kbd> by moving the
+green cursor on it and pressing the <kbd>h</kbd> and <kbd>c</kbd> five
+times. The result of this is shown in <a
+href="hop2.png">Figure24</a>.
+<p>
+<s4>Alpha-shear</s4>
+ <p>
+Another operation that can be useful when you want to move a cell in
+the GZigZag structure is the alpha-shear. The hop makes a cell hop
+along a dimension, but the alpha-shear moves the connection.
+<strong>The alpha-shear is used by typing <kbd>a</kbd> and two
+directions: first the direction of the connection that is moved and
+then the direction into which the connection is moved.</strong>
+ <p>
+The difference between the hop function and the alpha-shear function
+is easier to understand with an example. So, for example, when
+making the address book you notice that you have connected the address
+of your sister to the address of your brother. In <a href="olympos.png">Figure 25</a>
+<kbd>Olympos</kbd> is the address of <kbd>Athena Dean</kbd>, not the address of <kbd>Big
+Brother</kbd>.
+ <p>
+You can't correct this mistake by hopping because the hop function
+only hops the address to the other side of  <kbd>Big Brother</kbd> on d.1.
+(<a href="hopolympos.png">Figure 26</a>.) So, you can only correct the
+mistake by using the alpha-share. We pressed <kbd>a</kbd>,
+<kbd>j</kbd> and <kbd>i</kbd> to move <kbd>Olympos</kbd> to the right
+place. (<a href="olympos2.png">Figure 27</a> represents the result of
+this.)
+ <p>
+<s4>Cell exchange</s4>
+ <p>
+Cell exchange is an operation that changes the location of two cells
+in the GZigZag structure. <strong>First, two cells are selected using
+the blue and the green cursor. After this <kbd>%</kbd> is
+pressed.</strong>
+ <p>
+For example, the family tree structure is designed so that the cells
+of the children are connected to  <kbd>+</kbd> cell along d.children from
+the oldest to the youngest. If you had connected the cells so that the
+oldest would be the last cell of the list and the youngest would be
+the cell just below <kbd>+</kbd>, you could change the cells to the
+right places usig the cell exchange.
+ <p>
+<a href="change1.png">Figure 28</a> shows <kbd>Big Brother</kbd>, who is
+naturally the oldest of the children, and <kbd>Lost Boy</kbd>, the youngest of
+the children, in the wrong places. To correct the mistake, the blue cursor
+was moved on <kbd>Big Brother</kbd> and the green cursor was moved on <kbd>Lost
+Boy</kbd> and then <kbd>%</kbd> was pressed. <a
+href="change2.png">Figure29</a> shows that the brothers are now in the
+right places in the family tree.
+ <p>
+<s1>Navigational tricks</s1>
+<p>
+
+The basics of navigation in the GZigZag space were introduced in
+Section <ref buildingstruct>.  When you are familiar with the
+basics, these tricks might help you to work more effectively with your
+GZigZag.
+ <p>
+<s2>Returning to the home cell</s2>
+ <p>
+Currently there are two keys that help you to return to the home cell, if
+you feel completely lost:
+<p>
+<ol>
+<li> Pressing <strong><kbd>HOME</kbd></strong> returns the blue cursor to the home cell.
+<li> Pressing <strong><kbd>ESC</kbd></strong> returns the blue and the green cursor to the
+home cell
+</ol>
+
+<s2>Jumping to a cell using the cell ID</s2>
+<p>
+Cells of GZigZag have an ID, the purpose of which is to help
+to recognize the cells. In the current version of GZigZag IDs are
+numbers and can be used to make navigation easier.
+<p>
+The ID of the cell, on which the cursor is, can be seen in the
+bottom left corner of a window. The right window shows the ID
+of a cell on which the blue cursor is. The left window shows the
+ID of a cell on which the green cursor is.
+<p>
+The IDs can be used to help navigation in the following way:
+<p>
+<ol>
+<li> <strong>Type the ID of the cell</strong>, e.g. '554'. (Yes, if
+you want to use this, you have to learn the IDs of the cells you
+consider most important by heart.) If you make a mistake, you can use
+<kbd>BACKSPACE</kbd> to correct the mistake.  </ol>
+
+Choose one of the following depending on which cursor you want to
+use
+<ol>
+<li> If you want the blue cursor to move to the cell the ID of
+which you have just typed, <strong>press <kbd>g</kbd></strong>.
+<li> If you want the green cursor to move to the cell the ID of
+which you have just typed, <strong>press shift-G</strong>.
+</ol>
+
+
+<s2>Jumping to a cell on which another cursor is</s2>
+<p>
+If you notice that you have lost one of the cursors, this
+function might be useful. It brings the lost cursor to the
+cell on which another cursor is.
+<p>
+To make <strong>the blue cursor</strong> jump to the cell on which the green
+cursor is, press <strong><kbd>&gt;</kbd></strong>.
+<p>
+To make <strong>the green cursor</strong> jump to the cell on which
+the blue cursor is, press <strong><kbd>&lt;</kbd></strong>.
+<p>
+<s2>Jumping to the original cell from a clone</s2>
+<p>
+If you are on a cloned cell (the colour of which is dark yellow) and
+want to find out were the original cell (from which the clone was made)
+is, choose one of the following depending on which cursor you want to move:
+<p>
+<ol>
+<li> If <strong>the blue cursor</strong> is on the clone <strong>press
+<kbd>o</kbd></strong> to get to the original.  <li> If <strong>the
+green cursor</strong> is on the clone, press
+<strong>SHIFT-<kbd>o</kbd></strong> to get to the original.<p>
+</ol>
+
+<s2>Jumping to the end of a rank</s2>
+<p>
+A rank is one of the terms of the GZigZag language. It simply
+means a set of cells connected to each other along a dimension.
+For example, <a href="klooni.png">Figure 30</a> shows an incomplete
+address book, in which <kbd>Happy Man</kbd> and <kbd>Wall Street</kbd> form a rank
+along d.1. Also <kbd>Hippy Chick</kbd> and <kbd>Wall Street</kbd> form a rank along
+d.1 as well as the cells connected along d.2 from <kbd>Lost Boy</kbd> to <kbd>Bindings</kbd>
+(which cannot be seen on the figure).
+<p>
+To get to the end of a rank, press <kbd>END</kbd> and one of the keys indicating
+a direction. For example, if you would like to move the green cursor
+from <kbd>Happy Man</kbd> to <kbd>Lost Boy</kbd> (see <a href="klooni.png">Figure 30</a>),
+you would have to press <kbd>END</kbd> and <kbd>e</kbd>.<p>
+
+<s2>Changing the places of the cursors</s2>
+<p>
+Sometimes you might want to change the places of the cursors. <p>
+
+If you have an American keyboard, press <kbd>~</kbd> for doing this.<p>
+
+In case you are not using an American keyboard pressing <kbd>~</kbd>
+does not work. If you want to use the function, change the
+keydinging. (See <ref chkeybindings> for changing the keybinding.)<p>
+
+<s2>Curseling</s2>
+
+Under construction.
+
+<s1> Modifying the user interface of GZigZag</s1>
+ <p>
+ The current version of GZigZag offers some possibilities for changing
+ the user interface. You can change the key bindings and the way cells
+ (and their contents) look like. The looks of the views can also be
+ modified.
+ <p>
+<s2 chkkeybindings>Changing the keybindings</s2>
+<p>
+In addition to modifying the bindings of the basic functions, you can modify
+the bindings of the Edit window  and the bindings used for curseling.
+<p>
+To modify the bindings, go to  the 'Bindings' list. You find the list by
+moving to the positive direction on d.2 from the homecell until you get
+to <kbd>Bindings</kbd>. This cell is connected to <kbd>Normal mode</kbd>,
+<kbd>Text edit mode</kbd> and <kbd>Cursel mode</kbd>  on d.1, which are
+connected to cells enabling the change on d.2.
+<p>
+Say you want to  change the key used for changing the places of the
+cursors.  Instead of <kbd>~</kbd> you want to use <kbd>F10</kbd>.
+You  move on the Normal mode list on d.2 until you find a  cell containing '~'.
+(<a href="bind1.png">Figure31</a>.) Just replace ~ with F10. (<a href="bind1.png">Figure32</a>.)
+Pressing <kbd>F10</kbd> should now change the places of the cursors.
+<p>
+<s2> Changing the looks of cells and their contents (Cell views) </s2>
+ <p>
+<strong>A cell view  determines what cells and their contents look like</strong>.
+<p>
+By using a cell view you can affect
+<ul>
+<li>the font type and size
+<li>the way fonts are displayed
+<li>the background colour of the cells
+<li>the width of the cells
+<li> margins of the cells
+ </ul>
+ <p>
+As you have learned earlier, you can change a view by pressing a
+certain key. The same principle works with the cell views. <b>A cell
+view of the right window can be changed by pressing <kbd>F2</kbd>
+and the cell view of the left window can be changed by pressing
+<kbd>SHIFT-F2</kbd></b>.
+<p>
+The current version of GZigZag does not show the name of
+the active cell view on the window the same way the name of the active
+view is shown. The cell view that you get after starting an empty
+space in your GZigZag is shown in <a href="boring.png">Figure32</a>.
+After pressing <kbd>F2</kbd> once, you get a cell view that can be seen in
+<a href="f2.png">Figure33</a>.
+ <p>
+Naturally, you can modify cell views and create a cell views of
+your own, e.g. a cell view for a bad rainy day with boring grey background colour
+and small font size (<a href="rainy.png">Figure34</a>) and a cell view for a wonderful lovely day with
+green background, big font size and huge margins (<a href="shiny.png">Figure35</a>).
+  <p>
+<s3>Modifying a cell view</s3>
+ <p>
+<s4>Getting to know the 'Cell Views' list </s4>
+  <p>
+Before you can start modifying a cell view, you have to find the
+'CellViews' list.
+<p>
+You can find the list by moving to the positive direction on d.2 from
+the homecell until you get to the cell containing the text "CellViews".
+After this, move one step to the positive direction on d.1. You should
+now be on the 'CellViews' list, which consists of cells containg the names
+of the cell views.
+  <p>
+If you move on the list, you notice that the current version of GZigZag
+contains five standard views: "Standard Flob Factory" (which is used when
+you start GZigZag, see  <a href="boring.png">Figure32</a>), "Non-enlarging"
+(see <a href="f2.png">Figure33</a>), "Black background", "Different font" and
+"SplitCellFlobs". These standard cell views just demonstrate the different possibilities
+and can be easily changed.
+  <p>
+(If you take a closer look at the list, you notice that some of the cells
+are coloured orange. The orange colour tells that the coloured views
+are currently used in the two windows. Since the current version of GZigZag
+does not show the name of the active cell view in the windows, this is the
+only way to find out what is the name of the cell view used.)
+ <p>
+<s4>Changing "Standard Flob Factory" to "My Grey Winter Day Standard Factory"</s4>
+  <p>
+Say, you want to modify the "Standard Flob Factory". Firstly, you want to
+change the name of the view to "My Grey Winter Day Standard Factory" ;-).
+Then, you want to change the background colour of the cells to grey,
+the font type to 'Serif' and the size of the font to '8'.
+  <p>
+<s5>Changing the name</s5>
+  <p>
+Changing the name of a cell view is quite easy. Just go to the
+cell containing the text "Standard Flob Factory" and change the text
+to "My Grey Winter Day Standard Factory". (If you don't remember
+how to edit text in a cell, see <ref enter>)
+  <p>
+<s5>Changing the background colour</s5>
+  <p>
+The state of art of "My Grey Winter Day Standard Factory" after the change of
+the name can be seen in <a href="rcfact1.png">Figure36</a>.
+ <p>
+In Figure36 the blue cursor is on a cell containing the text "rcfact1", which
+is an identifier cell of the programme. Every cell on the 'CellViews' list is
+connected to an identifier cell like this on d.1. A user should not try
+to modify this cell.
+   <p>
+Figure36 also shows that the cell following "rcfact1" on d.1 is connected to a
+cell including the text "bg" on d.2. The "bg" cell, then, is connected to a
+cell containing the text "0xffffff" on d.1.
+  <p>
+The roles of these cell  are as follows:
+<ul>
+<li>
+The cell containing the text "bg" (for 'background colour) holds the name of the
+thing you can change (which is usually called a 'parameter')
+<li>
+The cell containing the text "0xffffff" includes the value of the
+parameter, which in this case is the value of the background colour. If you are familiar
+with the hexadecimal representation of colours used e.g. in HTML, changing the background
+colour should be easy. Yet, in GZigZag '#' is replaced by '0x'. </ul>
+  <p>
+So, to change the background colour from white to grey, pick a shade
+of grey from <a href="http://home.flash.net/~drj2142/pages/rgbhex.html">a RGB Hex Colour Chart</a>
+and replace "fffff" with an approriate value.
+   <p>
+For example, if you replace "ffffff" with "888888", the result can be seen in
+<a href="grey.png">Figure37</a>.
+  <p>
+<s5 para>Changing the font type and size</s5>
+   <p>
+Now you would like to change the font type and size of "My Grey Winter Day Standard
+Factory", but there is a problem. If you look at <a href="grey.png">Figure37</a>, there are no cells for placing the
+values of font type and size . The problem can be easily solved:  just create new cells for  the
+parameter and values. <a href="para.png">Figure39</a>  shows  our example after adding the cells
+ for the font parameter and the values of the type and the size.
+   <p>
+The next thing you have to do in order to change the font type and size is to  type in the
+values and the parameter. In the current version of GZigZag, you have to start by
+typing the values . (Yes, it is rather complicated, but if you type the parameter first,
+you will get an error. This will be fixed in the future.)  So, type "8" (or any other value for
+the font size) in the tailcell of the newly created rank, "serif " (or any other value for the font type)
+in the middle cell and the  text "font" in the headcell of the rank. The example after these
+changes can be seen in <a href="font.png">Figure40</a>.
+   <p>
+<s4>Other possible modifications</s4>
+  <p>
+The background colour and the font type and size are not the only modifications you can
+make. This section introduces other possible modifications.
+  <p>
+If there are no cells needed for  making  certain modifications, you have to create the
+cells  (in the manner introduced  in <ref para>).
+   <p>
+<s5>Changing the margins  of the cells</s5>
+   <p>
+Margins add invisible space inside the border of the cells, which pushes the cell's contents away
+from the border on all four sides.
+  <p>
+The following cells (created respectively along d.1) are needed for modifying margins:
+<ul><li> A cell for "margins"-parameter
+<li>A cell for the value of the  top and bottom margins (measured in pixels)
+<li>A cell for the value of  the left and right margins  (measured in pixels)</ul>
+  <p>
+<a href="margins.png">Figure41</a>  shows   "My Grey Winter Day Standard Factory" after
+adding the cells for the "margins" parameter and  the values.
+  <p>
+<s5>Changing the width of the cells </s5>
+   <p>
+You can change the width of the cells using the "widthstr" parameter.
+(As you have probably noticed, the StrechVanishing is the only view
+that specifies the width of the cells according to the lenght of the text
+in each cell. In other views, the cells have the same width.)
+  <p>
+The following cells (created respectively along d.1) are needed for modifying
+the width of the cells:
+<ul><li> A cell for the "widthstr"-parameter
+<li>A cell for the value of the width.  (This is not a numerical value. The more text you
+enter, the broader your cells.)</ul>
+  <p>
+<a href="widthstr.png">Figure42</a>  shows   "My Grey Winter Day Standard Factory" after adding the cells
+for the "widthstr" parameter and  the values.
+  <p>
+<s5>Changing the way fonts are displayed</s5>
+  <p>
+You can affect the way the fonts are displayed on the screen by
+using the "enlargefont" parameter.
+  <p>
+If the "enlargefont" parameter is "true",  GZigZag can use bigger
+font size than specified  in the font parameter to highlight the center cell
+in certain views. Setting "enlargefont" to false means that the specified
+font size is used everywhere.
+  <p>
+The  following cells (created respectively along d.1) are needed when using these parameters:
+<ul><li>A cell for the "enlargefont" parameter
+<li>A cell for the value of the parameter.  (The value is either "true" or "false".)</ul>
+  <p>
+<s4>Making a cell view of your own</s4>
+ <p>
+You can also - instead of modifying an existing cell view - make a completely
+new cell view.
+  <p>
+To do this, first create a new cell on the 'CellViews'-list and type the name of
+the cell view in it. (<a href="shinyhappy.png">Figure43</a> shows a new cell (named after a song of R.E.M)
+in the 'CellViews' list.) Then continue by creating an identifier cell containing
+the text "rcfact1" and an empty cell, respectively, to the positive direction
+along d.1. (<a href="shinyhappy2.png">Figure44</a>.) After this you can start creating the cells for
+the parametres on d.2.  (<a href="shinyhappy3.png">Figure45</a>)
+ <p>
+ <s2> Changing the looks of views</s2>
+
+ Under construction.
+
+<s1 views>More about views</s1>
+  <p>
+This section introduces some of  the views listed in the 'AllViews'-list.
+As it was mentioned in <ref views>, you have to clone the cells of these
+views from the 'AllViews'-list to the 'Views'-list in order to
+use them.
+  <p>
+<s2>Views for  hierachical structures</s2>
+  <p>
+VTree, VTree with lines, HTree and HTree with lines are views
+designed for showing tree structures and other hierarchies.
+VTree is an abbreviation for 'vertical tree', HTree for 'horizontal
+tree'. VTree shows the tree vertically, HTree horizontally.
+   <p>
+The difference between the VTree and VTree with lines is -as
+the name indicates - that VTree shows lines between the element
+of the hierarchy. Naturally, the same applies to the difference
+between HTree and HTree with lines.
+   <p>
+<s3>VTree and VTree with lines</s3>
+  <p>
+Say, you would like to present the organizational chart of the
+<a href="http://www.tielaitos.fi/fakta/pdfe/org1en.pdf">Finnish National Road Administarion</a>
+using VTree with lines.
+ <p>
+(The instructions given here also apply to VTree. The reason for using
+VTree with lines in this example is that the writer of the instructions just
+happens to like VTree with lines more.)
+  <p>
+First, you create two new dimensions. You could call the dimensions
+for example d.head1 and d.body1. After doing this rotate d.head1 to the
+X axis and d.body1 to the Y axis.  Then, change the view to
+VTree with lines. <a href="make1.png">Figure45</a> shows a GZigZag
+window after these operations.
+ <p>
+The board is the highest organizational unit of the hieararchy, so type
+'Board' on the cell. Below the board is the director general. Create a
+new cell for the director general by pressing 'n' and ',' (when the
+right cursor in on that cell) and type 'Director General' on the cell.
+Below the director are two units: the central administration and
+the headquarters. Create a cell for the the central administration first
+by pressing <kbd>n</kbd> and <kbd>,</kbd> (when the right cursor is on that cell).
+Another subunit to the director general can be created by pressing
+<kbd>n</kbd> and <kbd>l</kbd> (when the right cursor is on that cell).
+<a href="make2.png">Figure46</a> shows
+the hierachy after these operations (and typing in the names of
+the organizational units.)
+ <p>
+Thus, when you are using the blue cursor, you can create a subcell for another
+cell of the hierarchy by pressing <kbd>n</kbd> and <kbd>,</kbd>. If a cell has more than
+one subcells, you can create more subcells from the first subcell by
+pressing <kbd>n</kbd> and <kbd>l</kbd>.
+  <p>
+<a href="make3.png">Figure47</a> shows one part of the organizational chart of the Finnish National
+Road Administration after adding more organizational units.
+ <p>
+After creating the organizational chart using the VTree with lines you
+can view it with VTree (<a href="make4.png">Figure48</a>) and other views. Notice that the organizational
+chart looks quite different in views which are not designed for
+hiearchical structures. (<a href="make5.png">Figure49</a> presents the organizational chart in
+Vanishing View.)
+  <p>
+<s3>HTree and HTree with lines</s3>
+  <p>
+If you want to view a tree made using VTree, all you have to do
+is to change the two dimensions to different axes.
+ <p>
+Thus, to view the previous example using HTree or
+HTree with lines, you'd have to change d.head1 to the Y axis
+and d.body1 to the X axis.  (<a href="make6.png">Figure50</a>)
+ <p>
+In this view you can create a subcell for cell by pressing <kbd>n</kbd> and <kbd>l</kbd>.
+If a cell has more than one subcells, you can create more subcells from
+the first subcell by pressing  <kbd>n </kbd> and  <kbd>, </kbd>.
+ <p>
+<s2>A view for presentations</s2>
+<p>
+If you are planning to give a presentation, you could try doing it with
+GZigZag. There is a specific view called Presentation view designed
+especially for this purpose.  (If your version of GZigZag does not
+have a cell  for the Presentation view on the 'AllViews' list, make a
+new cell on the list and type 'Presentation' in it (with out '- marks). After doing this make
+a new cell to the positive direction from this cell on d.1 and type' Prez.R'
+in it.)
+  <p>
+Presentation view shows the structure of your presentation
+as a list. <a href="myspeech.png">Figure51</a>  shows a presentation called
+'My Speech'. The most important parts of 'My Speech' are
+'Who am I?', 'Why am I?' and 'Where am I?'.
+  <p>
+In the example the blue cursor is used to move in the presentation.
+The regular keys ' <kbd>i </kbd>,  <kbd>l </kbd>,  <kbd>, </kbd> and  <kbd>j </kbd> are used for moving the blue
+cursor. Pressing  <kbd>, </kbd>  moves the blue cursor down on
+the list (<a href="myspeech1.png">Figure52</a>). When the blue cursor is on 'Who am I?', pressing
+ <kbd>l </kbd> takes you the 'Who am I?' part of the presentation (<a href="myspeech2.png">Figure53</a>).
+When the blue cursor is on 'To be honest, I dunno', pressing  <kbd>l </kbd>
+takes you to the 'To be honest, I dunno' part of the presentation
+(<a href="myspeech3.png">Figure54</a>). You can get back to the previous parts of the presentation
+by pressing  <kbd>i </kbd>.
+ <p>
+After you have learned how to read a presentation using
+Presentation view, you might want to take a look at the same
+structure using another view. <a href="structure1.png">Figure55</a> shows
+the presentation in Vanishing View. If you want to make a presentation of your own, you should
+understand the structure of the presentation shown in Figure55. (The writer
+of this guide thinks that a presentation is actually easier to make using
+Vanishing View than Presentation view, which is just designed
+for <cite>showing</cite> presentations.)
+  <p>
+If you look at the Figure55, you notice that  title of the presentation
+('My Speech') is placed in one cell. The positive end of this cell
+is connected to an empty cell on d.1.   The most important parts
+of the presentation ('Who am I?', 'Why am I?' and 'Where am I?')
+are also in their own cells, which are connected to each other on
+d.2. 'Who am I?', then, is a title of a another part of presentation,
+which consists of   'Huh?', 'To be honest, I dunno' and 'Yes, it's difficult
+indeed'. Thus, 'Who am I?' is followed by an empty cell on d.1 and
+'Huh?', 'To be honest, I dunno'  and  'Yes, it's difficult indeed' are connected
+to the empty cell on d.2.
+<p>
+Do you understand the structure of a presentation now? ;-) To sum up,
+a cell contain the title of a presentation (or a title of a certain part
+of a presentation) is always connected to an empty cell to the positive
+direction on d.1.  The parts of the presentation (or the parts of a certain
+part of the presentation ;-) are connected to the empty cell to the
+positive direction on  d.2. If you understand that you should be able
+to make your own presentation with GZigZag.
+ <p>
+<s1>Some applitudes</s1>
+<p>
+<s2>Nile</s2>
+Nile is <strong>a writing tool of the future</strong> for people who love writing.
+It will provide functionalities that are lacking from the currently
+popular word processors. The very first version of Nile already
+supports Ted Nelson's idea of transclusions.  (See <a href="http://www.sfc.keio.ac.jp/~ted/XUsurvey/xuDation.html">
+Xanalogical Structure, Needed Now More than Ever: Parallel Documents,
+Deep Links to Content, Deep Versioning and Deep Re-Use</a>.)
+ <p>
+We appriciate people who have time to test Nile and comment on it
+e.g on the developer's mailing list, but we would like to remind that
+<strong>this tool is NOT yet safe</strong>. So don't try writing anything
+precious with it.
+<p>
+<s3 start>Starting Nile</s3>
+ <p>
+<strong>Before you can start using Nile, you should make some empty cells</strong>.
+You can think of these empty cells e.g. as cells that will rescue you if you
+get RASTER ERROR while using Nile. :-) (See <ref error>.) You can for example
+make two empty cells above the home cell. Leave the blue cursor on
+one of the cells. (See <a href="newcells.png">Figure56</a>.)
+ <p>
+After doing this, <strong>find the cell including the text 'SplitNileDemo' on
+the 'Actions'-list using the green cursor</strong>. This cell can be found by going
+to the homecell (press ESC unless you are already on the homecell) and
+move to the positive direction from the home cell on d.2 until you get
+to the cell containing the text 'Actions'. When you move one
+step to the positive direction on d.1 from this cell you'll end up in the
+Actions list, to which the 'SplitNileDemo'-cell is connected.
+ <p>
+Once you have found the right cell, <strong>press ENTER</strong>. Now you should see
+the Nile window (<a href="start.png">Figure57</a>) appearing on the screen.
+Then move the green cursor (on the GZZ window) on the other new
+cell you have just created.
+ <p>
+<s3>Writing a title</s3>
+ <p>
+Click on the left or the right side of the Nile window depending on which
+side of the window you want to start writing. Write a title for your text.
+<a href="story.png">Figure58</a> shows the Nile window after clicking
+on the right side of the window and typing 'Story'.
+ <p>
+<s3>Writing text</s3>
+ <p>
+Now that you have written a title, <strong>press enter to start writing the
+actual text</strong>. You do not need to capitalize the first letter of the
+the sentence if you remember to <strong>press the SPACEBAR two times
+after ending the previous sentence</strong>. Nevertheless, if the first word of the
+sentence is a name, you should capitalize the first letter. If you later want
+to move the name word e.g. in the middle of the sentence, the first letter of the name
+won't be a capitalized one anymore.  To start a new paragraph, press
+ENTER. <a href="storytext.png">Figure59</a> shows the Nile Window after typing
+some text.
+ <p>
+<s3 move> Moving, activating and arranging text</s3>
+ <p>
+An example. You would like to change the fourth sentence of the example text so that
+"a student of communication studies" would appear before "a doctor of psychology".
+ <p>
+To achieve this is, you would have to do the following things:
+<ol>
+<li>Move the insertion cursor (which is currently at the end of the last paragraph)
+near "a student of communication"
+<li>Activate "a student of communication studies"
+<li>Move "a student of communication studies" to the new place</ol>
+<p>
+The first part of the task is easy to do with the mouse: just click on the place,
+where you want the insertion cursor to be moved. (See <a href="aftermove.png">Figure60</a>,
+which represents the situation after the move.)
+ <p>
+You can also move the insertion cursor  by using the arrow keys. Yet, before trying to move
+the writing cursor with the arrow keys, you should learn to understand the
+three modes of writing, which help you to move the writing cursor with the arrow
+keys faster. You can also use the modes for activating parts of text (which is
+currently done only by using the keyboard) in a more effective way.
+ <p>
+The three modes are the character mode, the word mode and the sentence mode.
+<strong>You can change the modes by pressing the TAB key</strong>. When you
+first start using Nile, you are in the character mode. When you press the TAB key,
+the mode is changed into the word mode. Pressing the TAB key after this, takes you
+to the sentence mode. If you press the TAB once again, you're back in the
+character mode.
+
+<p>If you want to activate words, use the word mode.
+If you want to activate sentences, use the sentence mode.  In our example case,
+the use of the word mode is the best solution, because the phrase "a student of
+communications studies" consists of many words.
+<p>
+Thus, <strong>to activate characters/words/sentences</strong> (depending in which mode you are),
+<strong>use the arrow keys. If you want to activate more than one character/word/sentence/,
+keep the SHIFT key down while activating</strong>. <a href="active.png">Figure61</a>
+shows "a student of communication studies" activated by pressing the SHIFT key and the
+left arrow key five times.  After this, <strong>you can move the activated phrase by pressing
+ALT and an arrow key indicating the direction to which you want the text to be moved</strong>.
+In order to move "a student of communication studies" to its intented place you would have
+to keep the ALT key down and press the left arrow key until you'd see the text in the right
+place. (Note. In our current example you would also have to move the word "and".)
+<p>
+<s3>Making a Transclusion</s3>
+ <p>
+The writer of our example story now decides to make an improved version of her
+story.  To start another version, she clicks on the right side of the Nile window, writes
+a new, improved title for the story, a totally new first sentence and a beginning
+for the second sentence.  (See <a href="newstory.png">Figure61</a>.) After this, the
+writer of the new version decides that the first sentence of the first version is usable and
+wants to make a transclusion.
+ <p>
+To make a transclusion the writer activates the sentence in question, clicks with the mouse
+on the place  where she wants the transclusion to be made. In our example case the writer
+clicks after the ','. <strong>The key binding for a transclusion</strong>, then, is
+<strong>CTRL+T</strong>.  Nevertheless, because of a bug, the result is not quite
+what the writer wanted. As <a href="newstory2.png">Figure62</a> demonstrates,
+the transclusion did not end up in the right place. (The bug WILL be fixed.)  So, all
+the writer can do, is to move the sentence to the right place using the method introduced in
+<ref move>.  The text after the move (and another transclusion) is seen in
+<a href="newstory3.png">Figure63</a>. The use of colours demonstrates the parts
+of the texts that are the same. (This is likely to change, because the borderlines
+of the transclusions are a bit difficult to see.)
+<p>
+<s3 error>What to do if RASTER ERROR occurs</s3>
+<p>
+The writer of this document has been testing Nile for a while, but all the bugs are not yet fixed.
+RASTER ERROR occurs frequently.  <a href="rastererror.png">Figure64</a> shows
+the Nile Window after a bug.
+<p>
+To get back where you started from activate one of the GZZ-windows, press ESC
+and move the green cursor and the blue cursor on the empty cells that you have
+created for this purpose. (See <ref start>) Now you can return to the Nile window. (This
+works often, NOT always.)
+<p>
+<s1>Quiting GZigZag</s1>
+<p>
+When you've had enough, <strong>press <kbd>q</kbd></strong>. If you
+want to continue working with the same space next time, use the same
+cellscrollfile when starting.
+<p>
+<s1>List of keybindings</s1>
+<p>
+#include "../keybindings.wml"
+</substdims>
+
+</body>
+</html>
+
+
+
+

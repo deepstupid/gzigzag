@@ -1,0 +1,148 @@
+<!-- We use the ISO 8859-1 charset for documents. -->
+
+<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+
+<!-- Speakers' voices. Please add yourself and a logo. (32x32 image) -->
+
+<define-tag tjl>
+    <p class="tjl">
+    <img class="tjllogo" src="../TjlLogo.png" alt="Tjl: "/>
+</define-tag>
+
+<define-tag rtr>
+    <p class="rtr">
+    <img src="../RauliLogo.png" alt="Rauli: "/>
+</define-tag>
+
+<define-tag benja>
+    <p class="benja">
+    <b>Benja:</b>
+</define-tag>
+
+<define-tag ajk>
+    <p class="ajk">
+    <b>Ibid:</b>
+</define-tag>
+
+<define-tag tuukka>
+    <p class="tuukka">
+    <b>Tuukka:</b>
+</define-tag>
+
+<!-- Substitute dimensions so that they are written in a good
+     font. -->
+
+<define-tag substdims endtag=required>
+	{: [[s/(?<!>)(d\.+[-\w]+)/<code>\1<\/code>/g]]
+	  %body
+	:}
+</define-tag>
+
+
+<!-- Link to other GZZ documentation (separate tag needed to allow
+NS4-compatible docs to link to NS4-compatible docs and CSS-enhanced
+docs to link to CSS-enhanced docs. -->
+<if <string-eq $(mode) ns4>
+ <define-tag docref endtag=required>
+    <preserve doc>
+    <a href="../<get-var doc>-ns4.html">%body</a>
+ </define-tag>
+/>
+<if <string-neq $(mode) ns4>
+ <define-tag docref endtag=required>
+    <preserve doc>
+    <a href="../<get-var doc>.html">%body</a>
+ </define-tag>
+/>
+
+<!-- inline figure: use like <infigure img="foo.png"> -->
+
+<define-tag infigure>
+		<preserve img>
+		<set-var %attributes>
+	 <table border=0 width="100%"> <tr> <th>
+	 <img align="middle" src="<get-var img>">
+	 </table>
+	 <p>
+		<restore img>
+</define-tag>
+
+<!-- Use like <figure img="foo.png" width=...>caption</figure> -->
+
+	<!-- A bug-compatible ns4 version of figure. Crude but a must. -->
+<if <string-eq $(mode) ns4>
+ <group
+	<define-tag figure endtag=required>
+		<preserve img>
+		<preserve width>
+		<set-var %attributes>
+		<table border=2 frame=box width="<get-var width>">
+		<tr><th>
+		<table border=0 width="100%">
+		 <tr> <th> <img src="<get-var img>">
+		 <tr> <th> <p>%body
+		</table>
+		</table>
+		<restore img>
+		<restore width>
+	</define-tag>
+	<define-tag abstract endtag=required>
+		<h2>Abstract</h2>
+		<p>
+		%body
+	</define-tag>
+<define-tag warn>
+<p class="csswarn">
+<strong>
+You are reading an ugly version of this document that doesn't use CSS
+to place floats nicely. Figures are shown in a very crude way.
+Get Mozilla and see the other version - it's MUCH better.
+</strong>
+</define-tag>
+ />/>
+<if <string-neq $(mode) ns4>
+ <group
+	<define-tag figure endtag=required>
+		<preserve img>
+		<preserve width>
+		<set-var %attributes>
+		<div class=figure style="width: <get-var width>">
+		 <div class=figureimg>
+		  <img src="<get-var img>">
+		 </div>
+		 <p>
+		  %body
+		</div>
+		<restore img>
+		<restore width>
+	</define-tag>
+
+	<define-tag abstract endtag=required>
+		<div class=astract>
+		 <h2 class=abstracthdr>Abstract</h2>
+		 <p>
+		  %body
+		</div>
+	</define-tag>
+<define-tag warn>
+<p class="csswarn">
+<strong>
+Note that this document contains some formatting that is best rendered
+using a true CSS1 standard-compliant browser such as Mozilla; however,
+it should work reasonably well with any browser that can at least ignore
+CSS that it doesn't understand. Unfortunately, Netscape Navigator 4.7,
+for example, doesn't. Well, that's life...  
+</strong>
+<br><br>
+A non-CSS version exists: you can try by compiling this
+document from its WML version with some switches.. (if you came here
+through the WWW, there should be an alternate link on the referring
+page. However, I like
+the pretty rendering by Mozilla so much that that's still the default.
+</define-tag>
+ />
+/>
+
+#use wml::std::grid
+#use wml::fmt::isolatin

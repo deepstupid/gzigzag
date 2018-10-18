@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>The current design problems in GZigZag</title>
+#include '../wmlinc/article.wml'
+ </head>
+ <body>
+<H1>The current design problems in GZigZag</H1>
+<pre>$Id: dp.wml,v 1.53 2001/07/19 16:47:38 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas Lukka</b> <br>
+ 	<code>lukka@iki.fi</code><br>
+        Dept. of Mathematical Information Technology <br>
+	University of Jyväskylä 
+ </cell>
+</grid>
+
+
+<h2>Introduction</h2>
+
+	<p> 
+	This document is intended as an internal discussion document
+	on the most difficult design problems for the GZigZag source code.
+	This is work-in-progress: if there are any unclear parts, feel
+	free to ask me to clarify things.
+
+<h2>Graphics and UI</h2>
+
+    <h3>Connections / Decorations</h3>
+
+
+	<figure img="linkorder.png" width="250px">
+		A simple case where rendering a link in one go gives
+		suboptimal results.
+	</figure>
+
+	<figure img="beamorder.png" width="250px">
+		A beam with cells is even more complicated: the beam
+		has to be between the text and the cell background but
+		behind any other cells on the way to avoid cluttering
+		the screen.  If the beams' borders should float above
+		the beams, then this gets even more difficult.
+	</figure>
+
+	<p>
+	There are interesting problems in the rendering order of
+	links: if there is a link between cells that are at different
+	depths, then which cells should be in front. It is especially
+	difficult to include something like beams into this framework,
+	if a Z-buffer and a real third coordinate is not used.
+	One possibility is to split all links and beams in the middle
+	and render the two halves independently.  However, as seen in
+	the beam figure, that will not be enough.
+
+    <h3>Handles and cursors</h3>
+
+	<p>
+	One of the versions of Ted's specs specifies the following
+	structure for flob.
+	First of all, there is the central <dfn>handle cell</dfn> which
+	is the center of the flob. The flob is referred through it and
+	all the parts of the flob can be found through it.
+	That version of the spec specifies d.handle as the dimension to
+	reach the rest of the flob from the handle cell, and
+	d.ref as the dimension to use to refer to that handle cell and 
+	thereby to the whole flob. (the spec has apparently changed
+	now but the changes do not affect this problem).
+
+	<p>
+	The cells on d.ref are basically stand-ins for the whole flob,
+	kind of like clones are stand-ins for a cell. 
+	An email can be included in several mailboxes (lists of emails
+	running on d.2) by including cells that are on d.ref from
+	the original email's handle cell.
+
+	<p>
+	The problem, then, is basically about what is getting shown:
+	we'd like to be able to show
+	<ol>
+	<li> The actual flob
+	<li> The fact that a cursor is on the referring cell
+	<li> Possibly, the contents of the referring cell
+	</ol>
+	This is a problem since in the current codebase, a vob
+	is known by <em>one</em> cell, whereas the above obviously 
+	requires two cells: the referring cell and the handle cell.
+	Even more important is that the <code>FlobSet</code> knows
+	about the handle cell since otherwise connecting the vobs
+	becomes a less efficient procedure, requiring the FlobSet to
+	look at all referring cells to see whether they are included.
+
+	<p>
+	So the question really becomes: is there any point in storing
+	the referring cell in the vob structure, except as presentational
+	info about the string and cursor colors to show.
+
+	<p>
+	The user can also place the text 
+	insertion cursor in a cell by a mouse click. 
+	This makes things even more difficult.
+
+
+
+<h2>Slices</h2>
+
+<p>
+Slices are used for viewing a number of ZigZag spaces as one compound
+space, and for sending a group of cells over to another user.
+Slices are probably the most crucial aspect of the system for common use
+as they will enable collaboration and upgrading.
+
+<p>
+Among the issues here are
+<dl>
+ <dt>Permanent IDs for versions of cells
+ <dt>Specifying a group of cells for slicing.
+  <dd>This is simple when the all the cells are ones edited by the user.
+      This gets very hairy when the user wants e.g. to send a view. Which 
+      control cells are included?
+ <dt>Reconciling differences: collaborative editing.
+  <dd>A mechanism for keeping two peoples' versions of a "document"
+      in synch by sending minimal groups of cells across. 
+ <dt><code>d.cursor</code> and slices.
+  <dd>Having the cursors in the structure is both a blessing and a curse.
+      Cursors are used both for "variables" internal to the structure
+      with Clang and views' centers. 
+      Their interaction with slices and versioning is unclear to say the least.
+ <dt>Inclusion of a slice into multiple spaces
+  <dd>What a can of worms.
+ <dt>Viewing a space remotely
+  <dd>Only the cells seen should be sent over. How does <code>d.cursor</code>
+      work here?
+ <dt>The identity of dimensions
+  <dd>If a dimension is just a string, we have a namespace problem.
+      Dimension being identified with a particular cell might be a solution
+      but this is again not without its own problems.
+ <dt>Clones
+  <dd>Ted wants these to be used as a solution to many problems here.
+      But is it possible? Can all code be made to support the situation
+      where suddenly one of the cells is split into two clones when
+      the script expected them to be together.
+ <dt>Transcluding
+  <dd>Taking a cell from another space with a permanent ID and connecting
+      its transclusion somewhere in the local space - this creates a new
+      version of the cell!
+ <dt><code>d.ref</code> and <code>d.handle</code>
+  <dd>Interaction of higher-level items with the slice code?
+</dl>
+
+<p>
+And of course the really important question of what we're really after.
+Slices have distinct, but related functionalities:
+<dl>
+ <dt>Part of personal space.
+  <dd>This is what Ted's example of bringing in months of the calendar
+      from slices is about. Each day connects to a weekday on one dimension,
+      and the months connect naturally in the right order by preflets.
+      Here, the idea is that the slice connects to the "main space".
+ <dt>A fixed, distributed "package".
+  <dd>For example, the default space with the default bindings for keys, or
+      packages that demonstrate various features.
+      These are less often modified by the user and are brought in by the user
+      and attached somewhere.
+      Here, the main space connects to the slice.
+ <dt>Versioning.
+  <dd>This is rather similar to the abovementioned fixed, distributed 
+      packages: the user can attach the old version of some slice
+      somewhere, without modifying it (causing a branch) just by looking
+      and browsing it.
+      Naturally, if two versions of the same slice are brought in, the cells
+      should be connected along <code>d.version</code> or somesuch.
+  <dd>
+</dl>
+
+	<h3>Packages</h3>
+	<p>
+	Of the above functions, the most critical one for GZigZag
+	currently is the packages: distributing the main default space
+	as a slice would be a great step: then it would be possible for
+	users to start stable personal spaces which would not be needed
+	to be brought forwards for every new version of the bindings.
+
+	<p>
+	The most important problems here are cursors. Just about
+	everything else can be resolved by explicit hook cells ("hook your
+	own bindings negwards on <code>d.3</code> here").  Cursors are
+	a different matter.  They are used for several things, to name
+	a few:
+
+	<dl>
+	 <dt>Center of view
+	 <dt>Selecting dimensions from dimension lists
+	 <dt>Selecting rasters from raster lists
+	 <dt>Arbitrary selections for viewing operations
+	</dl>
+
+	<p>
+	Additionally, there is the cursor cargo dimension which allows
+	cursors to piggyback on one another - for example, combining
+	the cursors for one view and another view's X axis allows one
+	to change the dimension list for the X axis by moving the other
+	view's center.
+
+	<p>
+	The default space and other packages which have views will most
+	likely have cursors. In order for the spaces to be useful,
+	these cursors should be movable when the package-slice is
+	included and should be movable by changing the main space,
+	not the package-slice. Also, cursor cargo should be changeable.
+
+	<p>
+	There is a simple solution to these problems: the package slices'
+	own <code>d.cursor</code> and <code>d.cursor-cargo</code> are
+	mapped to some other dimensions, e.g. <code>d.ps-cursor</code>.
+	When a slice is first incorporated into the system, the
+	default cursors from the slice are copied to the global
+	<code>d.cursor</code>.	There then need to be operations on the
+	slice cell to reload or commit the cursors of a slice, which
+	simply copy the assignments of the cursors to the package-slice
+	(provided all cursors lie on cells of that package-slice as
+	they should) or copy the cursors from the package-slice to the
+	main space.
+
+	<h3>Most trivial slices</h3>
+
+	<p>
+	Because waiting for the full design to be finalized would
+	have seriously slowed down development (as the main developers
+	wouldn't be able to <em>use</em> GZZ for real work) there is
+	now a primitive slice implementation in place.	Even in its
+	rudimentary form it is surprisingly complete.  In addition,
+	this experiment gives valuable experience in the complexities
+	of implementing any types of slice systems.
+
+	<p>
+	The system works by handling two dimensions, <code>d.slices</code>
+	and (naturally) <code>d.cursor</code> specially.  These are in
+	fact the only dimensions that are allowed to connect between the
+	slices; all others are constrained to be only among the cells
+	of the same slice.
+
+	<p>
+	The dimension <code>d.slices</code> simply connects the homecells
+	of the slices in the slice order. There are no other connections
+	along this dimension and it cannot be modified.
+
+	<p>
+	<code>d.cursor</code> is a different matter. In order to be
+	useful, even the most trivial slices must allow connections that
+	transcend the slices on <code>d.cursor</code>.	In this model,
+	<code>d.cursor</code> is constrained so that the only operation
+	allowed is insertion negwards (currently the cursor is obtained
+	by going to the end of <code>d.cursor</code> poswards, which
+	will change).  Also, cells in slice 0 may be inserted to any
+	other cell but not vice versa: cells (cursors) in other slices
+	may only point to cells in the same slice.
+
+	<p>
+	These semantics are fairly simple but still their correct
+	implementation is not at all trivial, especially for
+	<code>d.cursor</code>.	The implementation uses preflets in
+	slice 0 to connect to the other slices and when reading, the
+	whole rank in slice 0 is placed before all the other cells in
+	the non-zero slice accursing the same cell, so the cursors are
+	not necessarily in the same order they were inserted in.
+
+	<h3>Adapter slices</h3>
+
+	<p>
+	One possible solution in the long term to the package-slice
+	problem is simply having adapter-like slices for the external
+	packages.  These slices would have preflets pointing to s.0 as
+	well as the external package - possibly even without intervening
+	cells.
+</body>
+</html>
+<!--
+	vim: set syntax=html :
+-->

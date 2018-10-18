@@ -1,0 +1,21 @@
+Priorities:
+
+- complicated, realistic example images of proctext and conn
+    - proctext in gzz
+    - 1D textured connectors with direct connections between elliptical
+      and rectangular and hexagonal nodes
+
+- article text: all points there? All objections answered?
+- choose approach for proctext. So many possible viewpoints :(
+- describe properly WHY conns is important:
+    - layout with constraints
+    - fit more information
+    ...
+    - aivan eri lähtökohdat
+
+- references? 
+    -blending
+
+- figures
+    - 3D texture pipeline
+    - conns: depth &c

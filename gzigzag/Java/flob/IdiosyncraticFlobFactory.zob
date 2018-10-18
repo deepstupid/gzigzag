@@ -1,0 +1,98 @@
+/*   
+IdiosyncraticFlobFactory.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A flob factory that shows each cell with its own view, if
+ * desired.
+ * The view should be connected negwards of the cell on 
+ * <code>d.cellview</code>, as a FlobFactory (CellView) ZOb.
+ */
+ 
+public class IdiosyncraticFlobFactory implements FlobFactory, ZOb {
+public static final String rcsid = "$Id: IdiosyncraticFlobFactory.zob,v 1.5 2001/03/18 10:38:26 bfallenstein Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+
+    STRUCTPARAMS {
+	ZOb def
+	    = null;
+    }
+
+    public FlobFactory getIdiosyncraticCellView(ZZCell c) {
+	ZZCell h = c.getRootclone().h("d.cellview", true);
+	if(h == null) return null;
+	// XXX We *WILL* need a cache of ZObs...
+	return (FlobFactory)ZZDefaultSpace.readZOb(h);
+    }
+
+    /** Get the idiosyncratic or default cell view.
+     * Never returns null.
+     */
+    public FlobFactory getCellView(ZZCell c) {
+	FlobFactory cv = getIdiosyncraticCellView(c);
+	if(cv == null) cv = (FlobFactory)def;
+	if(cv == null)
+	    throw new ZZError("No default view!");
+	return cv;
+    }
+
+
+    public Dimension getSize(ZZCell c, float fract) {
+	if(c == null) 
+	    return ((FlobFactory)def).getSize(null, fract);
+	return getCellView(c).getSize(c, fract);
+    }
+
+    public Flob makeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, 
+		int x, int y, int d, int w, int h) {
+	return getCellView(c).makeFlob(into, c, handleCell, 
+			fract, x, y, d, w, h);
+    }
+    public Flob placeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		    float fract, 
+			int x, int y, int depth,
+			float xfract, float yfract) {
+	return getCellView(c).placeFlob(into, c, handleCell,
+		    fract, x, y, depth, xfract, yfract);
+    }
+
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign,
+		int depth, Dimension d) {
+	return getCellView(c).centerFlob(into, c, handleCell, fract, p,
+	    xalign, yalign, depth, d);
+    }
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign, int depth) {
+	return getCellView(c).centerFlob(into, c, handleCell, fract, p,
+	    xalign, yalign, depth);
+    }
+
+}
+
+
+// vim: set syntax=java :

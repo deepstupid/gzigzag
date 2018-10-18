@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>The case for syntaxless languages</title>
+#include '../wmlinc/article.wml'
+ </head>
+ <body>
+{: [[s/(?<!>)\b(d\.+\w+)/<code>\1<\/code>/g]]
+<H1>The case for syntaxless languages</H1>
+<pre>$Id: synt.wml,v 1.1 2001/06/21 09:27:17 tjl Exp $</pre>
+<toc>
+
+<p>
+A manuscript-in-progress about syntaxless languages such as Clang.
+Intended for eventual publication in an academic journal.
+
+<warn>
+
+<h2>Introduction</h2>
+
+<h2>Computational structures</h2>
+
+<p>
+The most pervasive computing paradigm of today is that of
+directories and files, and of programs written as text.
+All the dominant platforms, Linux/Unix, Mac and Windows are based
+on the same fundamental structure.
+Indeed, the structure is so pervasive that it is difficult
+for many people to even imagine a different world. 
+
+<p>
+However, a different world is actually not even difficult to 
+define and implement: choosing a different data model for implementing
+an operating system, for example, is completely feasible,
+as shown e.g. by XXX.
+
+<p>
+In our work, we focus on the ZigZag structure, which is one alternative
+to the directories-files-text model.
+In ZigZag, data is contained in cells which are bidirectionally
+interconnected in a flexible, multidimensional structure.
+
+
+<h2>Parsing, symbol tables and integrated development environments</h2>
+
+<p>
+<small>We will probably need to use that term in every
+paper we write ;) ;)</small>
+
+<p>
+Today's computer languages are, with few exceptions, expressed as text.
+Even the use of the word computer <em>language</em> itself conveys
+the expectation that computer languages, like human languages,
+is expressible in a linear form.
+
+<p>
+In this context, a parser and symbol tables are
+an essential ingredient of a compiler; and that a language
+definition requires defining a Backus-Naur form syntax and
+namespaces for various identifiers.
+
+<p>
+Likewise, it is often found that using an editor which understands
+the language syntax and is able to suggest completions to e.g. method
+names is almost irreplaceable. Especially important is the ability
+to jump from a use of a symbol to the point in the code where
+the symbol was defined.
+
+<p>
+However, human language is expressible as one-dimensional
+because of a simple constraint in speech: time. When a language
+is spoken, a sequential form is a requirement. 
+
+<p>
+Computer languages try to mimic human languages in several ways.
+
+<h2>Syntaxless languages</h2>
+
+<p>
+A syntaxless language is based on there being a richer underlying
+structure than a simple text stream. 
+
+
+<h2></h2>
+
+:}
+</body>
+</html>
+<!--
+	vim: set syntax=html :
+-->

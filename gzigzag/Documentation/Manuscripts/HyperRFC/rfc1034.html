@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<TITLE>rfc1034 - Domain names - concepts and facilities</TITLE>
+<LINK rel="stylesheet" href="DEMOSHEET">
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<table>
+<tr>
+<td><td>
+<pre class="p1">
+4.3.2. Algorithm
+
+The actual algorithm used by the name server will depend on the local OS
+and data structures used to store RRs.  The following algorithm assumes
+that the RRs are organized in several tree structures, one for each
+zone, and another for the cache:
+
+   1. Set or clear the value of recursion available in the response
+      depending on whether the name server is willing to provide
+      recursive service.  If recursive service is available and
+      requested via the RD bit in the query, go to step 5,
+      otherwise step 2.
+
+   2. Search the available zones for the zone which is the nearest
+      ancestor to QNAME.  If such a zone is found, go to step 3,
+      otherwise step 4.
+
+   3. Start matching down, label by label, in the zone.  The
+      matching process can terminate several ways:
+</pre>
+<tr>
+<td><td>
+<pre class="p2">
+         a. If the whole of QNAME is matched, we have found the
+            node.
+
+            If the data at the node is a CNAME, and QTYPE doesn't
+            match CNAME, copy the CNAME RR into the answer section
+            of the response, change QNAME to the canonical name in
+            the CNAME RR, and go back to step 1.
+
+            Otherwise, copy all RRs which match QTYPE into the
+            answer section and go to step 6.
+</pre>
+<td>
+<table>
+<tr>
+<pre class="t2">
+[<a href="">RFC2535</a>] Domain Name System Security Extensions
+<a href="">2.3.5.</a> Special Considerations with CNAME RRs
+<span class="a2">
+   There is a problem when security related RRs with the same owner name
+   as a CNAME RR are retrieved from a non-security-aware server. In
+   particular, an initial retrieval for the CNAME or any other type may
+   not retrieve any associated SIG, KEY, or NXT RR. For retrieved types
+   other than CNAME, it will retrieve that type at the target name of
+   the CNAME (or chain of CNAMEs) and will also return the CNAME.  In
+   particular, a specific retrieval for type SIG will not get the SIG,
+   if any, at the original CNAME domain name but rather a SIG at the
+   target name.
+
+   Security aware servers must be used to securely CNAME in DNS.
+   Security aware servers MUST (1) allow KEY, SIG, and NXT RRs along
+   with CNAME RRs, (2) suppress CNAME processing on retrieval of these
+   types as well as on retrieval of the type CNAME, and (3)
+   automatically return SIG RRs authenticating the CNAME or CNAMEs
+   encountered in resolving a query.  This is a change from the previous
+   DNS standard [RFCs <a href="">1034</a>/<a href="">1035</a>] which
+   prohibited any other RR type at a node where a CNAME RR was present.
+</span>
+</pre>
+</table>
+<tr>
+<td><td>
+<pre class="p3">
+         b. If a match would take us out of the authoritative data,
+            we have a referral.  This happens when we encounter a
+            node with NS RRs marking cuts along the bottom of a
+            zone.
+
+            Copy the NS RRs for the subzone into the authority
+            section of the reply.  Put whatever addresses are
+            available into the additional section, using glue RRs
+            if the addresses are not available from authoritative
+            data or the cache.  Go to step 4.
+</pre>
+<tr>
+<td><td>
+<pre class="p4">
+         c. If at some label, a match is impossible (i.e., the
+            corresponding label does not exist), look to see if a
+            the "*" label exists.
+
+            If the "*" label does not exist, check whether the name
+            we are looking for is the original QNAME in the query
+            or a name we have followed due to a CNAME.  If the name
+            is original, set an authoritative name error in the
+            response and exit.  Otherwise just exit.
+
+            If the "*" label does exist, match RRs at that node
+            against QTYPE.  If any match, copy them into the answer
+            section, but set the owner of the RR to be QNAME, and
+            not the node with the "*" label.  Go to step 6.
+</pre>
+<td>
+<pre class="t4">
+[<a href="">RFC2308</a>] Negative Caching of DNS Queries (DNS NCACHE)
+<a href="">3.</a> Negative Answers from Authoritative Servers
+<span class="a4">
+   Name servers authoritative for a zone MUST include the SOA record of
+   the zone in the authority section of the response when reporting an
+   NXDOMAIN or indicating that no data of the requested type exists.
+   This is required so that the response may be cached.  The TTL of this
+   record is set from the minimum of the MINIMUM field of the SOA record
+   and the TTL of the SOA itself, and indicates how long a resolver may
+   cache the negative answer.  The TTL SIG record associated with the
+   SOA record should also be trimmed in line with the SOA's TTL.
+
+   If the containing zone is signed [<A HREF="http://www.faqs.org/rfcs/rfc2065.html">RFC2065</A>] the SOA and appropriate
+   NXT and SIG records MUST be added.
+</span>
+</pre>
+<tr>
+<td><td>
+<pre class="p5">
+   4. Start matching down in the cache.  If QNAME is found in the
+      cache, copy all RRs attached to it that match QTYPE into the
+      answer section.  If there was no delegation from
+      authoritative data, look for the best one from the cache, and
+      put it in the authority section.  Go to step 6.
+</pre>
+<td>
+<table>
+<tr>
+<pre class="t5">
+[<a href="">RFC2308</a>] Negative Caching of DNS Queries (DNS NCACHE)
+<a href="">6.</a> Negative answers from the cache
+<span class="a5">
+   When a server, in answering a query, encounters a cached negative
+   response it MUST add the cached SOA record to the authority section
+   of the response with the TTL decremented by the amount of time it was
+   stored in the cache.  This allows the NXDOMAIN / NODATA response to
+   time out correctly.
+
+   If a NXT record was cached along with SOA record it MUST be added to
+   the authority section.  If a SIG record was cached along with a NXT
+   record it SHOULD be added to the authority section.
+
+   As with all answers coming from the cache, negative answers SHOULD
+   have an implicit referral built into the answer.  This enables the
+   resolver to locate an authoritative source.  An implicit referral is
+   characterised by NS records in the authority section referring the
+   resolver towards a authoritative source.  NXDOMAIN types 1 and 4
+   responses contain implicit referrals as does NODATA type 1 response.
+</span>
+</pre>
+</table>
+<tr>
+<td><td>
+<pre class="p6">
+   5. Using the local resolver or a copy of its algorithm (see
+      resolver section of this memo) to answer the query.  Store
+      the results, including any intermediate CNAMEs, in the answer
+      section of the response.
+</pre>
+<td>
+<table>
+<tr>
+<pre class="t6">
+[<a href="">RFC2181</a>] Clarifications to the DNS Specification
+<a href="">5.4.</a> Receiving RRSets
+<span class="a6">
+   Servers must never merge RRs from a response with RRs in their cache
+   to form an RRSet.  If a response contains data that would form an
+   RRSet with data in a server's cache the server must either ignore the
+   RRs in the response, or discard the entire RRSet currently in the
+   cache, as appropriate.  Consequently the issue of TTLs varying
+   between the cache and a response does not cause concern, one will be
+   ignored.  That is, one of the data sets is always incorrect if the
+   data from an answer differs from the data in the cache.  The
+   challenge for the server is to determine which of the data sets is
+   correct, if one is, and retain that, while ignoring the other.  Note
+   that if a server receives an answer containing an RRSet that is
+   identical to that in its cache, with the possible exception of the
+   TTL value, it may, optionally, update the TTL in its cache with the
+   TTL of the received answer.  It should do this if the received answer
+   would be considered more authoritative (as discussed in the next
+   section) than the previously cached answer.
+</span>
+</pre>
+</table>
+<tr>
+<td><td>
+<pre class="p7">
+   6. Using local data only, attempt to add other RRs which may be
+      useful to the additional section of the query.  Exit.
+</pre>
+</table>
+</BODY>
+</HTML>

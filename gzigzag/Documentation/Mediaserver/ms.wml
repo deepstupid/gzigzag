@@ -1,0 +1,502 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>GZigZag mediaserver (to be renamed!) design</title>
+#include '../wmlinc/article.wml'
+ </head>
+ <body>
+<substdims>
+<H1>GZigZag mediaserver (to be renamed!) design</H1>
+<pre>$Id: ms.wml,v 1.22 2002/01/17 19:01:42 bfallenstein Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas Lukka</b> <br>
+ 	<code>lukka@iki.fi</code><br>
+        Dept. of Mathematical Information Technology <br>
+	University of Jyv&auml;skyl&auml; 
+ </cell>
+ <cell> <b>Antti-Juhani Kaijanaho</b> <br>
+ </cell>
+</grid>
+
+<toc>
+
+<p>
+The purpose of the mediaserver is to implement 
+a good basis the Xanadu permascroll model
+in an easy-to-use encapsulated fashion.
+
+<p>
+The mediaserver incorporates both peer-to-peer and 
+client-server transfer of data.
+
+<p>
+This ties in with Ted's other projects, and the intent
+is to produce a simple but powerful system completely independent
+of GZigZag (GZigZag is on a higher level and uses this as a library).
+(The source code is currently in the GZigZag repository but
+we might make a new project out of it at some point)
+
+<p>
+<b>Status:</b>
+The current implementation of the mediaserver (as of
+January 17th, 2002) implements local storage and
+client-server transfer through HTTP.
+
+
+<warn>
+
+<h2>Introduction</h2>
+
+<p>
+The Xanadu media model is based on attaching a permanent identifier
+to each piece of fluid media (e.g. text, audio) entering the system.
+This arrangement adds a level of indirection to media access, allowing
+content linkage, version comparison of documents composited from
+spans of fluid media, and automatic sharing of data between copies.
+
+<p>
+The gzz mediaserver is an implementation of these ideas
+in a peer-to-peer framework.
+
+<p>
+<b>Status:</b>
+Permanent identifiers for text and images are implemented.
+Image transclusions can be shown inside a single ZigZag space.
+Content linkage and version comparison aren't implemented yet.
+
+<p>
+Somewhat like freenet, but encryption is not the point here, point
+is media sharing, caching, replication and access.
+
+    <h3>Never copy</h3>
+
+    <p>
+    If we want to include a piece of audio into a ZZ space and then copy
+    the space for experiment / backup, the audio will also be copied, taking
+    up space. Creating a simple black-box stable media server will remove
+    this problem.
+
+    <h3>P2P mirroring; collections</h3>
+
+    <p>
+    Mirroring data between machines is easier. The same data
+    always has the same id, so only new ids need to be checked.
+    (<b>Status:</b>
+    This is implemented, and works with the client-server stuff;
+    we have a central working repository.)
+
+    <p>
+    All material is divided into permanent and transient (cached) material. 
+    Transient
+    material may be removed from the system at any time without notice.
+    Removing permanent material requires special procedures. Material may be
+    changed from transient to permanent but not the other way around.
+    (<b>Status:</b> At this point, all material is permanent.)
+
+    <p>
+    To ease mirroring and managing, we need some
+    way to deal with <em>collections</em>;
+    basically, sets of material that may change over time
+    which may be selected to be locally mirrored.
+    (<b>Status:</b> not implemented)
+    
+    <tjl>
+    Big question: what level is that information on?
+    ZZ space inside the server or something else?
+
+    <h3>Quality Levels</h3>
+
+    <p>
+    We need to support different
+    qualities for sounds and images; loading the given image at a lower
+    quality may be more efficient especially over a slow network, likewise
+    for sound.
+
+    <p>
+    Also, selecting a span and only transmitting that is important.
+
+    <p>
+    One really good demonstration of the power of zz would be to show
+    how a space is incrementally moved over a small link, with
+    the terminal device on the other end being able to cache
+    enough stuff so as to be able to give the user a better
+    interactive experience.
+
+    <p>
+    <b>Status:</b>
+    None of this has been implemented so far.
+
+
+    <h3>Balancing Digital Rights Management versus Fair Use</h3>
+
+    <tjl>
+     Hmm... this is really a can of worms.
+     It would be interesting to find an expert on copyright
+     to collaborate on this with.
+
+    <ul>
+    <li> support copying of cached content between the user's machines, but
+      no large-scale copying without repayment to content originator
+
+    <li> voluntary compliance
+
+    <li> testing of compliance by requests
+
+    <li> give people possibility of doing the right thing
+
+    <li> Asserting copyright &rarr; revocation?
+      The infringer is the one granting access to the material, not the user!
+    </ul>
+
+    <p>
+    <b>Status:</b>
+    Not implemented.
+
+
+<h2>Functionality</h2>
+
+<ul>
+    <li> communicate over network with other instances of mediaserver
+         (Status: client/server works)
+    <li> cache media locally (Status: not implemented)
+    <li> manage local store, serve published portions over network
+         (Status: not implemented)
+    <li> return given span of media
+         (Status: works only for whole blocks of media)
+    <li> record media, tag addresses / spans
+         (Status: not implemented)
+    <li> append text, char by char, efficiently
+         (Status: ok)
+    <li> manage globally unique ids.
+         (Status: ok)
+    <li> ID conflict is a fatally serious issue - exchange CRCs 
+          occasionally for random mutually shared pieces just to check.
+          (Status: obsolete?!? --Benja)
+    <li> Media-agnostic: data = bits, but modules which interpret
+	particular types of data may be built on top.
+	(Status: ok)
+</ul>
+
+
+<h2>Decentralized unique ID scheme</h2>
+
+<p>
+We consider IDs to 
+be octet sequences of arbitrary nonzero length.
+Each ID identifies a block of media uniquely:
+<b>
+ There is only one block of media per ID.
+</b>
+There <b>may</b> be several IDs for similar blocks of bits,
+but they are conceptually not the same block of media.
+If desired, an alias structure can be built above the mediaserver
+level to declare the sameness of the data in some blocks.
+
+
+    <h3>Requirements</h3>
+    <ul>
+    <li> Globally unique ID for a media block.
+    <li> Secure against at least the following attacks:
+	<ul>
+	<li> Content spoofing: passing out the wrong data
+	     for an existing ID
+	<li> ID spoofing: pretending that some data is from
+	     a source it isn't from
+	<li> Clash generation: generating any two pieces
+	     of media with the same ID.
+	<li> Clash inducement: giving a server information
+	     that leads it to generate IDs that are conflicting
+	     with some others.
+	</ul>
+    </ul>
+
+    <tjl>
+     I'm sure these are not all. Please think about potential
+     exploits since this is pretty vital for this system to work.
+
+    <h3>Crypto</h3>
+
+    <p>
+    From the above requirements, it is pretty clear that
+    cryptography is required to prevent e.g. clash generation. 
+    It is necessary to have a strong hash scheme
+    for the blocks. 
+    (<b>Status:</b> ok)
+
+    <p>
+    In addition, we do want to be able to sign blocks.
+    (<b>Status:</b> not implemented)
+
+
+    <p>
+    <img class="wideimg" src = "id-format.jpg">
+    <img class="wideimg" src = "id-sig-scheme.jpg">
+    <img class="wideimg" src = "spoof-3rdparty.jpg">
+
+	<h4>Trusted and untrusted servers</h4>
+
+	<p>
+	The goals in the beginning of this document discuss
+	the need for giving out spans and low-fidelity versions
+	of pieces of media.
+
+	<p>
+	This is a natural place for spoofing to occur since 
+	the digital signature cannot be checked without knowing
+	the whole media.
+
+	<p>
+	Ted once discussed the idea of having the checksums
+	as a tree as well; OTOH that may be difficult or impossible
+	to implement while keeping the overhead small.
+	It might be possible to sign pieces of the original document
+	as well, making a tradeoff by downloading the smallest 
+	subset of pieces that make up the document.
+	This of course works only for spans, not low-fidelity stuff.
+
+	<p>
+	These considerations lead to the concept of 
+	<em>trusted</em> and <em>untrusted</em> servers.
+	A trusted server is one which the client may trust to serve the
+	correct piece upon request, whereas the untrusted
+	server may try to spoof.
+
+	<p>
+	In real life, a trusted server might be e.g. a desktop
+	machine or a known server connected with a high-speed
+	network when the client is on a low-speed network.
+
+	<p>
+	Third-party checksumming might be attractive, i.e.
+	a ZZ space that references a scroll gives a checksum
+	for the pieces it references; however, 
+	this is no alternative to trusted servers, 
+	because we want
+	servers to be able to send only a few cells from a space
+	and these could be spoofed (no checksum can be checked for them).
+	
+	<p>
+	<b>Status:</b>
+	Not implemented.
+
+
+<h2>Pointers</h2>
+
+<p>
+In order to implement different versions of something, 
+we need a pointer mechanism on top of the mediaserver.
+Quite simply, we define a new content-type "application/x-gzigzag-ptr",
+which contains a file with the following format.
+
+<p>
+First, because we may want to start escaping characters, the ASCII chars
+'%' is forbidden.
+The file is newline (0x0a) -delimited, with one field on each line.
+The first line is the magic string "GZZPTR0".
+The second line gives the pointer id as a string.
+The third line gives the mediaserver block id to be pointed to 
+as a hex string. 
+The succeeding lines give the ids of the pointers that this pointer 
+obsoletes.
+
+For example,
+<pre>
+    GZZPTR0
+    foo
+    block100
+    block3
+    block7
+</pre>
+is a pointer setting with the name "foo", which 
+obsoletes the old pointers stored in blocks 3 and 7
+(which must also be "foo" pointers), and sets "foo" to point
+to block100.
+
+<p>
+<b>Status:</b> Ok.
+
+
+<h2>Architecture</h2>
+
+<p>
+The mediaserver proposed architecture has several levels.
+
+    <h3>Physical</h3>
+
+    <p>
+    The physical level takes care of retrieving and storing
+    spans according to unique global ids. 
+    All policy decisions are made on higher levels: this level
+    only opens network connections and stores the spans in files
+    and removes them according to instructions from the higher level.
+
+    <p>
+    No reference counting is done: that is also a problem of the higher
+    levels.
+    
+    <p>
+    <b>Status:</b> Ok.
+
+
+<h2>Implementation plan</h2>
+
+    <h3>Phase I -- operational since summer 2001</h3>
+
+    <p>
+    Unique IDs, at least a preliminary version that will remain unique
+    even when better schemes taken into use.
+    Currently using SHA-1 hash algorithm to "guarantee" uniqueness of keys
+    and resist spoofing.
+
+    <p>
+    The physical layer, except for peer-to-peer stuff.
+    Synchronization must be invoked explicitly by the user. 
+    No interactive network fetches but simply
+    code to synch up two repositories completely (copy everything
+    in both to both).
+
+
+    <h3>Phase II -- coming fall 2001</h3>
+
+    <p>
+    Multiple mediaserver pools usable together to separate
+    private and public data.
+
+    <p>
+    Most pressing reason: we want to include PS/PDF files downloaded
+    from the net into our hypertext bibliography, but we cannot
+    legally redistribute those files. Therefore we have to keep
+    the files obtained from elsewhere in a private pool.
+    A mechanism for sharing the source and allowing others to download
+    the files for themselves and recreating the same ms blocks
+    is being planned.
+
+    <p>
+    <b>Status:</b> ???
+
+    <h3>Phase III</h3>
+
+    <p>
+    Collections? Overriding? Signatures?
+
+<h2>HTTP Interface</h2>
+
+<p>
+<b>Status:</b>
+I <em>think</em> the stuff in this section is implemented. --Benja
+
+<p> Any mediaserver can be interfaced through the Java Mediaserver
+interface 
+There
+is an HTTP interface; a client class implementing Mediaserver will be
+written which will encapsulate the HTTP connection and make the HTTP
+mediaserver available like any local (same process) Mediaserver
+implementation.
+
+<p>
+This will be one way in which mediaserver content can be made available to
+others.
+
+<p>
+The storage module will listen on an IP-reachable host on an TCP
+port for incoming connections.  The protocol used is HTTP/1.1.  It is
+recommended that the storage module root URL be
+http://localhost/mediaserver/.  The root URL shall be configurable.
+
+<p>
+The following requests are supported:
+
+    <h3>Request: GET <em>root</em>/data.txt</h3>
+
+    <p>
+    A GET request of the base URL with the string
+    <code>data.txt</code> prepended will result in a listing of data
+    in the storage module.  Each line describes one datum; first comes
+    the ID and then (optionally) the length of the datum in base-10
+    ASCII representation.  These two fields are separated by linear
+    whitespace.
+
+    <h3>Request: GET <em>root</em>/data/</h3>
+
+    <p>
+    This will result in a human-readable version of the above listing.
+
+    <h3>Request: GET <em>root</em>/data/<em>key</em></h3>
+
+    <p>
+    A GET request of the base URL with the string <code>data/</code> and the
+    datum ID prepended will result in the datum requested.
+
+    <h3>Request: POST <em>root</em>/data/</h3>
+
+    <p>
+    Supporting POST is optional.
+
+    <p>
+    A POST request of the base URL with the string <code>data/</code>
+    prepended will store the body of the request as a block under a newly
+    assigned ID, and result in the newly created and assigned key as
+    plain text.
+
+    <h3>Request: PUT <em>root</em>/data/<em>datum</em></h3>
+
+    <p>
+    A PUT request of the base URL with the string <code>data/</code> and
+    a datum ID prepended will store the body of the request under the given 
+    ID. (Used for caching.)  If the key does not match the datum, the server
+    MUST reject the request with a 403 ("forbidden") response.
+
+    <h3>Request: DELETE <em>root</em>/data/<em>key</em></h3>
+
+    <p>
+    POST support is optional.
+
+    <p>
+    Mutatis mutandis.
+
+    <benja>
+    XXX is this good? possibly this should be done in direct interaction
+        with the storage module, not over HTTP? 
+        after all, delete cannot be undone... One way to deal with this would
+	be to have different levels of rights for clients, specified on the
+	commandline: standard is all rights for localhost, other hosts only
+	GET requests, but mixtures like all rights for everyone, except
+	DELETE for noone, are possible.
+
+     <ajk>
+        Yes it is good.  But we will want to give the admin a way to limit
+        access to this functionality, say, to trusted users communicating
+        over authenticated HTTPS connections
+
+<h2>Problems</h2>
+
+<p>
+Word-sized gaps in published documents for deleted words &rarr; guess
+confidential content, or damaging erased content?
+Maybe we need separate internal and external ids and a mapping between
+them in such cases.
+
+
+<benja>
+Additional problem: Deleting part of a block makes signature checking
+impossible...
+
+<tjl>
+Probably we only want to delete whole blocks... If a block is very large,
+it should be cut down, e.g. not allowing blocks larger than 200k or something.
+
+</substdims>
+</body>
+</html>
+<!--
+	vim: set syntax=html :
+-->

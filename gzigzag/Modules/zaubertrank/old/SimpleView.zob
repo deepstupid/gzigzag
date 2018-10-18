@@ -1,0 +1,137 @@
+/*   
+SimpleView.java
+ *    
+ *    Copyright (c) 2000, Benjamin Fallenstein
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+package org.zaubertrank;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+ 
+/** A simple view just showing a structure as text.
+ */
+
+public class SimpleView implements FlobView, ZOb {
+    public static boolean dbg = true;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+
+    STRUCTPARAMS {
+	/** The font to use.  */
+	Font font
+	    = new Font("SansSerif", Font.PLAIN, 16);
+
+	ZOb ftextlayouter
+	    = new FTextLayouter();
+    }
+
+    FontMetrics fm;
+
+    INITIALIZE {
+	fm = FONTMETRICS(font);
+    }
+
+    static class TokenPart extends FText.CellPart {
+	int tkNumber;
+	public TokenPart(ZZCell c, int offs, int n, Font f, FontMetrics fm,
+			 Color bg, Color fg, int tkNumber) {
+	    super(c, offs, n, f, fm, bg, fg);
+	    this.tkNumber = tkNumber;
+	}
+	public FText.Part subpart(int first, int last) {
+	    return new TokenPart(c, offs+first, last-first, f, this.fm, 
+				 bg, fg, tkNumber);
+	}
+	public Renderable rend(int x, int y, int d, Renderable prev0) {
+	    TokenFlob prev = null, parent = null, res;
+	    p("SimpleView.TokenPart.rend prev "+prev0);
+	    if(prev0 instanceof TokenFlob) {
+		prev = (TokenFlob)prev0;
+		if(prev.c != this.c) prev = null;
+		else if(prev.parent != null) parent = (TokenFlob)prev.parent;
+		else parent = prev;
+	    }
+	    p("SimpleView.TokenPart.rend found prev "+prev+" -- parent "+parent);
+	    res = new TokenFlob(x, y, d, width(), height(),
+				c, s, f, this.fm, parent, offs, n, bg, c);
+	    if(prev != null) res.setPrev(prev);
+	    if(parent == null) res.tkNumber = tkNumber;
+	    p("SimpleView.TokenPart nr "+tkNumber+" has nr "+res.tkNumber+" rend: "+res);
+	    return res;
+	}
+    }
+
+    FText.Part make(ZZCell c, int number) {
+	return new TokenPart(c, 0, -1, font, fm, null, Color.black, number);
+    }
+    FText.Part make(String s) {
+	return new FText.StringPart(s, font, fm, null, Color.black);
+    }
+
+    Vector getPart(ZZCell c, TokenGrouper g, int parent) {
+	Vector v = new Vector();
+	ZZCell tx = c.getRootclone(), var = c.s("d.2");
+	if(tx.equals(c)) {
+	    v.addElement(make(c, g.addToken(parent)));
+	    return v;
+	}
+	int number = g.addToken(parent);
+	for(tx = tx.s("d.2"); tx != null; tx = tx.s("d.2")) {
+	    ZZCell type = tx.getRootclone();
+	    if(type.equals(tx))
+		v.addElement(make(tx, number));
+	    else {
+		ZZCell val;
+		if(var == null || (val=var.s("d.1")) == null) {
+		    v.addElement(make("["));
+		    v.addElement(make(type.s("d.2"), g.addToken(number)));
+		    v.addElement(make("?]"));
+		} else {
+		    v.addElement(make("("));
+		    Vector w = getPart(val, g, number);
+		    for(Enumeration e = w.elements();
+			e.hasMoreElements();) {
+			v.addElement(e.nextElement());
+		    }
+		    v.addElement(make(")"));
+		}
+		if(var != null) var = var.s("d.2");
+	    }
+	}
+	return v;	
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+	TokenGrouper grp = new TokenGrouper();
+	FText ftxt = new FText(getPart(accursed, grp, -1));
+	
+	Dimension size = into.getSize();
+	Rectangle rect = new Rectangle(0, 0, size.width, size.height);
+
+	((FTextLayouter)ftextlayouter).place(into, ftxt, rect, 
+	    0, rect.y+rect.height/2,
+	    FText.Part.len(ftxt.parts)/2, 
+	    false, null);   // XXX use firstcap
+	grp.group(into);			
+    }
+}
+// vim: set syntax=java :

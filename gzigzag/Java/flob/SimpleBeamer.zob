@@ -1,0 +1,255 @@
+/*   
+SimpleBeamer.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+ 
+
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+/** A decorator which draws beams between overlapping SpanFlobs.
+ * This is a tricky job: among other things, we are responsible for
+ * the overall aesthetic effect of beams.
+ * Currently, we try to draw the beams between the topmost 
+ * flobs last so that the beams have a consistent ordering w.r.t. 
+ * the Z axis. This is <em>not</em> trivial, since we also have to
+ * draw neighbouring beams using the same color.
+ */
+
+public class SimpleBeamer implements FlobDecorator {
+public static final String rcsid = "$Id: SimpleBeamer.zob,v 1.8 2001/05/10 10:17:10 tjl Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+
+	/** The depth where to put the beam graphics.
+	 */
+	int depth 
+	    = 1000;
+
+    }
+
+    // Used for checking whether the connection between two spans
+    // is handled already.
+    private class Pair {
+	Object a; Object b;
+	public Pair(Object a, Object b) {
+	    this.a = a; 
+	    this.b = b;
+	}
+	public int hashCode() {
+	    return a.hashCode() ^ b.hashCode();
+	}
+	public boolean equals(Object o) {
+	    Pair p = (Pair)o;
+	    return (a==p.a && b==p.b) || (b==p.a && a==p.b);
+	}
+    }
+
+    static public Color getSpanColor() {
+        return new Color(
+            (float)(Math.random() + 1) / 2,
+            (float)(Math.random() + 1) / 2,
+            (float)(Math.random() + 1) / 2
+        );
+    }
+
+    int[] xy = new int[16];
+
+    protected void putBeam(BeamDecor.Builder bb,
+				SpanFlob[] sfs, Span[] sps,
+				  Color c) {
+	p("Putbeam");
+	int ssep = (int)(sps[0].getStartOffs() - sps[1].getStartOffs());
+	int esep = (int)(sps[0].getEndOffs() - sps[1].getEndOffs());
+
+	int x0=0, x1=0, w0=(int)sps[0].length(), w1=(int)sps[1].length();
+
+	if(ssep > 0) x1 = ssep;
+	else x0 = -ssep;
+
+	if(esep > 0) w0 -= esep;
+	else w1 += esep;
+
+	Rectangle r0 = sfs[0].getRectangle(x0, w0);
+	Rectangle r1 = sfs[1].getRectangle(x1, w1);
+
+	// Then, some difficult manipulation to get the points.
+
+	Rectangle a=null;
+
+	// left side
+	if(r0.x < r1.x) { a = r0; } else { a = r1; }
+	xy[0] = a.x; xy[8] = a.y;
+	xy[1] = a.x; xy[9] = a.y+a.height;
+	// bottom side
+	if(r0.y+r0.height > r1.y+r1.height) { a = r0; } else { a = r1; }
+	xy[2] = a.x; xy[10] = a.y+a.height;
+	xy[3] = a.x+a.width; xy[11] = a.y+a.height;
+	// right side
+	if(r0.x+r0.width > r1.x+r1.width) { a = r0; } else { a = r1; }
+	xy[4] = a.x+a.width; xy[12] = a.y+a.height;
+	xy[5] = a.x+a.width; xy[13] = a.y;
+	// top
+	if(r0.y < r1.y) { a = r0; } else { a = r1; }
+	xy[6] = a.x+a.width; xy[14] = a.y;
+	xy[7] = a.x; xy[15] = a.y;
+
+	bb.b(xy, c);
+    }
+
+    /** Return: whether to continue.
+     */
+    static boolean moveBack( SpanFlob[] sfs,
+			 Span[] spans) {
+	long l1 = spans[0].getStartOffs();
+	long l2 = spans[1].getStartOffs();
+	if(l1 == l2) {
+	    // Check if previous spans end at same point.
+	    sfs[0] = sfs[0].getPrev(); if(sfs[0] == null) return false;
+	    sfs[1] = sfs[1].getPrev(); if(sfs[1] == null) return false;
+	    spans[0] = sfs[0].getSpan(); if(spans[0] == null) return false;
+	    spans[1] = sfs[1].getSpan(); if(spans[1] == null) return false;
+	    if(spans[0].getEndOffs() != spans[1].getEndOffs()) return false;
+	    return true;
+	}
+	if(l1 > l2) {
+	    Span tmp = spans[0];
+	    sfs[0] = sfs[0].getPrev(); if(sfs[0] == null) return false;
+	    spans[0] = sfs[0].getSpan(); if(spans[0] == null) return false;
+	    return spans[0].isAppendable(tmp);
+	} else {
+	    Span tmp = spans[1];
+	    sfs[1] = sfs[1].getPrev(); if(sfs[1] == null) return false;
+	    spans[1] = sfs[1].getSpan(); if(spans[1] == null) return false;
+	    return spans[1].isAppendable(tmp);
+	}
+    }
+    static boolean moveForw( SpanFlob[] sfs,
+			 Span[] spans) {
+	long l1 = spans[0].getEndOffs();
+	long l2 = spans[1].getEndOffs();
+	if(l1 == l2) {
+	    // Check if previous spans end at same point.
+	    sfs[0] = sfs[0].getNext(); if(sfs[0] == null) return false;
+	    sfs[1] = sfs[1].getNext(); if(sfs[1] == null) return false;
+	    spans[0] = sfs[0].getSpan(); if(spans[0] == null) return false;
+	    spans[1] = sfs[1].getSpan(); if(spans[1] == null) return false;
+	    if(spans[0].getStartOffs() != spans[1].getStartOffs()) return false;
+	    return true;
+	}
+	if(l1 < l2) {
+	    Span tmp = spans[0];
+	    sfs[0] = sfs[0].getNext(); if(sfs[0] == null) return false;
+	    spans[0] = sfs[0].getSpan(); if(spans[0] == null) return false;
+	    return tmp.isAppendable(spans[0]);
+	} else {
+	    Span tmp = spans[1];
+	    sfs[1] = sfs[1].getNext(); if(sfs[1] == null) return false;
+	    spans[1] = sfs[1].getSpan(); if(spans[1] == null) return false;
+	    return tmp.isAppendable(spans[1]);
+	}
+    }
+
+    public void decorate(final FlobSet into, final String path, 
+			final ZZCell view) {
+
+	p("Putting beams...");
+	final BeamDecor.Builder bb = new BeamDecor.Builder(into);
+
+	final SpanSet ss = new SpanTree();
+
+	final Hashtable done = new Hashtable();
+
+	final SpanFlob[] sfs = new SpanFlob[2];
+	final Span[] sps = new Span[2];
+	final Span[] sps0 = new Span[2];
+
+	// Starts from the surface, goes deeper.
+	// BeamDecor renders first-put ones last, which is
+	// exactly right for this.
+
+	// XXX WRONG! 
+	// ss gets added things so that the span gets
+	// drawn when the deeper one is reached, not earlier.
+	// hmm...
+	into.iterDepth(new FlobSet.DepthIter() {
+	public void act(Flob[] flobs, int start, int n) {
+	    bb.startl((n+8)*4, depth);
+	    for(int f = start; f<start+n; f++) {
+		Flob cur = flobs[f];
+		if(!(cur instanceof SpanFlob)) continue;
+		SpanFlob sf = (SpanFlob)cur;
+		Span sp = sf.getSpan();
+		p("SF: "+sf+" "+sp);
+		if(sp == null) continue;
+		if(sp.length() == 0) continue;
+
+		Object[] ovs = ss.overlaps(sp);
+		ss.addSpan(sp, sf);
+		p("Objs: "+ovs+" "+ovs.length);
+		if(ovs.length > 0) {
+		    p("Obj: "+ovs[0]);
+		} else continue;
+
+
+		for(int i=0; i<ovs.length; i++) {
+		    Pair pa = new Pair(sf, ovs[i]);
+		    if(done.get(pa) != null)
+			continue;
+		    Color c = getSpanColor();
+
+		    sfs[0] = sf; sps[0] = sfs[0].getSpan();
+		    sfs[1] = (SpanFlob)ovs[i]; sps[1] = sfs[1].getSpan();
+
+		    sps0[0] = sps[0]; sps0[1] = sps[1];
+
+		    putBeam(bb, sfs, sps, c);
+		    done.put(pa, pa);
+
+		    while(moveBack(sfs, sps))  {
+			putBeam(bb, sfs, sps, c);
+			done.put(new Pair(sfs[0], sfs[1]), pa);
+		    }
+
+		    sfs[0] = sf; sps[0] = sps0[0];
+		    sfs[1] = (SpanFlob)ovs[i];  sps[1] = sps0[1];
+
+		    while(moveForw(sfs, sps))  {
+			putBeam(bb, sfs, sps, c);
+			done.put(new Pair(sfs[0], sfs[1]), pa);
+		    }
+
+		}
+	    }
+	}}, false);
+
+	bb.endl();
+	p("Beams finished.");
+    }
+
+}
+
+// vim: set syntax=java :

@@ -1,0 +1,209 @@
+/*   
+ParsedView.zob
+ *    
+ *    Copyright (c) 2000, Benjamin Fallenstein
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+package org.zaubertrank;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+ 
+/** A view for the zaubertrank using the Parser class.
+ */
+
+public class ParsedView implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+
+    STRUCTPARAMS {
+	/** The font to use.  */
+	Font font
+	    = new Font("SansSerif", Font.PLAIN, 16);
+
+	ZOb ftextlayouter
+	    = new FTextLayouter();
+	
+	/** Whether to mark the accursed part. */
+	boolean mark
+	    = false;
+	
+	int xmargin
+	    = 8;
+	
+	int ymargin
+	    = 2;
+	
+	int yspace
+	    = 10;
+    }
+
+    FontMetrics fm;
+
+    INITIALIZE {
+	fm = FONTMETRICS(font);
+    }
+
+    static class TokenPart extends FText.CellPart {
+	int tkNumber;
+	ZZCell tkHandle;
+	public TokenPart(ZZCell c, int offs, int n, Font f, FontMetrics fm,
+			 Color bg, Color fg, int tkNumber, ZZCell tkHandle) {
+	    super(c, offs, n, f, fm, bg, fg);
+	    this.tkNumber = tkNumber;
+	    this.tkHandle = tkHandle;
+	}
+	public FText.Part subpart(int first, int last) {
+	    return new TokenPart(c, offs+first, last-first, f, this.fm, 
+				 bg, fg, tkNumber, tkHandle);
+	}
+	public Renderable rend(int x, int y, int d, Renderable prev0) {
+	    TokenFlob prev = null, parent = null, res;
+	    p("SimpleView.TokenPart.rend prev "+prev0);
+	    if(prev0 instanceof TokenFlob) {
+		prev = (TokenFlob)prev0;
+		if(prev.c != this.c) prev = null;
+		else if(prev.parent != null) parent = (TokenFlob)prev.parent;
+		else parent = prev;
+	    }
+	    p("SimpleView.TokenPart.rend found prev "+prev+" -- parent "+parent);
+	    res = new TokenFlob(x, y, d, width(), height(),
+				c, s, f, this.fm, parent, offs, n, bg, tkHandle);
+	    if(prev != null) res.setPrev(prev);
+	    if(parent == null) res.tkNumber = tkNumber;
+	    p("SimpleView.TokenPart nr "+tkNumber+" has nr "+res.tkNumber+" rend: "+res);
+	    return res;
+	}
+    }
+
+    FText.Part make(ZZCell c, int number, ZZCell tkHandle,
+    		    ZZCell view) {
+	Color bg = null;
+	if(mark && tkHandle.equals(ZZCursorReal.get(view)))
+	    bg = ZZCursorReal.getColor(view);
+	Color fg = Color.black;
+	return new TokenPart(c, 0, -1, font, fm, bg, fg, number, tkHandle);
+    }
+    FText.Part make(String s) {
+	return new FText.StringPart(s, font, fm, null, Color.black);
+    }
+
+    void getParts(Vector v, Parser.TypeRef tr, TokenGrouper g, int parent,
+    		  ZZCell tkHandle, ZZCell view) {
+	int number = g.addToken(parent);
+	ZZCell[] text = tr.getText();
+	if(text == null) { v.addElement(make("<type without text>")); return; }
+	v.addElement(make("["));
+	for(int i=0; i<text.length; i++)
+	    v.addElement(make(text[i], number, tkHandle, view));
+	v.addElement(make("?]"));
+    }
+
+    void getParts(Vector v, Parser.ExpRef er, TokenGrouper g, int parent,
+		  ZZCell view) {
+	int number = g.addToken(parent);
+	Object[] text = er.getText();
+	for(int i=0; i<text.length; i++) {
+	    Object o = text[i];
+	    if(o instanceof ZZCell) {
+		v.addElement(make((ZZCell)o, number, er.e.c, view));
+	    } else if(o instanceof Parser.ExpRef) {
+		Parser.ExpRef sub_er = (Parser.ExpRef)o;
+		ZZCell sub_c = sub_er.e.c;
+		getParts(v, sub_er, g, number, view);
+	    } else if(o instanceof Parser.TypeRef) {
+		getParts(v, (Parser.TypeRef)o, g, number, er.e.c, view); // XXX tkHandle
+	    } else
+		throw new ZZError("ARGH! strange type in ExpRef.getText");
+	}
+    }
+
+    public void place(FlobSet into, Parser.ExpNode en, Rectangle rect, 
+		      TokenGrouper grp, Parser.GrammarNode gn, int dir,
+		      ZZCell view, int[] inits) {
+	int number = grp.addToken(-1);
+	
+	Vector parts = new Vector();
+	Parser.ExpRef er = new Parser.ExpRef(en, gn);
+	getParts(parts, er, grp, -1, view);
+	parts.addElement(make(".  "));
+	FText ftxt = new FText(parts);
+
+	boolean[] beginningSentence = new boolean[2];
+	beginningSentence[0] = true;
+	beginningSentence[1] = false;
+	
+	int starty;
+	if(dir <= 0) starty = inits[0];
+	else	     starty = inits[1];
+	
+	Rectangle res =
+	    ((FTextLayouter)ftextlayouter).place(into, ftxt, rect, 1,
+	        dir, starty,
+	        FText.Part.len(ftxt.parts)/2, 
+	        false, beginningSentence);
+
+	int xm = xmargin+3, ym = ymargin+3;
+	into.add(new CellBgFlob(res.x-xm, res.y-ym, 2, res.width+xm+xm, 
+				res.height+ym+ym, en.c));
+	
+	if(dir <= 0) inits[0] = res.y - 2*ym - yspace - 6;
+	if(dir >= 0) inits[1] = res.y + res.height + 2*ym + yspace + 6;
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+	ZZCell c = accursed;
+	while(c.h(Parser.paramdim) != c ||
+	      c.h(Parser.valuedim) != c) {
+	    c = c.h(Parser.paramdim);
+	    c = c.h(Parser.valuedim);
+	}
+				
+	TokenGrouper grp = new TokenGrouper();
+	Parser.GrammarNode gn = new Parser.GrammarNode(
+		view.getSpace().getHomeCell().s(Parser.grammardim));
+	Parser.ExpNode en = new Parser.ExpNode(c);
+	Dimension size = into.getSize();
+	Rectangle rect = new Rectangle(xmargin, ymargin, size.width-2*xmargin, 
+				       size.height-2*ymargin);
+	
+	int[] inits = new int[2];
+	inits[0] = (inits[1] = rect.y + rect.height/2);
+	
+	place(into, en, rect, grp, gn, 0, view, inits);
+	
+	for(Parser.ExpNode en0 = en.step(-1);
+	    en0 != null && inits[0] > rect.y;
+	    en0 = en0.step(-1)) {
+	    	place(into, en0, rect, grp, gn, -1, view, inits);
+	}
+	
+	for(Parser.ExpNode en1 = en.step(1); 
+	    en1 != null && inits[1] < rect.y+rect.height; 
+	    en1 = en1.step(1)) {
+	    	place(into, en1, rect, grp, gn, 1, view, inits);
+	}
+	
+	grp.group(into);			
+    }
+}
+// vim: set syntax=java :

@@ -1,0 +1,187 @@
+/*   
+ZZSOM1.java
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+
+package org.gzigzag.map;
+import org.gzigzag.*;
+import java.util.*;
+
+public class ZZFMM1 extends ZZMap implements ZOb {
+
+    STRUCTPARAMS {
+        ZOb inputReader 
+            = new DefaultInputReader();
+        float err
+            = (float)0.5;
+        float bQ 
+            = -200;
+        float border_sharpness
+            = (float)5.0;
+        float border_elasticity
+            = (float)0.05;
+        float medium_viscosity
+            = (float)0.5;
+        float medium_viscosity_min
+            = (float)0.3;
+        float medium_viscosity_coef
+            = (float)0.97;
+        int iter_rate
+            = 1;
+    }
+    protected boolean changed = true;
+    protected int p;
+    protected FMM.FMMStructure fms;
+    protected FMM fmm;
+    protected float mediumViscosity;
+    protected Random rand;
+    protected int iter_dim, iters;
+    protected int ITER_RATE = 1;
+
+    float xmin = (float)0.0;
+    float xmax = (float)1.0;
+    float ymin = (float)0.0;
+    float ymax = (float)1.0;
+
+    // this is called by ZZMap's 'initialize'
+    protected void mapInit() {
+        // no background iteration
+        setIterationRate(100);
+        rand = new Random();
+    }
+
+    // this is called by ZZMap's 'update'
+    protected void mapUpdate() {
+	fms = new FMMHashTree(xmin, xmax, ymin, ymax, 64, err);
+	p = fms.nTerms();
+	for(int j=0; j<nInputs(); j++) {
+            FMMParticle fp = (FMMParticle)inputs[j];
+            fms.add(fp);
+        }
+	fmm = new FMM(fms);
+        mediumViscosity = medium_viscosity;
+    }
+
+    protected ZZMap.Particle makeParticle(int id, ZZCell c, int[] input_vec,
+                                          boolean focus) {
+        float x, y;
+	int qsum = 1;
+	for(int i=0; i<input_vec.length; i++) {
+            qsum += input_vec[i];
+            input_vec[i] = input_vec[i]==0 ? -1 : 0;
+        }    
+	int[] qn = new int[input_vec.length+1];
+	System.arraycopy(input_vec, 0, qn, 1, input_vec.length);
+	qn[0] = input_vec.length;
+        if(focus) {
+            x = (float)0.5;
+            y = (float)0.5;
+        } else {
+	    x = (float)(0.8*rand.nextFloat()+0.1);
+	    y = (float)(0.8*rand.nextFloat()+0.1);
+        }
+	return (ZZMap.Particle)(new FMMParticle(id, c, x, y, qn, p));
+    }
+
+    // if two inputs intersects, decide which one to show
+    protected ZZMap.Particle compareParticles(ZZMap.Particle p1, 
+                                              ZZMap.Particle p2) {
+        if(p1.priority() > p2.priority()) return p1;
+        if(p2.priority() > p1.priority()) return p2;
+        // if priorities are the same, test which one
+        // match better with the weights
+        if(weights[p1.id()] > weights[p2.id()]) return p1;
+        return p2;
+    }
+
+    // fp.V will be updated according to fp.F
+    private void updateParticlePosition(FMMParticle fp) {
+	float e, dx, dy;
+
+	Complex F, borderF, a;
+	borderF = new Complex((float)-bQ/((fp.x-xmin)*border_sharpness)
+		             +(float)bQ/((xmax-fp.x)*border_sharpness),
+			      (float)-bQ/((fp.y-ymin)*border_sharpness)
+                             +(float)bQ/((ymax-fp.y)*border_sharpness));
+
+        // t = time = 1
+
+	F = new Complex(fp.F);
+        F.add(borderF);
+	a = new Complex(F); a.div(fp.q[0]);
+
+	fp.V.add(a);
+        fp.V.mul(mediumViscosity);
+	
+        Complex s = fp.V;
+
+	fp.x += (float)(s.r()/200.0);
+	fp.y += (float)(s.i()/200.0);
+
+	if(fp.x<=xmin) { 
+            fp.x = (float)xmin+(xmax-xmin)*(float)0.05;
+            fp.V.set(0); //mul(-border_elasticity);
+	} else if(fp.x>=xmax) { 
+            fp.x = (float)xmax-(xmax-xmin)*(float)0.05;
+            fp.V.set(0); //mul(-border_elasticity);
+	}
+	if(fp.y<=ymin) { 
+            fp.y = (float)ymin+(ymax-ymin)*(float)0.05;
+            fp.V.set(0); //mul(-border_elasticity);
+	} else if(fp.y>=ymax) { 
+	    fp.y = (float)ymax-(ymax-ymin)*(float)0.05;
+            fp.V.set(0); //mul(-border_elasticity);
+	}
+    }
+
+    synchronized public boolean iterate() {
+        if(inputs == null) return false;
+
+        if(mediumViscosity < medium_viscosity_min) return false;
+
+        if(iters == iter_rate) {
+            iters = 0;
+	    fms.empty();
+            for(int j=0; j<inputs.length; j++)
+                fms.add((FMMParticle)inputs[j]);
+  	    fmm.proceed(1);
+            for(int i=inputSize()-1; i>=2; i--)
+  	        fmm.proceed(i, (float)1.0, true);
+        }
+        iters++;
+
+        for(int j=0; j<inputs.length; j++)
+            updateParticlePosition((FMMParticle)inputs[j]);
+
+        mediumViscosity *= medium_viscosity_coef;
+        System.out.println("visc = "+mediumViscosity);
+
+	changed(true);
+        return changed;
+    }
+}
+
+
+
+
+
+
+

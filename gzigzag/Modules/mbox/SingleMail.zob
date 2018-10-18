@@ -1,0 +1,133 @@
+/*
+SingleMail.zob
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuukka Hastrup
+ */
+
+package org.gzigzag.module.mbox;
+
+import org.gzigzag.*;
+import java.awt.*;
+
+
+
+/** A presentation of a single e-mail message.
+ */
+
+public class SingleMail implements FlobView, ZOb {
+    public static final boolean dbg = true;
+    static final void p(String s) { if (dbg) System.out.println(s); }
+
+    STRUCTPARAMS {
+	Font hfont = new Font("SansSerif", Font.PLAIN, 14);
+	Font dfont = new Font("SansSerif", Font.BOLD, 14);
+	Font bfont = new Font("Monospaced", Font.PLAIN, 12);
+
+	int tabstop = 8;
+    } 
+    
+    int headerh;
+    int bodyh;
+    FontMetrics hfm;
+    Color headerc, datac, bodyc;
+    String tabs[];
+
+    INITIALIZE {
+	headerh = (hfont.getSize() > dfont.getSize()? hfont.getSize() 
+						    : dfont.getSize());
+	bodyh = bfont.getSize();
+	hfm = FONTMETRICS(hfont);
+	headerc = datac = bodyc = Color.red;
+
+	tabs = new String[tabstop + 1];
+	tabs[0] = "";
+	for (int i = 1; i < tabstop + 1; i++)
+	    tabs[i] = tabs[i - 1] + '\t';
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		       ZZCell view, String[]dims, ZZCell accursed) { 
+	Dimension d = into.getSize();
+
+	ZZCell handle = accursed.h("d.ref", -1);
+
+	ZZCell c = handle;
+	ZZCell f;
+	int y = 0;
+	c = c.s("d.handle", 1);
+	while (c != null && y <= d.height) {
+	    f = c.s("d.1", 1);
+	    if (f != null)	// Header record
+		y = addHeader(into, y, c, f);
+	    else
+		y = addBody(into, y, c);
+	    c = c.s("d.handle", 1);
+	}
+    } 
+    
+    int addHeader(FlobSet into, int y, ZZCell c, ZZCell d) {
+	p(into.toString() + y + c.toString() + d.toString());
+	p("C: " + c.getID());
+	p("D: " + d.getID());
+	String field = c.getText();
+	String data = d.getText();
+	y += headerh;
+	into.add(new TextDecor(0, y, field, headerc, hfont));
+	into.add(new TextDecor(hfm.stringWidth(field) + 10, y,
+				data, datac, dfont));
+	return y;
+    } 
+    
+    int addBody(FlobSet into, int y, ZZCell c) {
+	String body = c.getText();
+	int start = 0;
+	int end = -1;
+	while (end < body.length()) {	// Split into lines
+	    end = body.indexOf('\n', end + 1);
+	    if (end == -1)
+		end = body.length();
+	    y += bodyh;
+	    if (start < end) {
+		String line = body.substring(start, end);
+		StringBuffer buf = new StringBuffer();
+		int offs = 0;
+		int pos = 0;
+		int tab = -1;
+		while (tab < line.length()) {	// Expand tabs
+		    tab = line.indexOf('\t', tab + 1);
+		    if (tab == -1)
+			tab = line.length();
+		    buf.append(line.substring(pos, tab));
+		    if (tab < line.length()) {
+			int tablen = tabstop - ((tab + offs) % tabstop);
+			p("Tab: " + tablen);
+			buf.append(tabs[tablen]);
+			offs = offs + tablen - 1;
+		    }
+		    pos = tab + 1;
+		}
+		into.add(new TextDecor(0, y, new String(buf), bodyc, bfont));
+	    }
+	    start = end + 1;
+	}
+	return y;
+    }
+}
+
+
+// vim: set syntax=java :

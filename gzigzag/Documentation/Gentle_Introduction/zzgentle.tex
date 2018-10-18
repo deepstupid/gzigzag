@@ -1,0 +1,1280 @@
+% Copyright(C) 1999 Tuomas J. Lukka
+% Redistribution permitted
+%
+% XXX redo pics in gpic.
+%
+%
+\documentclass[12pt]{article}
+
+
+\usepackage{rcs}
+\RCS $Date: 2000/09/13 14:55:57 $
+\RCS $Revision: 1.17 $
+\date{Rev.\RCSRevision~~\RCSDate}
+
+
+\usepackage{umlaut}
+\usepackage{times}
+\usepackage{xy}
+\xyoption{frame}
+\xyoption{matrix}
+\xyoption{arrow}
+\xyoption{curve}
+\renewcommand{\Large}{\LARGE}
+
+\CompileMatrices
+
+\title{\bf \Huge A Gentle Introduction to 
+Ted~Nelson's ZigZag\footnote{ZigZag is a trademark of Ted Nelson}~
+structure}
+\author{Tuomas J.~Lukka, {\tt lukka@iki.fi}}
+\begin{document}
+\maketitle
+% \begin{abstract}
+% \end{abstract}
+
+\tableofcontents
+\listoffigures
+
+\section{Introduction}
+
+\def\zz{ZigZag}
+ZigZag is a generic data structure, not tied to any particular application
+but quite generic in nature.  The purpose of this document is to introduce
+the reader to the ZigZag structure and some example applications of
+it. This document was written using material and ideas from 
+documents by and discussions with Ted Nelson,
+but also contains some ideas the author believes to be original.
+
+\zz\ was invented by Ted Nelson and is currently being implemented
+as a prototype at the University of Jyväskylä under the direction of
+the author.
+
+Note that while the basic structure of \zz, i.e. cells, ranks, dimensions
+is fixed, the more particular aspects, i.e. particular dimensions by name,
+the actions (executable code in the structure), the interaction between
+different \zz\ spaces, distributed \zz\ etc.~are still very much being
+developed. We have a prototype and are experimenting with it but
+we need more experience with actual applications in order to understand
+the system better.
+If you feel you can help and want to get in on the action, contact
+the author or Ted Nelson himself.
+
+\section{Basics}
+
+\zz\ sets up a paradigm for manipulating data and devices, a platform
+if you may, quite like UNIX. In UNIX (at least originally), everything
+is a file. Whether it is really a printer or the console or a network
+connection doesn't matter: the same basic operations (or a subset of
+them) is available. \zz\ is quite similar: everything is a cell and
+connections between the cells. However, the structure set up by \zz\ is
+far richer than a hierarchical file system.
+
+
+\subsection{The \zz\ structure}
+
+All data in \zz\ consists of cells. A cell can contain e.g.~text, an image
+or something like that --- basically, an indivisible atomic unit of data.
+It may be implemented in terms of a reference to a larger unit of data
+but for now, this is not significant. Just think of a cell as a little
+bit of data that has no significant internal structure (except of course the 
+sequence for text, the places of the pixels for an image etc).
+
+\begin{figure}
+\caption{a) A cell with some data inside (the string ``Cell A'').
+b) Two neighbouring cells: Cell B is poswards on the dimension {\tt d.1} 
+from Cell A (and conversely, Cell A is negwards 
+on the dimension {\tt d.1} from Cell B.
+c) Two intersecting ranks, one in {\tt d.1} and the other in {\tt d.2}.
+The cells in the two ranks are BCDE and ADFG. 
+The negend of the one on {\tt d.1} is B and the posend of the same rank
+is E. The negend and the posend of the other rank are A and G, respectively.
+%
+%Note that there are six other ranks
+%in this picture as well, each of length one: 
+%namely, A, F, G in {\tt d.1} and B, C, E in {\tt d.2}.
+%Usually these ranks of length one will not be mentioned or talked
+%about as ranks
+%but they are still ranks in the sense that every cell is on every dimension.
+\label{fig:onecell}}
+a) 
+%\xymatrix{
+%*+[F]\hbox{Cell A}
+%}~~~~~
+.PS
+boxwid=0.6
+boxht=0.25
+box "Cell A" wid 0.6 ht 0.25
+.PE
+\box\graph~~~~
+b) 
+%\xymatrix{
+%*+[F]\hbox{Cell A}
+%\ar[r]^{\tt d.1} &
+%*+[F]\hbox{Cell A}
+%}
+.PS
+box "Cell A" same
+arrow "\tt d.1" ""
+box "Cell B" same
+.PE
+\box\graph~~~~~
+% \xymatrix {
+% && *+[F]\hbox{A} \ar[d]^{\tt d.2}& \\
+% *+[F]\hbox{B} \ar[r]^{\tt d.1} &
+% *+[F]\hbox{C} \ar[r]^{\tt d.1} &
+% *+[F]\hbox{D} \ar[r]^{\tt d.1} \ar[d]^{\tt d.2} &
+% *+[F]\hbox{E} 
+% \\
+% && *+[F]\hbox{F} \ar[d]^{\tt d.2}& \\
+% && *+[F]\hbox{G} & \\
+% }
+.PS
+move down ;
+right;
+B: box "B" wid 0.3 ht 0.25;
+arrow "\tt d.1" "";
+C: box "C" same ;
+arrow "\tt d.1" "";
+D: box "D" same ;
+arrow "\tt d.1" "";
+E: box "E" same ;
+move to D.s;
+down;
+arrow "\tt d.2" "";
+box "F" same;
+arrow "\tt d.2" "";
+box "G" same;
+A: box "A" same at D .n + (0,0.75)
+arrow "\tt d.2" "" from A .s to D .n;
+.PE
+c)\box\graph
+\end{figure}
+
+\begin{figure}
+\caption{a) A paradoxical, non-spreadsheet-like structure.
+There are two ranks that are longer than one: BCDE on {\tt d.1} and ADFBG on {\tt d.2} 
+b) A different view of the same paradoxical structure.
+\label{fig:paradox}}
+a) 
+% \xymatrix{
+% && *+[F]\hbox{A} \ar[d]^{\tt d.2}& \\
+% *+[F]\hbox{B} \ar[r]^{\tt d.1} \ar[d]^{\tt d.2} &
+% *+[F]\hbox{C} \ar[r]^{\tt d.1} &
+% *+[F]\hbox{D} \ar[r]^{\tt d.1} \ar[d]^{\tt d.2} &
+% *+[F]\hbox{E} \\
+% *+[F]\hbox{G}   && *+[F]\hbox{F}  
+%   \POS"2,1"**\crv{[]-(0,20)&"3,1"-(0,20)&"3,1"-(20,0)&"2,1"+(0,20)}?>*\dir{>}?(.05)*!R!/^5pt/{\tt d.2}
+% &  \\
+% }
+.PS
+move down ;
+right;
+B: box "B" wid 0.3 ht 0.25;
+arrow "\tt d.1" "";
+C: box "C" same ;
+arrow "\tt d.1" "";
+D: box "D" same ;
+arrow "\tt d.1" "";
+E: box "E" same ;
+move to D.s;
+down;
+arrow "\tt d.2" rjust "";
+F: box "F" same;
+move to B .s;
+arrow "\tt d.2" "";
+box "G" same;
+A: box "A" same at D .n + (0,0.75)
+arrow "\tt d.2" "" from A .s to D .n;
+move to F.s ;
+spline down then left 2.1 then up 2 then right 0.5 to B.n ->;
+.PE
+\box\graph~~~~~
+.PS
+boxwid=0.3;boxht=0.25;
+down;
+box "A"; arrow "\tt d.2"; D: box "D"; arrow "\tt d.2";
+box "F"; arrow "\tt d.2"; B: box "B"; arrow "\tt d.2";
+box "G";
+right; move to D.e; arrow "\tt d.1" ""; box "E";
+move to B.e; arrow "\tt d.1" ""; box "C"; 
+spline right then down 1 then down 0.5 left 2.0 then up 2.5 to D.w ->;
+.PE
+b)\box\graph
+% \xymatrix{
+% *+[F]\hbox{A} \ar[d]^{\tt d.2} & \\
+% *+[F]\hbox{D} \ar[d]^{\tt d.2} \ar[r]^{\tt d.1} & *+[F]\hbox{E} \\
+% *+[F]\hbox{F} \ar[d]^{\tt d.2} & \\
+% *+[F]\hbox{B} \ar[d]^{\tt d.2} \ar[r]^{\tt d.1} & *+[F]\hbox{C} 
+% 	\POS"2,1"**\crv{[]+(30,0)&"5,1"+(20,-10)&"5,1"+(10,-10)&"5,1"+(-5,-10)&"2,1"-(30,0)}?>*\dir{>}?(0.05)*!R!/^5pt/{\tt d.1}\\
+% *+[F]\hbox{G}  & \\
+% }
+\end{figure}
+
+The \zz\ structure is organized according to {\em dimensions}. These
+are just directions --- normal spreadsheets have two, x and y, and \zz\
+has an unlimited number.  Dimensions are told apart from each other by
+name --- like {\tt d.1} or {\tt d.clone}.
+
+In each dimension, each cell has a positive end and a negative end. Each
+positive end can be connected to exactly one negative end (and vice
+versa) in the same dimension.  In diagrams, this connection is often
+shown as an arrow or a line, possibly labeled with a dimension if it is
+not evident from the context.  A cell connected to another cell in the
+positive direction on dimension {\tt d} is called the cell's posward
+neighbour on {\tt d}.
+
+Now, if we have two dimensions and the cells are connected in a regular
+lattice, then this corresponds to a normal spreadsheet. However, no
+restriction is placed on which positive and negative ends are connected
+together - this is why this is called the \zz\ {\em structure}.  All kinds
+of structures are possible: loops, M\oe bius strips, spheres etc.
+The kind of structure to choose for your application is up to your
+imagination.
+
+However, locally, from the perspective of one or two cells, this will
+still look like the spreadsheet: each cell has its neighbours and
+you go from it to one direction and then turn around and come back in
+the opposite direction, you end up in the same cell.  So locally this
+structure is logical and simple --- like a spreadsheet --- but globally
+it is paradoxical: you can just keep going into one direction and 
+arrive back where
+you came from, for example, or you can go left, down, right and up and
+{\em not} come back where you started from.
+
+One good way of visualizing this kind of structure is to think a
+device commonly found in science fiction books and films: a hallway
+with several doors. One door leads to a desert, and another to the
+antarctic. When you go through the door, you are in a different place
+but you can still walk back through the door, open the other door and
+walk through it.  At each moment separately, you are operating under
+the rules of three-dimensional space known to us but when you pass the
+door and realize that you don't see the other door from the other side,
+you know that you are in a paradoxical environment.
+
+Another place to look for good, related visualizations, is the work
+of M.C.Escher, who has created many paradoxical spaces that would fit
+well with \zz. However, not all of his paintings work this way: in \zz,
+directions are global: up is the same ``up'' everywhere, unlike in some
+of Escher's work, so care has to be taken with this analogy.
+
+Another possible way of viewing this structure is the electric circuit view
+where the cells are just drawn as blocks with {\tt +} and {\tt -} 
+connectors labeled with dimensions. Wires (connections) can now be drawn from
+any {\tt +} to any {\tt -} connector in the same dimension.
+
+
+Finally, let's go through the vocabulary of \zz:
+\begin{description}
+\item[cell] The basic unit of information
+\item[dimensions] Orthogonal directions along which ranks of cells run.
+\item[neighbour] The cell next to another cell on a given dimension. Either poswards or negwards
+\item[rank] A number of cells that are neighbours to each others, that is, a list that a 
+given dimension runs through. Note that all cells are on ranks in all dimensions; many of them
+are simply on ranks of length one by themselves.
+\item[negwards, poswards] The two directions on each rank/dimension.
+\item[negend, posend] The most negwards/poswards cell of a rank.
+\end{description}
+
+The words {\em row} and {\em column} are not on the list, and there
+is a reason for this: a row is just a rank viewed horizontally and
+a column is a rank viewed vertically. The same rank can be seen, depending
+on the view, as either a row or column.
+
+\subsection{A different perspective}
+
+A slightly different way of looking at the structure that may sometimes
+help thinking about it is to consider {\em labeled lists}.
+That is, instead of considering cells and connections, consider lists (each
+list labeled with a string) of 
+cells where the same cell may be on several lists (but only on ones
+with different labels).
+It is not difficult to see that this is exactly the same
+structure as above but viewed from a different angle: emphasizing the ranks
+instead of the single cell and its connections.
+
+As an example of such a structure, consider a list of people and their
+birth years. It'd be quite natural to have first names, last names and 
+birth years in their own columns, each row being one person.
+If done e.g.~on a spreadsheet, you would have to settle
+for the global rectangular structure. However, with ZigZag you can
+do more interesting things such as have the first names in alphabetical
+order, the last names in alphabetical order and finally even the birth
+years in numerical order in their own colums. This is because the columns
+are independent of each other, bound together simply by having the rows
+going across them. Displaying such a structure can be done in several
+different ways.
+
+Also, it would then be easy to select subsets of the people on other dimensions,
+for example for people who are currently in the same class or whatever.
+
+
+
+\begin{figure}
+\caption{
+}
+XXX!!!
+\end{figure}
+
+It is useful to be able to see the structure from both perspectives
+since this will both help to overcome the feeling of paradoxicality
+from the spreadsheet-like connective picture but also remember that
+the cells are important objects in the list picture.
+
+\subsection{Arriving at the ZigZag structure}
+
+To arrive at ZigZag from a general perspective, consider the problem
+of storing and visualizing information in a structure.
+Now, we naturally need some kind of ``atoms'', i.e.~indivisible 
+pieces of information --- let's make an atom connected to a piece of text
+as the information it carries. Now, atoms should be connected to each other.
+Consider the two principles: 1) all connections must be two-directional
+and 2) to preserve visualizability, no cell should have an enormous number
+of connections. There are of course several different ways of realizing
+these principles but ZigZag is a particularly simple one.
+
+\subsection{Special system dimensions}
+
+At the time of the writing, some of these dimension are still in GZigZag
+with their old names and semantics, most notably d.stepper (which goes
+by the handle d.cursor).
+
+Usually dimensions that are closely related to each other have
+related names, like {\tt d.stepper} and {\tt d..stepper-cargo} below.
+
+Some dimensions have special meaning to \zz. Among them are
+\begin{description}
+\item[d.clone] The clone dimension. All cells on a clone rank are clones of each other, meaning
+that their contents are enforced to be the same and changes to the contents of one are reflected
+to the others.
+
+For example, clones could be used to represent the same email address
+on a number of email headers, so that all those instances of the
+same email addresses would be linked to each other through {\tt d.clone}.
+\item[d.stepper] A pointing dimension. The negend of a rank on 
+{\tt d.stepper} is the cell being pointed at by all of the other cells
+on that rank.
+
+This mechanism is used for instance by the views to point to the cursor which is
+at the center of the view. Moving the cursor is equivalent to inserting
+the maincell of the view poswards on {\tt d.stepper} from the new position
+of the cursor (the accursed cell).
+
+\item[d..stepper-cargo] A mechanism for glueing several steppers together,
+so that multiple views can share the same center and when one changes, all 
+change. Details explained in the GZigZag specs.
+
+\end{description}
+
+\subsection{Comparison to existing computer structures}
+
+To put it coarsely, outside \zz\ there are four different kinds of
+structures in computers today: linear lists (and grids i.e.~lists of lists), 
+trees and messes (by 
+a mess, I mean any complicated data structure).
+The first two are inflexible and the third always requires much
+programming and debugging to do and is often hard to visualize.
+
+\zz\ offers a fundamental new kind of {\em structure} where encoding
+new structures is simple because the coherence of the underlying
+simple flexible structure is guaranteed.
+At first it may seem strange that a structure that restricts the
+number of connections from each cell can be generic but this simple
+restriction is what brings about the coherence of \zz. 
+In the sections below you'll see how this restriction does not prevent
+any structure from being represented using \zz\ but it enables several
+clever visualizations.
+
+\zz\ guarantees that there are no dangling pointers: all links are 
+two-directional. You can always find which cells refer to a given cell.
+
+The {\em most} interesting thing about \zz\ and existing structures,
+the importance of which I really only realized while doing a demo at Nokia
+is simply that by using different dimensions, \zz\ allows you to 
+arrange the {\em same} things (cells) into {\em different} traditional
+structures. So you can have the same cells in a tree along two
+dimensions (as you'll see below, trees are easiest done using two
+dimensions, one to go from the parent to the first child and the other
+to move along siblings), a list along another dimension and a table
+along two other dimensions. If you use relcells (see~\ref{sec:relcell})
+you can even put the same things (this time, not cells: you do have to do a step of indirection)
+into different structures along the 
+{\em same} dimensions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Viewing}
+
+Now that the structure is defined, we have to be able to view and edit
+it on the computer somehow. Of course, we {\em could} just put this
+structure in a text file and edit it by naming cells with numbers and
+links by naming the cell numbers but this would lose the visuality
+inherent in the design.
+
+There are {\bf many} variations to this theme. For different applications,
+different visualizations are of course appropriate but this does not
+diminish the fact that underneath all there lies a common structure which
+can be visualized in any of the ways, unlike for traditional computer
+applications where the structure and the view are usually closely coupled.
+
+\subsection{Simple 2D raster view}
+
+A really simple 2D view is obtained by selecting two dimensions and a
+``center'' cell.  These two dimensions are associated with the X and Y
+coordinates and starting from the center cell A, other cells are placed
+on a rectangular grid around it, according to the dimensions: let's
+say the center cell is placed at coordinates (0,0). Now, if {\tt d.1}
+corresponds to X and {\tt d.2} corresponds to Y, and there lies a cell B
+poswards from A on {\tt d.1}, then B would be placed at (1,0), and so on.
+
+Of course, since the \zz\ structure can be paradoxical (it is not
+inherently paradoxical in 2D: you can define a structure that looks just
+like a spreadsheet), there can be several different cells that would
+be typeset at the same point in the 2D diagram.  For example, a simple
+paradox would be that starting from cell A, going first poswards on {\tt
+d.1} and then {\tt d.2} could result in a different cell than first going
+poswards on {\tt d.2} and then {\tt d.1}.  This is where {\em rasters}
+come in.  A raster is basically a rule for selecting which cells get
+shown in a 2D diagram.  There can be several different rasters, from
+which the user can select the one best suited for the structure he is
+currently viewing.
+
+The simplest kind of raster, a {\em hard raster} is simply a tree on the 2D
+grid: it starts at the center cell and can branch at any cell (including
+the center cell) but it will only arrive to each cell once. The cells that
+are displayed are chosen by taking exactly those paths that the tree takes
+when finding out the cells. If there is no cell in the direction from
+the cell being rendered, then that whole branch of the tree is left empty.
+
+Two rasters, specifically the simplest ones, stand out from among the
+possible hard rasters: the horizontal and vertical raster, where the
+tree is formed by a single column or row, each cell in which branches
+into each row/column. XXX
+
+\begin{figure}
+\caption{The two most common hard rasters. a) row-oriented, b) column-oriented.
+Both are shown on a $5\times5$ cell screen.}
+.PS
+[
+boxwid=0.15; boxht=0.15
+linewid=0.3; lineht=0.3;
+up;
+C: box; arrow; B: box; arrow; A: box; 
+down;
+move to C.s; arrow; D: box; arrow; E: box; 
+copy thru % move to $1.e; right; arrow; box; arrow; box; move to $1.w; left; arrow; box; arrow; box % until "END"
+A
+B
+C
+D
+E
+END
+]
+.PE
+a)\box\graph
+.PS
+[
+boxwid=0.15; boxht=0.15
+linewid=0.3; lineht=0.3;
+right;
+C: box; arrow; B: box; arrow; A: box; 
+left;
+move to C.w; arrow; D: box; arrow; E: box; 
+copy thru % move to $1.n; up; arrow; box; arrow; box; move to $1.s;down; arrow; box; arrow; box % until "END"
+A
+B
+C
+D
+E
+END
+]
+.PE
+~~~~~~b)\box\graph
+% a)
+% \xymatrix @*[F-] {
+% & \ar[l] & \ar[l] \ar[r] & \ar[r] & \\
+% & \ar[l] & \ar[l] \ar[u] \ar[r] & \ar[r] & \\
+% & \ar[l] & \ar[l] \ar[u]\ar[d] \ar[r] & \ar[r] & \\
+% & \ar[l] & \ar[l] \ar[d] \ar[r] & \ar[r] & \\
+% & \ar[l] & \ar[l] \ar[r] & \ar[r] & \\
+% }
+% ~~~~~b)\xymatrix @*[F-] {
+% & & & & \\
+% \ar[u] & \ar[u] & \ar[u] & \ar[u] & \ar[u] \\
+% \ar[u]\ar[d] & \ar[u]\ar[d]\ar[l] & \ar[u]\ar[d]\ar[l]\ar[r] & \ar[u]\ar[d]\ar[r] & \ar[u]\ar[d] \\
+% \ar[d] & \ar[d] & \ar[d] & \ar[d] & \ar[d] \\
+% & & & &
+% }
+\end{figure}
+
+A {\em soft raster}, on the other hand is one that does not specify explicitly
+how to traverse the cells --- it only specifies how to resolve conflicts
+between the cells that would be displayed on the same position and in
+which order to ``expand'' cells.  A soft raster generally results in more
+cells being displayed than a hard raster.  An example of a soft raster
+would be ``each new cell is expanded; preference is horizontally from
+center, vertically from center, horizontally away from center, vertically
+away from center''. Incidentally, this soft raster always shows exactly
+the same cells at exactly the same positions as the row-oriented raster,
+except that it can also show more cells that would have been left out
+in the hard raster.
+
+In order to look clear to the human observer, visual cues about the
+structure are vital.  All neighbouring cells that lie next to each other
+should be connected with a line, and all cells that have neighbours
+that were not displayed because of the raster should have e.g. half of a
+connecting line, disappearing underneath the other cell in some visual
+fashion to show this.  Also, when moving in the structure so that the
+part of
+
+\subsection{``Vanishing'' view}
+
+The vanishing view is a computationally simple way to display 2-4 (or more)
+dimensions of the structure. 
+First, a direction vector is defined for each dimension - for the usual X, Y and Z
+they would be (1,0), (0,1) and (1,1). Then, we place the cursor cell at the 
+center of the screen at size one. We see whether which neighbours exist and
+move to the appropriate directions but --- here comes the big innovation ---
+we shrink both the size and the direction vectors by multiplying them by 0.9.
+Then the process is continued from the last rendered cells, always shrinking.
+
+In reality, of course, the cells are buffered and rendered in the other direction
+since we want the center cell to be on top (and the cells near the center to be 
+above the ones far from it).
+
+Other effects may also be applied to clarify the view for the user, such as
+graying out the ``far-away'' cells (this is generally called Fog in computer
+graphics), thickening the lines of the cells near the center and so on.
+
+In this view it is important to not render the same cell twice as that would get
+even more confusing than with grid rasters.
+
+
+\subsection{Multicentrics}
+
+\subsection{3D view}
+
+3-D rastering can be performed in just the same way as 2-D rastering
+and visualized by drawing balls and sticks in a 3-D scene.
+
+XXX
+
+\subsection{Tree view}
+
+Since the 2D plane of the \zz\ structure can be viewed as a tree (starting
+with 4 branches and branching further at each cell to 3 directions) why
+not show it as one? Those places where the structure is not paradoxical
+can be shown as regular grids but for the other places, a tree centered
+on the home cell and extending outwards can be a good visualization.
+The benefit of this view is that it shows {\em all} cells within a
+certain range of the center cell --- on the other hand, some of them
+may have to be drawn very small, depending on the paradoxicality of
+the structure.
+
+\subsection{Animated cloud view}
+
+Each dimension has a 2-D vector associated with it and starting from
+a given cell, all cells to a given radius are plotted (though not more
+than once, even when reached through different paths).
+If the vectors are shrunk when going farther from the origin, a view
+related to the tree view is obtained.
+
+Animation and randomity is essential: when this structure rotates, it is
+possible to grasp the structure close to a cell.
+
+\subsection{Pseudo-3D view}
+
+This view closely resembles a rastered view, except that between the
+cells in the grid there are diagonally shown two cells, one poswards
+and one negwards of each cell in a third dimension. The connections from
+these cells are not shown (but it is shown that they do have connections).
+
+\subsection{Special, application-oriented views}
+
+To be correct, instead of application we should use the word {\em
+applitude} to distinguish from the traditional kind of monolithic
+application.
+
+For some applications (again: not programs, but rather ``things you do
+with \zz''), it is useful to have special views for themselves. This
+could include showing some cells from more dimensions around the center
+cell than the generic view could do.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sample structures}
+
+This section shows some of the possible applications of \zz. 
+Note that these applications are not applications as in
+separate executables that are run to perform a task: that is
+old-fashioned thinking. The \zz\ way is to have them all together,
+in the same space. This is what Ted Nelson means when he speaks about
+applications being prisons: here you can easily link together your
+CDs and your pre/reprints and your meetings.
+
+There is an interesting phenomenon associated with inventing applications
+for \zz: when you are first introduced to it, you are astonished at the 
+things you could do with it but when you start thinking of sample applications,
+you may soon draw a blank.
+
+Interestingly, the reason is likely not to be \zz, but rather the fact that
+we have for a long time been trained to think in traditional computer
+paradigms and ``paper simulators'' that it is initially hard to see how
+the freer multidimensional structure of \zz\ could be of use but slowly,
+as you get used to the idea, possible uses will start popping up.
+Thinking outside the box is not at all easy.
+
+\subsection{A CD Player}
+
+One quite interesting application of \zz\ would be a CD player.
+The point is that you can manage the CDs you own, form different
+lists of songs on them that you like or that fit particular styles,
+download some of them into MP3-files and so on. And play CDs, of course.
+
+\begin{figure}
+\caption{Some view of the suggested CD player structure.
+a) The CD player cell, linked to the disk that is in the CD bay and playing
+a piece.
+The duration along {\tt d.1} is shown only for one piece.
+Some of the songs have been cloned and linked to form a short playlist
+of my very favorite songs.
+\label{fig:cdplayeri}
+}
+a) \xymatrix@R=0.4cm @C=1.5cm{
+*+[F]\hbox{CD Player} \ar[r]^{\tt d.playing} \ar[rdddd]^{\tt d.playing}&
+*+[F]\hbox{Astor Piazzolla / Oblivion} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Jeanne y Paul} \ar[d]^{\tt d.ondisk} 
+	\ar[ddddddr]^{\tt d.clone}
+	\\
+& *+[F]\hbox{En penultimo} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Oblivion} \ar[d]^{\tt d.ondisk} \ar[r]^{\tt d.1} 
+    & *+[F]\hbox{4:02 XXX} \\
+& *+[F]\hbox{Enrico IV} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Tanti anni prima} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Remembrance} \ar[d]^{\tt d.ondisk} 
+	& *+[F]\hbox{Very best of Oblivion} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Cavalcata} \ar[d]^{\tt d.ondisk} 
+	& *+[F]\hbox{Jeanne y Paul} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Baires '72} \ar[d]^{\tt d.ondisk} 
+	& *+[F]\hbox{Oda para un hippie} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{Oda para un hippie} \ar[d]^{\tt d.ondisk} \ar[ur]^{\tt d.clone}
+	& *+[F]\hbox{Fuga} \\
+& *+[F]\hbox{Fuga} \ar[d]^{\tt d.ondisk} 
+	\ar[ur]^{\tt d.clone} \\
+& *+[F]\hbox{Homenaje a Cordoba} \ar[d]^{\tt d.ondisk} \\
+& *+[F]\hbox{En 3x4} \\
+}~~~~~
+\end{figure}
+
+A part of the structure is shown in Fig.~\ref{fig:cdplayeri}.
+There would be one cell, representing the CD player. 
+Each CD would have its own headcell, containing the CDDB id (or some other
+type of checksum by which a disk can be identified).
+This cell would be linked to the track cells via {\tt d.ondisk}, which
+would be linked to the track
+names and lengths via {\tt d.1}.
+
+When the CD player is playing a piece, it is automatically connected
+to one of the disk cells via {\tt d.playing} and one of the track
+cells of that disk via {\tt d.playingtrack}. The time is shown
+by some other (editable!) cells connected to the CD player cell (not shown here).
+If there is a CD changer,
+there could be also a dimension {\tt d.inbay} which would link the CD
+player to all the disk cells of the disks in the changer.
+And of course, you could make the player play a different track by
+changing the link of {\tt d.playingtrack} or {\tt d.playing}.
+
+Now that the structure is defined, we can use it either through 
+the usual views, or through a special view adapted to this
+purpose.
+
+But the most important thing is that now, unlike in most CD player
+applications, even the ones that support CDDB, you can now include
+your {\em own} information in this structure. The CD player code
+would not mind additional connections to the track cells.
+It would then be easy to make a note of (and find it again) on which
+of the 60 Bach's Kantatenwerk CDs (there are 10 volumes of 6 CDs each)
+that wonderful trio between the oboe d'amore, viola da gamba and continuo
+was again.
+
+Alternatively, you could make playlists using clones along {\tt d.clone}
+of the track cells, and linking them along {\tt d.ondisk}, creating
+a virtual disk for the CD player.
+
+This kind of interface where some of the connections are ``magical'' i.e.
+where changing the connection causes something to happen, and some are
+not magical, is a good example of how \zz\ can be used.
+Nice graphical interfaces can now be written on top of this structure
+but having the simple underlying structure (like an API, except
+data-, not code-based) makes it possible to link all the information
+provided by the CD player to other applications. The CDDB entries have
+been liberated from the prison of the CD player.
+
+
+\subsection{Managing a collection of virtual pre/reprints}
+
+In academia, you often collect stacks and stacks of pre/reprints
+from colleagues, which are quite difficult to keep properly organized
+so that when you search for the information you remember you had
+at one point it may take quite a while to find it.
+
+Computers have brought this problem to a completely different level:
+nowadays pre- and reprints are often distributed as compressed postscript
+files, and often with non-descriptive names like {\tt aaai1.ps.gz} (which
+is descriptive to the author but not to others).
+Unless you meticulously rename the files to include the author and
+the subject, you will before long be hopelessly lost among virtual
+stacks of files --- and there you won't even have the same help from 
+our intuitive understanding of physical space that you would have had
+with physical documents. Also, it's slower to scan compressed postscript
+files: it takes a few seconds for the computer to show the first page.
+
+This is one place where \zz\ can truly help. First of all, you can
+organize your preprints in lists according to authors and journals.
+You can annotate the files. 
+But most importantly, after doing this, you can browse them easily
+using all the available \zz\ viewers.
+And not only this: if you are doing your own academic projects in \zz\ as
+well, you can link the relevant publications directly to the area
+where you are doing your work. 
+
+You could use a database application for this but they are often clumsy
+when entering data and the browsing is not even nearly as simple as in
+\zz.
+
+Of course, this problem is caused by not using reasonable data formats
+to start with but this is what we have to work with today.
+
+Maintaining a similar structure e.g.~in HTML would be a nightmare:
+dangling links everywhere etc. \zz\ makes it easy since all links are
+2-directional and the structure is easy to edit.
+
+\subsection{Managing program settings}
+
+Having programs that allow the user to customize their look and functionality
+is great. However, one pet peeve of mine is that these programs often 
+only allow one set of default settings. If I like to have the program to have
+one look in a particular context (e.g.~when doing short documents) 
+and another in some other context (books), I would always have to click through
+the configurations dialog and change the settings. 
+
+Even more horribly, many X11 programs take their configuration from
+X resources which are specified by name. Here it is possible to have
+different configurations for the same program but they are difficult to
+edit and even more difficult (or impossible) to change while the program
+is running.
+
+\zz\ can change all this. Because of the ubiquitous data structure, 
+a program instance (for example, a view window showing a part of the \zz\
+structure) can be given one settings cell. Starting from this cell, the
+program will use prespecified paths to find its configuration information,
+all in the \zz\ structure. There are three main benefits:
+1) this allows several different configurations
+for the same program to coexist, 2) if the prespecified paths are done
+in a smart way, configurations can ``inherit'' settings from one another
+dynamically and 3) the configuration is simple to change at run time because
+of the active notification properties of \zz.
+
+Since the relationship between the configuration property names and values
+is like a list, using {\tt d.1} between the property name and value 
+and {\tt d.2} to link the properties is natural. 
+For inheriting properties, we'll just use all cells that have a connection
+negwards on {\tt d.inheritsettings}. Fig.~\ref{fig:progset} shows this
+structure.
+
+\begin{figure}
+\caption{
+A structure useful for program settings. There are three sets of settings
+for the program now, represented by the cells Default, MySpecial, and MyUsual.
+Both MySpecial and MyUsual inherit most of their settings from Default but
+nothing from each other.
+\label{fig:progset}
+}
+\xymatrix@R=0.4cm @C=0.4cm{
+& & *+[F]\hbox{MyUsual} \ar[d]^{\tt d.2} & & *+[F]\hbox{MySpecial}  \ar[d]^{\tt d.2}& \\
+& & *+[F]\hbox{BgColor}  \ar[r]^{\tt d.1} \ar[d]^{\tt d.2}& *+[F]\hbox{blue} & *+[F]\hbox{Font} \ar[d]^{\tt d.2}\ar[r]^{\tt d.1}  & *+[F]\hbox{weirdsym} \\
+& & *+[F]\hbox{FgColor}  \ar[r]^{\tt d.1} \ar[d]^{\tt d.2}& *+[F]\hbox{yellow} & *+[F]\hbox{Animation}  \ar[r]^{\tt d.1} \ar[d]^{\tt d.2}& *+[F]\hbox{no} \\
+*+[F]\hbox{Default} \ar[d]^{\tt d.2} \ar[rr]^{\tt d.inheritsettings} & & *+[F]\hbox{~}  \ar[rr]^{\tt d.inheritsettings}& & *+[F]\hbox{~} \\
+*+[F]\hbox{BgColor} \ar[r]^{\tt d.1} \ar[d]^{\tt d.2} & *+[F]\hbox{white} \\
+*+[F]\hbox{FgColor}  \ar[r]^{\tt d.1} \ar[d]^{\tt d.2}& *+[F]\hbox{black} \\
+*+[F]\hbox{Font}  \ar[r]^{\tt d.1} \ar[d]^{\tt d.2}& *+[F]\hbox{Times} \\
+*+[F]\hbox{Title}  \ar[r]^{\tt d.1} \ar[d]^{\tt d.2}& *+[F]\hbox{ZZ Window} \\
+*+[F]\hbox{Animation}  \ar[r]^{\tt d.1} & *+[F]\hbox{yes} \\
+}
+\end{figure}
+
+\label{sec:appconf}
+But now there is a small potential problem: what about misspellings?
+If I were to write {\tt bgcolorr} instead of {\tt bgcolor}, the 
+setting would be quietly ignored. 
+This is where the fact that \zz\ is a {\em structure} can be incredibly
+helpful. Instead of creating new cells with the setting names, we simply
+{\em clone} the cells representing the setting names. This can make
+our life even simpler if the same cells are used in the documentation:
+when you want to change a setting, you simply clone the correct cell
+from the documentation, add it to the setting list and write in your setting ---
+and of course this process can be automated with a small script.
+As a bonus, you'd get a listing of all your settings for a given setting
+by simply browsing the structure.
+This is not shown as a figure because drawing this in 2D without interaction
+and animation is difficult.
+
+Another place where the structure and links of \zz\ are wildly useful
+is font management. It's possible to have a master font list from where
+you can clone fonts to smaller, private lists where the fonts you like
+are easily accessible and finally clone them to the settings list,
+without having to remember the whole name or without having to always
+pick the fonts from the long lists of possibilities.
+
+Due to the generic nature of \zz, the applications of this idea are
+not at all limited to program settings.
+The same kind of arrangement can naturally work for key- (and mouse-) 
+bindings as well,
+where the setting would be a script that would be run when the key
+is pressed.
+Another application of this paradigm would be controlling parameter sets
+to scientific computations.
+
+\subsection{Keybindings}
+
+There is another type of structured information that is generally 
+rather difficult to manage: keybindings. Most programs fix their keybindings
+absolutely, allowing for no customization. Some programs allow the user
+to choose which key does what but won't allow multiple states or such.
+
+In ZigZag, implementing keybindings is ridiculously simple: we simply
+define a traversal algorithm that performs some action every time a key
+is pressed. The state can be specified by a cursor-like construction.
+For example,
+\begin{enumerate}
+\item 1.
+Start from the current cell and move down on {\tt d.2} until a string
+matching the keystroke is found. If not found, return.
+\item 2.
+Move one step on {\tt d.1}. This is the cell giving the name of the action.
+Execute action, downwards on {\tt d.2} from here.
+\item 3.
+Move to the poscell on {\tt d.3} from the action-name cell. 
+Set the next state to be this. If there is no rank on {\tt d.3} from
+the action-name cell, return to the original state.
+\end{enumerate}
+Additionally, the algorithm can be made to traverse rule sublists
+listed on {\tt d.3} from a cell on the action dimension.
+
+The more mathematically oriented readers will have recognized this
+as being a simple state machine --- which is exactly what it is.
+The point here is simply that it is easy for the user to edit this state
+machine using the ZigZag tools.
+
+
+\subsection{A better {\tt javadoc}}
+
+Javadoc is the tool used to produce hypertext (in the ``traditional'' sense)
+documentation by extracting on-line documentation from java source code
+and adding links to the classes of the parameters etc.
+This type of documentation is quite useful, giving the programmer
+the ability to quickly jump to definitions of related classes.
+
+Here, however, \zz\ has a lot to give. The problem with javadoc is that
+it produces HTML files which are read in a browser which does not understand
+the structure of the documentation. Browsing through the package hierarchy
+must happen through clicking on links and the back button. 
+
+In \zz, it is easy to handle tree structures
+
+
+\subsection{A personal information manager}
+
+\subsection{A programmer's editor}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Designing structures}
+
+There are as many different structures as applications but still there
+are some helpful design patterns for \zz\ structures just as in OOP.
+
+\subsection{Arrangement along a dimension}
+
+Sometimes, there is a good, unique way of arranging cells along a
+dimension, e.g.~alphabetical order. However, sometimes there is not,
+or there are two different orders you'd like to have.
+
+This may seem like a difficult problem but actually, if all but one of the
+desired orders are easy to determine from the neighbours of the cells,
+then there is no problem at all: instead of expressing it directly in
+the structure, those orderings that are easy to construct algorithmically
+should be delegated to the view (as of yet, there are no viewers capable
+of this but they are under construction).
+
+This idea applies to the clones and many to one reference sections below.
+
+If you really need several arrangements, you could consider
+a second dimension along which to arrange the same cells, or alternatively
+cloning the cells for another arrangement, or even putting dummy cells
+next to the cells in some other dimension with the sole purpose of
+arranging the cells (this is something that could be done to simulate
+email folders so that the same piece of email can be in several 
+folders at once).
+
+\subsection{Clones}
+
+When designing e.g.~an email application, the same person will pop up
+often in the correspondence.  One good way of keeping track is to have
+all the references to the person be clones i.e.~cells having the exactly
+the same content, connected to each other along {\tt d.clone}. The head
+cell is the ``original one'' into which you'd store other facts about
+the person.
+
+Similarly, clones were suggested for the cells used to name 
+settings in the example in Sec.~\ref{sec:appconf}.
+
+\subsection{Many to one reference}
+
+Having many cells refer to one cell may be conceptually difficult in
+\zz\ at first due to the fact that each cell may only have one link
+in one dimension. However, this is possible through either clones
+or headcells.
+
+Remember that there is only one headcell per rank --- why not organize all
+the cells that refer to the one cell as a rank and have the headcell of
+the rank be the cell linked to? It is possible to define special rasters
+that take this into account.
+
+The reason this is better than having many cells referring to one cell
+directly by a pointer or something is that now it is easy to ask the
+inverse question ``which cells refer to this cell''.  The structure is
+much more robust because of this: there will be no dangling references,
+i.e.~a cell can't be deleted without knowing that there is a link from
+somewhere to it.
+
+In Sec.~\ref{sec:appconf} the dimension {\tt d.inheritsettings} was
+used like this: two settings were able to inherit the same set of
+settings by defining the headcell in {\tt d.inheritsettings} to be the
+settings to be inherited.
+
+See also the next subsection for a structure for expressing general
+relations.
+
+\subsection{Relation Cells}
+
+\label{sec:relcell}
+
+Relation cells (relcells) are a commonly occurring construct in \zz.
+Fundamentally, relcells exist to declare a relationship between two
+cells or two groups of cells.
+
+
+% .PS
+% copy thru % circle at ($1,$2) % until "END"
+% 1 2
+% 3 4
+% 5 6
+% END
+% box
+% .PE
+% 
+%               \centerline{\raise 1em\box\graph}
+
+
+
+\begin{figure}
+\caption{
+\label{fig:relcell}
+a) A simple relation cell , marked with a $+$, connecting two cells
+to each other. 
+b) The reason for such relation cells: A is related to C and D but B is
+only related to C. This kind of relation is not specifiable without relation
+cells.
+}
+a)
+.PS
+box "A"
+arrow "d.x" ""
+box "+"
+down; move to last box.s
+arrow "d.y" ljust
+box "B"
+.PE
+\box\graph
+b)
+.PS
+box "A"
+arrow "d.x" ""
+RC1: box "+"
+arrow 
+box "+"
+down; move to last box.s
+arrow down 1
+box "D"
+move to RC1.s
+arrow 
+RC3:box "+"
+arrow
+box "C"
+move to RC3.w
+left
+line <-
+box "B"
+.PE
+\box\graph
+% a) \xymatrix{
+% *+[F]\hbox{A} \ar[r]^{\tt d.x}& *+[F]\hbox{+} \ar[d]^{\tt d.y} \\
+% & *+[F]\hbox{B}
+% }~~~~~
+% b) \xymatrix{
+% *+[F]\hbox{A} \ar[r]^{\tt d.x}& *+[F]\hbox{+} \ar[d]^{\tt d.y} \ar[r]^{\tt d.x}
+% 			& *+[F]\hbox{+} \ar[dd]^{\tt d.y} \\
+% *+[F]\hbox{B} \ar[r]^{\tt d.x}& *+[F]\hbox{+} \ar[d]^{\tt d.y} \\
+% & *+[F]\hbox{C} & *+[F]\hbox{D} 
+% }~~~~~
+% c) \xymatrix{
+% *+[F]\hbox{A} \ar[r]
+% }
+\end{figure}
+
+As shown in {\tt fig:relcell}, 
+the basic relcell denotes an association between one endcell of one dimension
+and another endcell of another dimension. 
+
+This is not the only kind of relcell there is: a different type is
+one that relates many cells to one, in such a way that many different
+sets of cells can be related to the same cell. This kind of relation 
+is useful for e.g.~cursors.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Programming \zz}
+
+This section explains how scripts can be used in \zz. Also, 
+we discuss how the view applications can be made simple
+through clever use of scripts.
+
+\subsection{The scripting API}
+
+The most basic operations in \zz, expressed with parameters
+\begin{description}
+\item[new cell(cell, dim, posneg)] Create a new cell from the given cell in the given
+dimension, in the given direction.
+If a cell already exists in that direction, insert this new cell between
+the current cell and the existing cell in the same rank:
+the rank ABCDE, if the new cell n is inserted poswards from C,
+becomes ABCnDE. The other connections from all cells are unaffected.
+\item[delete cell(cell)] Delete the given cell.
+\item[link(fromcell, tocell, dim)] Create a connection between fromcell and tocell along dimension
+dim.
+\item[delete link(cell, dim, posneg)] Delete the link from the given cell in the given dimension
+and direction.
+\item[set cell contents(cell, data)] Set the contents of the cell to data.
+\end{description}
+In a visual environment, you give the parameters by clicking etc. but the basic
+operations are still the same.
+
+Now, these are the absolute minimum operations to get by: they are
+definitely not a complete set of useful operations. 
+All the advanced operations can be defined through these operations, though.
+
+There are a number of more complicated editing operations that deal with ranks:
+\begin{description}
+\item[jump(cell,dim,posneg)] In its rank on dimension dim, hop this cell over its neighbour.
+The rank ABCDE, if B is jumped poswards, becomes ACBDE. No other connections from the cells are affected.
+\end{description}
+
+XXX Shearing
+
+
+\subsection{Scripts}
+
+Currently, a cell with a \verb+#+ sign in front of it can be
+interpreted as executable code.  The code gets as its parameters
+the cell the code was in and one parameter cell (possibly also a
+cell representing a viewer in the future).
+
+\subsection{Editing via scripts}
+
+The interface to edit the \zz\ structure in our prototype is encoded
+mostly in terms scripts: the only operation the viewer knows about
+is executing one cell on another cell. The viewer does not know how
+to e.g.~create a new cell or link cells.
+
+This gives us a surprising amount of flexibility in the user interface.
+For instance, if we want to have a {\tt Skip to} operation in our
+CD player, we can simply write a small script in a cell that finds
+the CD player that is playing the disk and connects it along the 
+{\tt d.playingtrack} dimension to the cell the {\tt Skip to} script
+was executed on. We can then bind either tell the viewer to execute
+this action or even specify a special binding for it in the viewer
+configuration (which is also stored in the \zz\ structure).
+
+\subsection{Watches}
+
+(DRAFT!)
+It is possible to place scripts in the structure which are run whenever
+some part of the structure is changed. This is how the CD player example
+above would be implemented. 
+This is a very simple mechanism: the scripts are placed along a
+dimension {\tt d.watch} from the cell which (and the connections of which)
+are being watched. Whenever the cell or one of its connections is changed
+or deleted, the scripts are run.
+
+XXX watching a watcher?
+
+\section{Versioning}
+
+NB. This section is subject to change. It is meant to be a sketch for
+implementing versioning for \zz\ and is by no means final.
+This is currently not yet implemented.
+
+Normally, on computers, if you edit a file and save it, the previous
+version is gone.  You have changed the contents of the file and now the
+new contents is all you can see.  There are programs, like RCS and CVS,
+that can be used to store and track the changes to a single file or to
+a group of files. There are even versioning filesystems where you 
+are able to retrieve the previous versions of your files.
+
+In \zz, versioning is inherent in the structure: the previous versions
+are accessible through simply browsing the structure itself.
+
+In \zz, there are two kinds of storage for cells: transient and permanent.
+Cells in transient storage are treated just like normal files: when
+they are deleted they are gone, or when they are changed, the previous
+form is not accessible.  This is what is currently being implemented in
+our prototype.
+
+Permanent cells (the recommended type of storage in the future) are
+a more interesting case: when you delete a permanent cell, you are
+actually only deleting all the links to it --- or more accurately, you
+are creating a new version of that cell and all its neighbours, and in
+this new version, the connections between the cell being ``deleted''
+and its neighbours do not exist. Nothing is deleted from the storage;
+only information about the changes is added.  In permanent storage, it is
+possible to access all the previous versions of any part of the structure.
+
+The parts of the structure that deal with versions are a good example
+of {\em virtual cells}, which you can view and sometimes (depending
+on the context) alter or at least link to, but which do not necessarily
+exist in the same way as ordinary cells but are generated on the fly
+by the \zz\ server from the information it has.
+
+
+\subsection{Cell Identity}
+
+In order to distinguish between different versions of a cell, there are
+two different types of cell ids. The LID (Lifespan ID) refers to all the
+versions of a cell at the same time, i.e.~it refers to one rank in the
+dimension {\tt d.cellversion}.  The posend of that rank is the current
+version of the cell.  The VID (Version ID) refers to one particular
+version of the cell, i.e.~that cell at all moments between two changes
+that occurred to that cell.
+
+The {\tt d.cellversion} dimension is generally not what you want to use
+since it tracks changes to that one cell only. It jumps right over any
+changes to a neighbouring cell or any other cell.
+
+The {\tt d.version} dimension is another versioning dimension. This is
+the global version, which changes for every cell when even one change
+is made anywhere in the structure (a number of changes may be committed
+simultaneously though).
+
+\begin{figure}
+\caption{An example of how {\tt d.version} works.
+In this example, we start with two cells, A and C. First, a new cell B is created
+on {\tt d.1} from A, and then this new cell is connected to cell C and finally a new cell
+D is created negwards on {\tt d.1} from A.
+The straight arrows show {\tt d.globalversion} horizontally and {\tt d.1} vertically.
+The curved arrows show {\tt d.cellversion}. Note how they skip several of the global versions
+since nothing happened to that cell. All the connections along {\tt d.cellversion} are shown,
+so it is important to notice that there is no neighbour in that dimension for many cells, only
+the {\em last} cell representing each cell version.
+The cells are vertically aligned by time.
+Also, note that if there were more cells and they had been changed, there would be one more step
+in {\tt d.globalversion} for each change not visible here.
+}
+\xymatrix{
+& & & D \ar[d] \\
+A \ar[r] \POS"2,3"**\crv{[]+(20,20)}?>*\dir{>} & A \ar[r]\ar[d] 
+& A \ar[r]\ar[d] \POS"2,4"**\crv{[]+(10,20)}?>*\dir{>} 
+& A\ar[d]\\
+         & B \ar[r] & B \ar[r] \ar[d] & B \ar[d]\\
+C \ar[r] 
+& C \ar[r] \POS"4,4"**\crv{[]+(20,20)}?>*\dir{>} 
+& C \ar[r] & C\\
+}
+\end{figure}
+
+\subsection{Scrolls}
+
+One of the fundamental concepts in the Ted Nelson's Xanadu system is that
+of {\em scrolls}.  A scroll is a storage form of data into which new data
+is appended but old data is never removed --- it is essentially carved
+in stone as it arrives. The data in scrolls is used by pointing to it.
+
+%%%%%%%%%%%%%%%%%%%%
+\section{Distributed \zz}
+
+Like the section on versioning, this section is at best a raw sketch
+of the functionality.
+
+\subsection{\zz\ remote protocol}
+
+In order to allow different \zz\ processors to interact, we have
+defined a \zz\ data protocol. The protocol is an active one and has
+state --- so it is more suitable between processes on the same machine.
+A passive, stateless protocol is under planning.
+
+The protocol allows a client to be informed whenever any cell changes
+(the client has to explicitly request to be informed about a cell, though),
+change the structure, or run code.
+
+The protocol is still not finalized.
+
+
+\subsection{Slices}
+
+There can be several different data sources: for instance, files on a disk
+could be represented by a process that serves \zz\ cells through looking
+at the filesystem, or \zz\ structures from different computers on a network
+could be represented as data sources.
+
+In general, all different sources of data in the sense that they provide
+a collection of \zz\ data are called slices.
+
+\section{ZZ Programs}
+
+So far, we have been talking about \zz\ on a fairly abstract level. In
+this section, we'll start looking at some implementation details that
+make \zz\ special.
+
+\subsection{Model-View-Controller}
+
+The Model-View-Controller (MVC) paradigm was introduced with SmallTalk.
+The idea is that instead of programming a graphical program like spaghetti,
+you'd clearly separate the data that is being represented, the views
+of the data and whatever changes the data (the controllers).
+The view and the controller are usually a part of the same object, so
+that you can e.g.~drag pieces of a diagram but the point is that the
+view and the controller do not communicate with each other.
+The controller changes the model and then {\em all} the different views
+get updated as well.
+
+The Model in \zz\ is of course the \zz\ structure.
+Changing the raster would be achieved {\em not} by changing some
+internal variable of the graphical client but rather by changing the
+part of the \zz\ structure that represents the client.
+Likewise, the cursors of the various views are represented in the structure
+as are the selected dimensions and rasters.
+
+In the \zz\ system, using a MVC structure pervasively has many benefits.
+First and foremost, it brings configuration and run-time data of
+the \zz\ programs to the same area as the other data. This way
+all the facilities of \zz\ for scripting and editing can be used
+for these as well. As an example, writing a small script that finds
+the next {\em relevant} dimension to show in X direction is trivial
+when all the data is in the \zz\ structure but doing the same if the
+application were built in a traditional way is next to impossible --- or
+at least difficult, requiring a special API provided by the application.
+
+
+
+
+
+\end{document}
+
+

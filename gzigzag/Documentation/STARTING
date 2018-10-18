@@ -1,0 +1,24 @@
+$Id: STARTING,v 1.2 2000/09/09 13:37:32 tjl Exp $
+
+Documenting how to start with GZigZag is difficult because it
+is a moving target. So if there are any discrepancies with the
+current CVS version and this document, please ask me (lukka@iki.fi)
+to update it.
+Especially the keystrokes are liable to change soon. This is the situation 
+at the date given above.
+
+When you first start GZigZag, you get two windows showing cells and
+their connections.
+The system works so that
+you click on the right-hand window to focus on it and then all you need
+is the keyboard: you can forget the mouse (it does work though: clicking
+on a cell moves to it).
+
+For the cursor motion you have the keys "IJL," and "ESFC". Pressing Tab
+will give you a text insertion cursor that you can move sideways with the
+arrow keys.
+
+Other commands are n-<dir> for new cell, / (slash)-<dir> for connecting
+two cells etc. They are shown in the user's guide.
+
+Any other questions, just mail me.

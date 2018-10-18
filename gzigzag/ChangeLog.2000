@@ -1,0 +1,1329 @@
+2000-12-31 Sunday 15:23  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/CursorView.zob: Fix
+
+2000-12-31 Sunday 15:15  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/: ApplitudeMgr.java, ZZDefaultSpace.java,
+	ZZKeyBindings1.java, ZZPrimitiveActions.java,
+	flob/CombinedView.zob: Fixes
+
+2000-12-31 Sunday 15:12  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/FlobSet.java: Make FlobSet MUCH more efficient, not
+	using Vectors when not needed
+
+2000-12-29 Friday 00:01  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/Makefile: Add notemap
+
+2000-12-28 Thursday 22:46  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/MultiView.zob: Improve applitude interconnectivity
+
+2000-12-28 Thursday 02:18  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/.cvsignore: ...and now: an attempt at THE REAL THING
+	(applitude interconnectivity)
+
+2000-12-28 Thursday 01:19  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/NileDemo.java: Now applitude bindings work quite
+	well, including mode changes -- i.e., Nile works together with
+	other applitudes
+
+2000-12-27 Wednesday 21:11  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/Flob.java: Now able to change applitude by clicking
+
+2000-12-27 Wednesday 12:14  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/notemap/Notemap.zob: Half-fix: it isn't *right*, but
+	readable now even in special cases
+
+2000-12-27 Wednesday 12:11  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Math/ajk-scribbles.tex: Initial revision.
+
+2000-12-27 Wednesday 00:43  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* NEWS: Update
+
+2000-12-26 Tuesday 22:48  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/storage/MemWritable.java, Modules/nile/NileApplet.java: OK,
+	make it actually work
+
+2000-12-26 Tuesday 21:59  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/SplitNileDemo.java: Draft of an applet demoing split
+	nile (actually, it works, except StringScroll needs a writable --
+	which disables scrolls/spans -- which disables transclusions, which
+	basicly is the coolest thing we want to show...)
+
+2000-12-26 Tuesday 21:13  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/.cvsignore: Add SplitNileView
+
+2000-12-26 Tuesday 21:12  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/Nile1.java: Fix a bit
+
+2000-12-26 Tuesday 20:15  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/SplitNileView.zob: Forgot to add, again...
+
+2000-12-26 Tuesday 20:15  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/CoordDecor.java: WOW: Parallel Nile streams -- showing
+	transclusions with beams
+
+2000-12-26 Tuesday 15:20  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/SplitView.zob: Oops, forgot to add...
+
+2000-12-26 Tuesday 15:20  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/Renderable.java: Put in hooks for the basic capability
+	of combining views, and a funny view that uses them
+
+2000-12-26 Tuesday 14:09  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/media/FText.java: Fix capitalisation
+
+2000-12-25 Monday 19:55  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/Nile2Ops.java: ...and, forgot to commit this
+
+2000-12-25 Monday 19:37  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/: flob/FTextLayouter.zob, media/Capitalizer.java: Abstract
+	string capitalization out to a Capitalizer class, change FText and
+	FTextLayouter API (next step would be to move firstCap out of
+	FTextLayouter -- it does NOT belong there! -- and into the views;
+	at the same time, get rid of the calls with beginningSentence[].
+	Too much work to do it now)
+
+2000-12-25 Monday 17:26  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/clang/: Data.java, flowing/Data.java: Make Data usable by
+	all clangs also, doc a bit (I moved it to org.gzigzag because that
+	causes the least changes, but it'd be better to move it to
+	org.gzigzag.clang someday.)
+
+2000-12-25 Monday 13:58  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/zaubertrank/ZaubertrankPart.java,
+	Java/storage/ZZCacheDimSpace.java: A spacepart for the zaubertrank,
+	with a dimension that shows the elements of a zaubertrank token
+	tree in Reverse Polish Notation.
+
+2000-12-25 Monday 13:54  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/errors/: MissingTermError.java, SyntaxError.java: Oops,
+	publicize
+
+2000-12-25 Monday 12:22  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/clang/thales/SyntaxError.java: Move SyntaxError to
+	org.gzigzag and Java/errors -- I think it should be possible for
+	all clangs to use the same SyntaxError exception. If we want to
+	separate, we can have subclasses.
+
+2000-12-25 Monday 09:45  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* changelog-authors: Last time commits weren't mailed through
+	gzz-commits, not everyone was on changelog-authors, so try adding
+	everyone on the SourceForge Project Member List ;) (it can't hurt,
+	can it now?)
+
+2000-12-24 Sunday 21:24  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/transform/Convert.java: A handy little utility to convert
+	from old to new file format
+
+2000-12-24 Sunday 13:54  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/: Dump.java, dump2java.pl: More work on dumping
+
+2000-12-22 Friday 22:44  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/Dumper.java: Make im- and export of dumps work; dump2java
+	converter later to be invoked on compiletime, to make a Java file
+	which recreates the dumped subspace
+
+2000-12-20 Wednesday 22:26  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/Nile2Iter.java: Jump between nile transclusions --
+	unfortunately, this *does* cheat
+
+2000-12-18 Monday 19:24  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/: Main.java, ZZDimSpace.java, ZZSpace.java: Put the hooks in
+	to find all cells whose spans overlap a given span. New arg for
+	Main, -span, so that normal users won't be slowed down until we
+	have a reasonable implementation for SpanSet.
+
+2000-12-17 Sunday 17:24  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/Nile1View.zob: Turn standard debug off
+
+2000-12-17 Sunday 16:32  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/nile/Nile2Unit.java: Nile transclusions
+
+2000-12-12 Tuesday 18:43  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/storage/ZZPersistentDimSpace.java:
+	PersistentDimSpace.recreateMasterDimList must set the space of the
+	dimension or there'll be problems.
+
+2000-12-12 Tuesday 11:18  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/storage/ZZPersistentDimension.java: s/final// for dbg, also
+	enable one commented-out p()
+
+2000-12-11 Monday 21:38  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/media/TestLines.java: Change method use deprecated in jdk1.3
+
+2000-12-11 Monday 19:47  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ScalableFont.java: Clean up, restyle, document
+
+2000-12-11 Monday 13:57  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Nile/Makefile (ver_0_4): Fix^2: Nile in 0.4 doc
+	tarball
+
+2000-12-11 Monday 13:40  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Makefile (ver_0_4): Nile in 0.4 doc tarball
+
+2000-12-11 Monday 13:20  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/index.html (ver_0_4): Nile docs
+
+2000-12-11 Monday 09:20  Rauli Ruohonen <raulir@iki.fi>
+
+	* Java/ZZUpdateManager.java, Modules/applet/ZZApplet.java,
+	Modules/prez/PrezRaster.zob: Cleaned ZZUpdateManager up a bit
+	(clarified comments, removed unused variables). Fixed a null
+	pointer reference bug in PrezRaster. Modified ZZApplet so that it
+	works again.
+
+2000-12-11 Monday 09:03  Rauli Ruohonen <raulir@iki.fi>
+
+	* Java/ZOb.java, Java/ZZCommand.java, Java/ZZWindows.java,
+	Java/zob2java.pl, Java/flob/CellFlobFactory1.zob,
+	Java/flob/CellFlobFactory2.zob,
+	Java/flob/IdiosyncraticFlobFactory.zob,
+	Java/flob/ParallelTextView.zob, Java/flob/RankTextView.zob,
+	Modules/textcloud/TextCloud.zob: Replaced ad hoc font scaling stuff
+	in zobs with use of ScalableFont. Nile is the only view still using
+	the old way.
+
+2000-12-11 Monday 02:54  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/VanishingView.zob: Add more efficient getPoint to Flob,
+	document FlobSet little
+
+2000-12-11 Monday 02:54  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/VobSet.java: Start drafting new API
+
+2000-12-10 Sunday 21:18  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/SimpleTextView.zob: Make editview work with
+	SimpleTextView, new HELP command bound to F1
+
+2000-12-10 Sunday 17:14  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/nile/Nile1.zob: Reorganize a bit
+
+2000-12-09 Saturday 02:29  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Nile/nileug.wml: Short nile user's guide
+
+2000-12-08 Friday 23:05  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Nile/nile.wml, Java/ZZCursorReal.java: Nile now
+	basically works as a text editor. Now it's time to start testing it
+	out and fixing the details. Whew!
+
+2000-12-08 Friday 12:50  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/zaubertrank/: Actions.java, ParsedView.zob, Parser.java,
+	Zaubertrank.java: Yet some more work on the zaubertrank
+
+2000-12-07 Thursday 00:37  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/nile/: Nile1Ops.java, Nile1Text.java, Nile2Test.java:
+	More nile work. Now moved to new APIs, which make things a LOT
+	simpler than the earlier ones. The way the word-breaking code works
+	is almost clear now ;). Sentences and paragraphs untested. Should
+	define actions soon.
+
+2000-12-07 Thursday 00:36  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZCell.java: Add new method: findCell to look for a cell
+	along a rank.
+
+2000-12-06 Wednesday 10:36  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/zaubertrank/SimpleView.zob: More work on the zaubertrank
+
+2000-12-05 Tuesday 03:44  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/mungencss.pl: A small script to remove generated routines
+	from the javancss output.
+
+2000-12-05 Tuesday 03:43  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/clang/heraclitus/: HeraclitusClang.java,
+	HeraclitusCommand.zob, Primitive.java: Comment some more, change
+	cursorparam to param.
+
+2000-12-05 Tuesday 02:01  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/wmlinc/art.css: More nile doc
+
+2000-12-04 Monday 22:11  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Modules/zaubertrank/: .cvsignore, README.html, TokenFlob.java,
+	TokenGrouper.java: More work on the zaubertrank
+
+2000-12-04 Monday 13:01  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: JEv.java, ZZViewComponent.java, media/Stream.java: Clean
+	up some old code
+
+2000-11-30 Thursday 19:44  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/SplitCellFlob1.java: SplitCellFlobs MUST have the same
+	cell if they are parent and nextPart.
+
+2000-11-30 Thursday 19:43  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZUtil.java: Make mix a little more careful
+
+2000-11-30 Thursday 08:44  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Makefile, manifest-filter.pl, Java/ZZDimension.java,
+	Java/ZZLocalDimension.java, Java/storage/ZZCacheDimension.java,
+	Modules/test/TestUndo.java: merge from 0.3
+
+2000-11-28 Tuesday 12:07  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/media/StringScroll.java: Update author info.
+
+2000-11-27 Monday 11:09  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/media/UTF8Char.java: New UTF-8 StringScroll format
+
+2000-11-25 Saturday 00:36  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZCursor.java, ZZCursorVirtual.java: Nile now knows how to
+	select single words when clicked by mouse. Hopping them over each
+	other is the next task...
+
+2000-11-24 Friday 16:24  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/media/VStream.java: Further nile work - now showing the
+	selected unit should just about work, then for making the actual
+	units. This nastily complicates the view code but that's life - it
+	shouldn't be getting much worse after this, anyway.
+
+2000-11-24 Friday 03:02  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/nile/README: More nile work. Factor out vstream cursor
+	move from PrimitiveActions - this should probably be done for a
+	number of other actions, too...
+
+2000-11-22 Wednesday 17:19  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/: CyberText/permascroll.png,
+	CyberText/rank1vert.png, CyberText/rank2vert.png,
+	CyberText/rank3both.png, Spec/canvasraster.png, Spec/cursor1.png,
+	Spec/cursordim.png, Spec/inheritparam.png, Spec/rasterspec.png:
+	generated files OUT!
+
+2000-11-22 Wednesday 00:35  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/nile/Nile1GenTreeModel.java: Various changes to make nile
+	have its own window and modes. Now we can start working on the ops
+	in peace, and because it's bound to a real window, we can very
+	easily see what is happening in the structure. Of course, this is
+	not how it will be in the end: in the end it will be just one of
+	the views and views can also have states but for now, we'll do
+	this.
+
+2000-11-20 Monday 17:36  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/nile/Nile1Div.java: More nile work
+
+2000-11-20 Monday 12:59  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/FlobView.java: Fix rcsid
+
+2000-11-19 Sunday 01:49  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/hypergenealogy/HyperGenealogy.zob: More work - now can
+	show each time step, so can basically animate.
+
+2000-11-17 Friday 18:46  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/FTextLayouter.java: Add firstcap and
+	section-title-jumping to nile. It is starting to look pretty good.
+	Text entry is still difficult because you have to make the tags by
+	hand but that'll get easier soon. The problem with fistcap is that
+	it's done completely wrong now and needs to be redone. 1: there
+	should be a central place to do it, with its own state object, 2:
+	there should be less awareness of it throughout classes, it should
+	be a single call to FText, not involving FTextLayout at all, 3: it
+	should be thought out whether we do really want it to e at this
+	level or whether we should explicitly store sentence breaks in nile
+	- I don't know yet. But entering the sentence break by two spaces
+	feels quite natural (that's Ted's design).
+
+2000-11-17 Friday 13:52  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/UsersGuide/: addressbook.png, alku.png, bind1.png,
+	bind2.png, boring.png, breakkafka.png, change1.png, change2.png,
+	child1.png, child2.png, connection1.png, creation.png,
+	dimensio.png, extra.png, f2.png, familytree.png, font.png,
+	grey.png, hop1.png, hop2.png, hopolympos.png, htree.png, kafka.png,
+	klooni.png, make1.png, make2.png, make3.png, make4.png, make5.png,
+	make6.png, margins.png, mark1.png, mark2.png, markconnect.png,
+	mutsi.png, mutsiosoite.png, myspeech.png, myspeech1.png,
+	myspeech2.png, myspeech3.png, newug.wml, olympos.png, olympos2.png,
+	osoite.png, para.png, rainy.png, rcfact1.png, rotate.png, row.png,
+	shiny.png, shinyhappy.png, shinyhappy2.png, shinyhappy3.png,
+	structure1.png, structure2.png, suku.png, testi.png,
+	wallstreet.png, widthstr.png, wrongconn.png (ver_0_2): bring
+	current manual from trunk to frozen branch
+
+2000-11-16 Thursday 21:01  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/part/GenTreePart.java: Make space upgrade work again. Put
+	the old system list in a reasonable place. Remove dcold since it
+	doesn't mean anything after that.
+
+2000-11-16 Thursday 20:33  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/clang/flowing/: Flowing.java, FlowingClang.java,
+	StackFrame.java, StackFrameReal.java, StackFrameVirtual.java: A
+	newer flowing clang version
+
+2000-11-16 Thursday 20:28  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/DimRecursor.java, Java/Iter.java,
+	Java/flob/EnumVanishingView.zob, Modules/iter/.cvsignore,
+	Modules/iter/DimRecursor.java, Modules/iter/EnumVanishingView.zob,
+	Modules/iter/Iter.java, Modules/iter/README: Move iteration
+	experiments into Modules/
+
+2000-11-16 Thursday 00:25  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/part/: GenTreePartModel.java, GenTreeTestModel.java: More
+	work on tree-like parts: define a general interface. This makes the
+	code a bit simpler and now we can use this on nile. Excellent...
+
+2000-11-15 Wednesday 16:26  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/arch/java2d/ZZDrawingJ2D.java: Lesser quality settings
+
+2000-11-13 Monday 11:59  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/part/ImpliedTreePart2.java: Use parsed IDs. Improvement?
+
+2000-11-13 Monday 11:59  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZSpacePart.java, part/ImpliedTreePart.java: Rationalize
+
+2000-11-13 Monday 11:58  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZCellHandle.java: Optimize
+
+2000-11-10 Friday 17:45  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/flob/FlobFactory.java: An iteration draft which abstracts
+	the dimension recursion out; a not-yet-really-working version of
+	the Vanishing view in less than 175 lines, using that; functions to
+	place flobs visual center to visual center.
+
+2000-11-10 Friday 09:59  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/wmlinc/catart.wml: (hopefully) fix anchoring
+
+2000-11-07 Tuesday 23:07  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZSlicedDimSpace.java, storage/Sliced.java,
+	storage/SlicedCursor.java, storage/SlicedHomes.java,
+	storage/SlicedSame.java: Remove compilation warnings. Start work on
+	a sequence-implied tree
+
+2000-11-07 Tuesday 13:06  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/flob/RowColRaster.zob: merge
+
+2000-11-07 Tuesday 12:38  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/flob/CompassRaster.zob, Java/flob/CompassView.zob,
+	Java/flob/FlobRaster.java, Java/flob/ICView.zob,
+	Java/flob/Level.java, Java/flob/LevelRaster.zob,
+	Java/flob/LevelView.zob, Java/flob/ManyToManyRaster.zob,
+	Java/flob/ManyToManyView.zob, Java/flob/NullRaster.zob,
+	Java/flob/NullView.zob, Java/flob/RasterCellFactory1.zob,
+	Java/flob/RasterCellFactory2.zob, Java/flob/RasterFlobFactory.java,
+	Java/flob/RowColView.zob, Java/flob/SimpleFlobRaster.zob,
+	Java/flob/SimpleFlobView.zob, Java/flob/TreeRaster.zob,
+	Java/flob/TreeView.zob, Java/flob/VStreamRaster.zob,
+	Modules/daytimedemo/Calendar2.zob,
+	Modules/daytimedemo/DayTimeDemo.zob, Modules/mbox/SingleMail.zob:
+	merge
+
+2000-11-06 Monday 12:39  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/part/: BinaryTreePart.java, DoubleStepPart.java,
+	ZZROSpacePart.java, ZZROStrSpacePart.java: An amusing new space
+	part: double-step dimensions
+
+2000-11-06 Monday 12:06  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/clang/heraclitus/.cvsignore, Modules/daytimedemo/.cvsignore,
+	Modules/hypergenealogy/.cvsignore, Modules/mbox/ZZMbox.java:
+	merging from 0.2 branch
+
+2000-11-05 Sunday 19:11  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZRODimension.java, storage/SlicedOV.java,
+	storage/SlicedStpr.java: BIG change. Please test, as things may be
+	BADLY broken. Change ZZDimension to use ZZCellHandles instead of
+	Strings, based on the potentially faulty assumption that
+	ZZCellHandles are a good idea. This is very experimental.
+
+2000-11-05 Sunday 18:22  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/arch/javadoc/ZobDoc.java: First working version of ZOb docs.
+
+2000-11-05 Sunday 12:51  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/.cvsignore: Add generated zob documentation
+
+2000-11-05 Sunday 12:49  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/openGL/ZZOpenGLGraphics.java: Start work on a doclet for
+	generating ZOb structparam docs. The point is to leave out the
+	things that are not interesting for use in the structure.
+
+2000-11-03 Friday 08:25  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/: clang/ZZClangOps.pl, storage/Recs.pl: much better file by
+	perl generation
+
+2000-11-03 Friday 08:01  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/media/Scroll.java, Java/storage/DimHash.java,
+	Java/storage/DirSet.java, Java/storage/WritableHash.java,
+	Java/storage/WritableSet.java, Modules/xml/XML.java: hopefully
+	final 0.1.x merge
+
+2000-11-03 Friday 06:47  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/storage/Recs.java: generated file OUT!
+
+2000-11-02 Thursday 13:03  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/LoopDetector.java: Important: use .equals instead of == for
+	comparison.
+
+2000-11-02 Thursday 13:01  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZDrawing.java: Rendering quality: I want my antialiased
+	fonts antialiased.
+
+2000-11-01 Wednesday 08:12  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZCanvasView.java, ZZPhotoView.java,
+	media/ZZSoundView.java: Make painting always happen into
+	doublebuffer.
+
+2000-11-01 Wednesday 00:39  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZIter.java, flob/StdLinks.zob: Various fixes to views,
+	including curving. Not complete yet: need to add bulge.
+
+2000-10-31 Tuesday 15:12  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/TestSpace.java: First optional architecture: Java2D. If you
+	have Java2D in your compilation *and* execution environment and use
+	'make ARCH=java2d', you'll get translucent cells. We can use the
+	improved rendering of Java2D now.
+
+2000-10-31 Tuesday 14:20  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/UsersGuide/Makefile: fix a bug
+
+2000-10-31 Tuesday 14:01  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/: lib.mk, wmlinc/article.wml, wmlinc/common.wml:
+	first version of cat's UG - talk to her if you want to work on it
+
+2000-10-30 Monday 15:25  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZModule.java, flob/VanishingRaster.zob: VanishingRaster
+	-> vanishingview
+
+2000-10-30 Monday 10:44  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZModules.java: Why would we need an extra ZZModules class
+	after all?
+
+2000-10-29 Sunday 19:34  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/wordnet/conv.pl: Longer func name, for a change. Count
+	better. Make deleteFromRank called excise.
+
+2000-10-29 Sunday 19:19  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/TimeTest.java: Twiddle
+
+2000-10-27 Friday 13:55  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/BallCell.java: Oops, forgot to add
+
+2000-10-26 Thursday 18:15  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/LineDecor.java: Fix dbg
+
+2000-10-26 Thursday 18:15  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/Colorer.java: A bit more structure
+
+2000-10-26 Thursday 18:14  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/CellBgFlob.java: Adjust for colorer
+
+2000-10-26 Thursday 18:09  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: SafeExit.java, UndoList.java, d.java,
+	errors/ZZInvalidCursorPositionError.java, flob/ArrowDecor.java,
+	flob/FlobDecorator.java: More javadoc comments
+
+2000-10-26 Thursday 13:08  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/: keybindings.wml, Spec/Makefile: merge
+
+2000-10-26 Thursday 12:25  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/NEWS (ver_0_1): oops, move NEWS to toplevel dir
+
+2000-10-22 Sunday 09:15  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/MagGrid.zob: Decrease trybefore a bit for smoother
+	animation
+
+2000-10-21 Saturday 23:07  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/flob/GridGeom.java: Start reimplementing row-column stuff.
+	The aim is to get a cleaner abstraction so that we can start
+	bootstrapping by rewriting the new, easy code using cells.
+
+2000-10-21 Saturday 13:46  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/README: Update requirements
+
+2000-10-21 Saturday 13:45  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Gentle_Introduction/gi.wml: Rewrite the whole XML
+	import / export stuff. We really don't want DOM to load the whole
+	document in memory but SAX since we can just stream off the tags.
+	This should make import/export of large amounts of stuff faster,
+	just what we need for the wordnet demo...
+
+2000-10-20 Friday 15:47  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/ZZRasterDirection.java: This doesn't make sense to me
+	anymore...
+
+2000-10-20 Friday 15:16  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/clang/flowing/X.java: Change back earlier i18n attempt
+
+2000-10-20 Friday 11:35  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/RString.java: This may become something eventually -
+	referential strings as objects. I'll have to talk with Ted about
+	what a cell should really be able to contain
+
+2000-10-19 Thursday 17:04  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/media/: ZZDefaultText.java, ZZText.java: Next draft
+
+2000-10-18 Wednesday 14:35  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZConnection.java, Java/ZZPath.java,
+	Java/clang/ZZClang1.java, Java/clang/ZZClangContextReal.java,
+	Java/clang/flowing/T.java, Java/clang/heraclitus/PS1.java,
+	Java/clang/thales/Environment.java,
+	Java/clang/thales/SyntaxForm.java, Java/clang/thales/Task.java,
+	Java/clang/thales/syntaxforms/Abstraction.java,
+	Java/clang/thales/syntaxforms/CellDenoter.java,
+	Java/clang/thales/syntaxforms/CellLiteral.java,
+	Java/clang/thales/syntaxforms/Primitive.java,
+	Java/clang/thales/syntaxforms/Sequence.java,
+	Java/transform/ChangeDim.java, Java/transform/ClearDim.java,
+	Java/transform/CopyDim.java, Java/transform/FoldDim.java,
+	Java/transform/ReverseDim.java, Java/transform/Version0.java,
+	Modules/database/DB0.java, Modules/openGL/OpenGLCloud.java,
+	Modules/sound/ZZPlayer.java, Modules/test/TestClang1.java,
+	Modules/test/TestHuge.java: HUGE HUGE HUGE change. Global replace
+	all getNeighbours, getHeadcells and newCells. Now the code should
+	be a lot cleaner-looking...
+
+2000-10-17 Tuesday 11:05  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/FAQ: Clarify who programs and who doesn't (someone
+	got confused)
+
+2000-10-17 Tuesday 08:01  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* CODING: Recommend ZZLogger.
+
+2000-10-13 Friday 13:52  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/clang/flowing/: B.java, C.java, Primitive.java,
+	PrimitiveSet.java: Improve flowing
+
+2000-10-11 Wednesday 13:28  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/clang/heraclitus/HeraclitusCommand.java: oops
+
+2000-10-10 Tuesday 09:03  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/diagrams/Makefile: another merge
+
+2000-09-29 Friday 12:34  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* README: Demo for cat: added a space.
+
+2000-09-23 Saturday 12:00  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* cvsparser.pl, Documentation/ApplitudeWriters/Makefile,
+	Documentation/Clang_Design/Makefile,
+	Documentation/CyberText/Makefile,
+	Documentation/DesignProblems/Makefile,
+	Documentation/DimBased/Makefile,
+	Documentation/Gentle_Introduction/Makefile,
+	Documentation/Glossary/Makefile, Documentation/Math/Makefile:
+	another merge
+
+2000-09-19 Tuesday 10:31  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Glossary/gl.wml, Java/ChkVersion.java,
+	Java/NullZOb.java, Java/SoundObs.java, Java/ZZEvObs.java,
+	Java/ZZExec.java, Java/ZZKeyBindings.java,
+	Java/ZZKeyBindings0.java, Java/ZZObs.java, Java/ZZObsTrigger.java,
+	Java/ZZScene.java, Java/ZZTraverseCB.java, Java/ZZView.java,
+	Java/clang/ZZClangContext.java,
+	Java/clang/ZZClangContextVirtual.java, Java/clang/ZZClangOp.java,
+	Java/errors/ZZConnectWouldBreakError.java,
+	Java/errors/ZZError.java, Java/errors/ZZFatalError.java,
+	Java/errors/ZZInfiniteLoop.java,
+	Java/errors/ZZInvalidDimensionError.java, Java/flob/BeamDecor.java,
+	Java/flob/CellFlob1.java, Java/flob/ConnectionLineDecor.java,
+	Java/flob/SimpleBeamer.zob, Java/flob/SimpleFlobConnector.zob,
+	Java/flob/SpanFlob.java, Java/flob/TextDecor.java,
+	Java/media/Address.java, Java/media/ByteScroll.java,
+	Java/media/CharScroll.java, Java/media/LineBreaker.java,
+	Java/media/LineInfo.java, Java/media/SimpleLineBreaker.java,
+	Java/media/SimpleLineInfo.java, Java/media/SoundScroll.java,
+	Java/media/Span.java, Java/media/SpanSet.java,
+	Java/media/SpanTree.java, Java/media/ZZHumber.java,
+	Java/storage/ContentHash.java, Java/storage/ContentStore.java,
+	Java/storage/ContentStorer.java, Java/storage/DimStore.java,
+	Java/storage/FileWritable.java, Java/storage/Flushable.java,
+	Java/storage/GZZ0.java, Java/storage/SimpleContentFile.java,
+	Java/storage/SimpleDimFile.java, Java/storage/TestDimHash.java,
+	Java/storage/Writable.java, Java/storage/WritableIS.java,
+	Java/storage/ZZCacheContentStore.java,
+	Java/storage/ZZDimStorer.java, Java/transform/Version1.java,
+	Java/transform/Version2.java, Java/transform/VersionChanger.java,
+	Modules/extern/Extern.java, Modules/joystick/LinuxJoystick.java,
+	Modules/mbox/ZZDateParser.java, Modules/prez/Prez.java: another
+	merge
+
+2000-09-19 Tuesday 09:45  Tuomas J. Lukka <lukka@iki.fi>
+
+	* INSTALL: test lock release
+
+2000-09-18 Monday 14:28  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/storage/: DirStreamSet.java, StreamSet.java: Add deletion of
+	extra cells associated with cursors
+
+2000-09-17 Sunday 23:50  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Syntaxless/synt.wml: Start writing
+
+2000-09-17 Sunday 23:44  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/Cell.java: This doesn't have much to give any more...
+
+2000-09-17 Sunday 13:45  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/clang/heraclitus/PrimitiveSet.java: merge again, also fixing
+	the brokenness of previous merge
+
+2000-09-17 Sunday 13:07  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/BuildInfo.java.in, Java/ZZLogger.java,
+	Java/ZZPrimitiveCommand.zob, Java/clang/thales/DimensionNames.java,
+	Java/clang/thales/Evaluator.java,
+	Java/clang/thales/PrimitiveOperation.java,
+	Java/clang/thales/Refcounted.java,
+	Java/clang/thales/ThalesClang.java,
+	Java/clang/thales/ThalesProgram.zob,
+	Java/clang/thales/primitives/If.java,
+	Java/script/ZZScriptPerl.java, Modules/applet/example1.html: merge
+	from stable branch, does not compile
+
+2000-09-15 Friday 09:51  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* makedist.sh, manifest-filter.lst (ver_0_1): dist maker fixes
+
+2000-09-14 Thursday 16:10  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* .cvsignore, makedist.param: merge from ver_0_1
+
+2000-09-13 Wednesday 15:06  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CyberText/: 1.png, 3.png, 4.png, ct.wml,
+	kello-o.png, kello.png, vilma.png: Put in new version
+
+2000-09-13 Wednesday 14:58  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CyberText/ct-old.wml: Save old version in current
+	tree as well
+
+2000-09-13 Wednesday 14:55  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Gentle_Introduction/zzgentle.tex: Start html
+	conversion
+
+2000-09-13 Wednesday 14:54  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Spec/zzspec.wml: add summary of dims (to be grown)
+
+2000-09-12 Tuesday 17:12  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/UsersGuide/ug.wml: Improve
+
+2000-09-09 Saturday 13:37  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/STARTING: Update
+
+2000-09-09 Saturday 09:32  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/storage/: MultiFile.java, WriteCacheOp.java: Mark various
+	storage files deprecated
+
+2000-09-08 Friday 09:53  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/clang/thales/Primitive.java: move Primitive to syntaxforms
+
+2000-09-07 Thursday 22:57  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/UsersGuide/: clone1.png, clone2.png, connect1.png,
+	connect2.png: Add clones
+
+2000-09-07 Thursday 22:42  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/UsersGuide/: bothwins.png, edit1.png, edit2.png,
+	edit3.png, edit4.png, rightmoved.png, showingz.png: User's guide,
+	first half of first draft
+
+2000-09-07 Thursday 18:27  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CellScroll/: .cvsignore, Makefile, cs.ptex: Remove
+	old crud
+
+2000-09-07 Thursday 12:34  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Clang_Design/thales.wml: markup fix
+
+2000-09-06 Wednesday 05:30  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/clang/thales/.cvsignore: ignore generated file
+
+2000-09-04 Monday 19:10  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/storage/ZZWriteCacheDimension.java: First undo test working
+
+2000-08-29 Tuesday 07:39  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/ZZEventQueue.java: ZZEventQueue is not used anywhere
+
+2000-08-28 Monday 11:12  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/Next.java: seems to be superseded by ZZDimSpace.IDDimension
+
+2000-08-27 Sunday 14:20  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Java/ZZClangOps.java: Now what was this doing here?
+
+2000-08-27 Sunday 08:40  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZHash.java, ZZHashObs.java, ZZViewObs.java: And some
+	more. Lots of evolution has been going on, apparently.
+
+2000-08-27 Sunday 08:37  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZAbstractClient.java, ZZJavaRegistry.java,
+	ZZLinkRenderer.java, ZZLinkRenderer1.java, ZZRank.java: Remove more
+	old cruft. The nightly jars are already down to 297k from 350k... I
+	wonder how low we can go ;)
+
+2000-08-26 Saturday 21:51  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/example1.html: Move it to where it should be
+
+2000-08-25 Friday 02:55  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/TODO: Mention sf task manager
+
+2000-08-24 Thursday 19:21  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZCanvas.java, ZZCanvasCell1.java, ZZCanvasCellBg.java,
+	ZZCanvasTextSpanSet.java, ZZGraphics.java, ZZPathCoordRaster.java,
+	ZZRaster.java, ZZTreeRaster.java, ZZVanishingRaster.java,
+	media/TestSpans.java, media/VStreamRenderer.java,
+	media/ZZCanvasBeamThing.java, media/ZZCanvasTextMark.java,
+	media/ZZCanvasTextSpan.java: Remove a LOT of crud! I wonder how
+	much the next .jar files will be smaller by...
+
+2000-08-24 Thursday 10:48  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Modules/database/: zz.queries, zz.sql: SQL samples we used in the
+	demo
+
+2000-08-22 Tuesday 19:46  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Modules/xml/: XML2ZZ.java, ZZXML1.java: New XML import/export is
+	"complete". Removing old versions.
+
+2000-08-21 Monday 18:12  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Java/storage/.cvsignore: Obvious ;-) One more autogenerated file.
+
+2000-08-21 Monday 18:10  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Java/ZZLocal.java, Java/ZZRemote.java, Java/ZZSimpleEdit.java,
+	Java/storage/TestScroll.java, Java/storage/ZZCellScroll.java,
+	Modules/xml/TestXML.java: Old test implementations of space and
+	related files removed.
+
+2000-08-19 Saturday 12:16  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Clang_Design/design.ptex: oops
+
+2000-08-19 Saturday 05:35  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Modules/database/createscript.pl: Polishing things up for a demo
+
+2000-08-18 Friday 22:52  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/: prez/.cvsignore, textcloud/.cvsignore: Ignore cvs
+
+2000-08-17 Thursday 12:56  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/ApplitudeWriters/appw.wml: Doc changes
+
+2000-08-15 Tuesday 11:58  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/clang/thales/README: Initial revision.
+
+2000-08-15 Tuesday 05:19  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/DesignProblems/dp.wml: Solve (?) versioning problem
+
+2000-08-14 Monday 19:22  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/TextCloud.java: Change textcloud into ZOb
+
+2000-08-11 Friday 10:43  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Modules/mbox/MailRaster.zob: Forgot to commit this removal.
+
+2000-08-10 Thursday 22:14  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Modules/mbox/.cvsignore: Renamed MailRaster to SingleMail.
+
+2000-08-05 Saturday 22:27  Benjamin Fallenstein <b.fallenstein@gmx.de>
+
+	* Documentation/misc/Curseling: Cursor selection (curseling) doc
+	(XXX zzspec not yet updated)
+
+2000-08-03 Thursday 20:41  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZGlobal.java, ZZList.java: LOTS of changes: ZZObs should
+	work again, things should be a little faster and some things are
+	deprecated. I may have broken something, please tell me if I did.
+
+2000-07-28 Friday 08:36  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Spec/email1.dia: New diagram
+
+2000-07-27 Thursday 10:15  Tuukka Hastrup <tuukka@iki.fi>
+
+	* Java/flob/FlatRaster.zob: Renamed FlatRaster as CompassRaster.
+	Shows all the connections from accursed cell. Draft
+
+2000-07-23 Sunday 23:39  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZAbstractView.java: Good riddance, once more.
+
+2000-07-23 Sunday 23:11  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZSimpleClient2.java: Good riddance, you, too ;)
+
+2000-07-23 Sunday 14:50  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/media/ZZSoundCanvasComb.java: Start removal of swing.
+
+2000-07-22 Saturday 18:14  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZTextView.java: Good riddance ;)
+
+2000-07-18 Tuesday 09:34  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Java/flob/VanishingRaster.java: Ignore generated files
+
+2000-07-18 Tuesday 05:21  Antti-Juhani Kaijanaho <gaia@iki.fi>
+
+	* Documentation/Math/math.ptex: Make the ZZSpace definition a
+	little more explicit.
+
+2000-07-17 Monday 22:02  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZDummyGraphics.java: Obsolete
+
+2000-07-14 Friday 00:15  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Spec/inheritparam.dia: Update
+
+2000-07-11 Tuesday 12:30  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/clang/.cvsignore: Small tidy-ups
+
+2000-07-11 Tuesday 12:22  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZClang1.java, ZZClangContext.java,
+	ZZClangContextReal.java, ZZClangContextVirtual.java,
+	ZZClangOp.java, ZZClangOps.pl: Move clang stuff to its own subdir
+
+2000-07-11 Tuesday 11:10  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZConnectWouldBreakError.java, ZZError.java: Slightly more
+	graceful error handling.
+
+2000-07-09 Sunday 20:50  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/RasterFlobFactory.java: Move flobstuff
+
+2000-07-09 Sunday 14:31  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/README: Add keybindings
+
+2000-07-09 Sunday 12:20  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: Flob.java, FlobSet.java: Move flob-related stuff to flob/.
+	Add Renderable for decorations and as a base class. We're close
+	now.
+
+2000-07-07 Friday 18:34  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/make-src-tree.sh: Doc generation patch from Tuukka
+
+2000-07-04 Tuesday 19:02  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/FlobFactory.java: Move FlobFactory to RasterFlobFactory -
+	it's more for rasters than general flob stuff
+
+2000-07-04 Tuesday 18:25  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZHomeComb.java: Some flob work
+
+2000-07-04 Tuesday 17:40  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZFlobDim.java, ZZFlobIter.java, ZZFlobIterable.java,
+	ZZFlobRenderer.java: Remove old attempts in order not to confuse
+	people
+
+2000-07-03 Monday 22:26  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Spec/: canvasraster.dia, cursor1.dia,
+	cursordim.dia, rasterspec.dia: Talk about rasters
+
+2000-07-02 Sunday 21:42  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Spec/zzspec.ptex: Start htmlization
+
+2000-06-21 Wednesday 19:34  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Documentation/CyberText/email.dia: overview, more to come.
+	Tomorrow...
+
+2000-06-13 Tuesday 11:34  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/DesignProblems/: beamorder.dia, linkorder.dia: add
+
+2000-06-03 Saturday 09:41  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Modules/xml/old2xml.pl: fixes, to be cleaned
+
+2000-05-29 Monday 21:26  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/openGL/: Makefile, ZZOpenGLGraphics.cc: Add comments
+
+2000-05-26 Friday 10:14  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CyberText/permascroll.dia: Oops
+
+2000-05-26 Friday 10:08  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Modules/openGL/fi_iki_lukka_ZZOpenGLGraphics.h: some simple
+	code...
+
+2000-05-22 Monday 16:48  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CyberText/: rank2vert.dia, rank3both.dia: oops
+
+2000-05-21 Sunday 00:47  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CyberText/rank1vert.dia: First figure... more to
+	follow
+
+2000-05-20 Saturday 15:55  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZCellRenderer.java, ZZCellRenderer1.java: Restart now
+	retains TextCloud window.
+
+2000-05-19 Friday 01:46  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZSingleCellView.java: Discard singlecellview
+
+2000-05-16 Tuesday 14:57  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/: diagrams/ZZCanvas.dia, diagrams/cursoring.dia,
+	misc/RENDERING: Diagrams
+
+2000-05-14 Sunday 18:31  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/StringScroll.java: ...
+
+2000-05-09 Tuesday 17:29  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: Test1.java, ZZ2DBlob.java, ZZ2DCanvas.java,
+	ZZ2DCanvasGridRaster.java, ZZ2DCanvasRaster.java,
+	ZZ2DCanvasVanishingRaster.java, ZZ2DCanvasView.java: Speedup,
+	cleanup
+
+2000-05-08 Monday 23:56  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/misc/: billow, textcloud: X
+
+2000-05-08 Monday 01:37  Tuomas J. Lukka <lukka@iki.fi>
+
+	* TODO: ...
+
+2000-05-03 Wednesday 04:30  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* C++/: Data.cpp, Data.h, INSTALL, Makefile, Makefile.in,
+	Renderer.cpp, Renderer.h, ZZ2DGrid.cpp, ZZ2DGrid.h, ZZ2DRaster.h,
+	ZZ2DRaster_Col.cpp, ZZ2DRaster_Col.h, ZZ2DRaster_Row.cpp,
+	ZZ2DRaster_Row.h, ZZ2DRaster_Soft1.cpp, ZZ2DRaster_Soft1.h,
+	ZZ2DRaster_Soft2.cpp, ZZ2DRaster_Soft2.h, ZZ2DRaster_SoftRow.cpp,
+	ZZ2DRaster_SoftRow.h, ZZCell.cpp, ZZCell.h, ZZCliComm.cpp,
+	ZZCliComm.h, ZZClient.cpp, ZZClient.h, ZZClientInterface.h,
+	ZZClientViewIf.h, ZZFileHandler.cpp, ZZFileHandler.h,
+	ZZFileHandlerInterface.h, ZZId.h, ZZScript.cpp, ZZScript.h,
+	ZZScriptAPI_1.h, ZZScriptInterface.h, ZZScriptServerInterface.h,
+	ZZServer.cpp, ZZServer.h, ZZServerInterface.h, ZZSettings.h,
+	ZZView.cpp, ZZView.h, configure, configure.in, main.cpp, main.h:
+	removed c++-version again :
+	-------------------------------------------------------------------
+	---
+
+2000-05-03 Wednesday 03:06  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/misc/keys: foo
+
+2000-05-03 Wednesday 03:04  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZCanvasVanishingRaster.java: Flobs. Whew.
+
+2000-05-02 Tuesday 10:15  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* C++/README: removed c++ version
+
+2000-05-01 Monday 04:21  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZ2DCanvasButteredRaster.java: Improve new canvas
+
+2000-04-30 Sunday 11:41  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ContentHash.java, ContentStore.java, DimHash.java,
+	DimStore.java, DirSet.java, MultiFile.java, Recs.java, Recs.pl,
+	Sliced.java, SlicedOV.java, SlicedStpr.java, TestDimHash.java,
+	TestScroll.java, Writable.java, WritableHash.java, WritableIS.java,
+	WritableSet.java, ZZCellScroll.java, ZZPersistentDimSpace.java,
+	ZZPersistentDimension.java: More reorg
+
+2000-04-30 Sunday 11:36  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: Address.java, ByteScroll.java, CharScroll.java,
+	Scroll.java, SoundScroll.java, Span.java, SpanTree.java,
+	TestSpans.java, VStream.java, VStreamRenderer.java,
+	ZZCanvasBeamThing.java, ZZCanvasTextMark.java,
+	ZZCanvasTextSpan.java, ZZHumber.java, ZZSoundCanvasComb.java,
+	ZZSoundView.java, media/README: Reorg
+
+2000-04-30 Sunday 11:26  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZMarkView.java, ZZMouseListener.java: Remove refs to
+	swing
+
+2000-04-13 Thursday 14:09  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZCompound.java: cursor
+
+2000-04-06 Thursday 03:22  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Gentle_Introduction/.cvsignore: Twid
+
+2000-03-28 Tuesday 12:51  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Modules/README: added applet
+
+2000-03-28 Tuesday 07:54  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Java/ZZApplet.java: moved to Modules
+
+2000-03-13 Monday 00:19  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/check.pl: Make view font etc selection simpler
+
+2000-03-12 Sunday 10:57  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/.gvimrc: Add help
+
+2000-03-12 Sunday 10:55  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Slices/SliceLogic,
+	Documentation/Slices/zzSliceLogic.jpg, Java/ZZSliced.java: Small
+	things
+
+2000-03-06 Monday 05:36  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Java/: Scene.java, ZZRenderer3d.java: removed 3d code
+
+2000-03-04 Saturday 15:45  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/DimBased/dim.ptex: add docs
+
+2000-02-29 Tuesday 00:42  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZEdit.java: edit to space change
+
+2000-02-20 Sunday 17:33  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: TestXML.java, ZZXML1.java: Make XML a module
+
+2000-02-19 Saturday 18:06  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Clang_Design/.cvsignore,
+	Documentation/Interfacing/.cvsignore,
+	Documentation/Spec/.cvsignore, Java/ZZ2DGrid.java,
+	Java/ZZ2DGridRaster.java, Java/ZZ2DGridRasters.java,
+	Java/ZZ2DGridView.java: Remove 2dgrid legacy code
+
+2000-02-19 Saturday 18:01  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Modules/test/README: Clang WORKS
+
+2000-02-08 Tuesday 00:40  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZ2DCanvasRasters.java: Many small things, cleaning reorg
+
+2000-02-03 Thursday 09:35  Vesa Parkkinen <veparkki@st.jyu.fi>
+
+	* Java/script/Makefile: [no log message]
+
+2000-02-01 Tuesday 23:06  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Perl/README: Preparing for 0.01
+
+2000-01-30 Sunday 19:39  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/Package.html: Simplification of space code - preparing for
+	transients
+
+2000-01-27 Thursday 18:00  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Interfacing/Makefile: Doc makefiles
+
+2000-01-26 Wednesday 18:28  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/ZZObsCaster.java: New event model ++
+
+2000-01-03 Monday 02:35  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZ2DGridComponent.java, ZZSimpleClient.java: Getting
+	there...
+
+2000-01-01 Saturday 00:52  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/: ZZBrowse.java, ZZVCell.java: Reshaping and
+	undinosaurifying
+
+1999-12-24 Friday 16:33  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/CellScroll/SCRATCH: Ignoring stuff...
+
+1999-12-24 Friday 16:30  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Gentle_Introduction/README: foo
+
+1999-12-23 Thursday 01:53  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Interfacing/int.ptex: Add rcs info to doc files
+
+1999-12-23 Thursday 01:44  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/Clang_Design/design.pod: Change format
+
+1999-12-09 Thursday 16:15  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/script/: ZZScriptAPI_1_JNI.h, ZZScriptPerl.cpp: Minor
+	JNIPerl fixes
+
+1999-12-09 Thursday 13:13  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/script/: ZZScriptAPI_1_JNI.cpp, invoke.c: foo
+
+1999-12-09 Thursday 01:31  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Java/script/ZZId.h: Start jni-perl
+
+1999-12-04 Saturday 18:01  Tuomas J. Lukka <lukka@iki.fi>
+
+	* Documentation/: PROTOCOL, misc/ADDRESSING, misc/TORESOLVE: foo
+
+1999-12-04 Saturday 17:37  Tuomas J. Lukka <lukka@iki.fi>
+
+	* LICENSE.lgpl, LICENSE.xpl, VERSION, Perl/PerlServImpl.pm,
+	Perl/ZZPerlDBServ.pm, Perl/ZZPerlServ.pm,
+	Perl/ZZPerlSimpleClient.pm, Perl/cperl.pl, Perl/sperl.pl: foo
+

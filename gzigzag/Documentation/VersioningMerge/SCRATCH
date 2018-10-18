@@ -1,0 +1,353 @@
+
+	<h3> A first try at an algorithm </h3>
+
+	<figure img="ABCD.jpg" width="111px">
+	    The merge identifiers used below.
+	</figure>
+
+	<p>
+	We need to determine whether a single rank has conflicts.
+	Or more accurately, we need to <i>define</i> what a conflict would
+	mean, along a single dimension.
+	Let us start by enumerating some cases that clearly do not 
+	work. In the cases below, we use the name A for the original
+	version, B and C for the changed versions and D for the merged
+	version.
+
+<!--
+	<figure img="LLMergeProblem.jpg" width="306px">
+	    A simplistic merge yields <b>two</b> ringranks
+	    from merging two simple rearrangements. BAD.
+	</figure>
+-->
+
+	<dl>
+	 <dt>Number of ranks.
+	     <dd> If neither B or C changes the number of ranks from A,
+		  D mustn't either.
+	 <dt>Loops.
+	     <dd> If neither B or C creates new loops or destroys old loops,
+		  D mustn't either.
+	 <dt>Long-range relations.
+	     <dd> If in all A, B and C a cell x is poswards from cell y,
+		  this must be true for D as well.
+	</dl>
+
+	<infigure img="LLMergeProblem2.jpg" width="298px">
+	<!--
+	    Splicing two ranks differently leads to a ringrank 
+	    cutout.
+	#</figure>
+	-->
+
+	<p>
+	Tempting as it might be, we can't just say that any logical
+	statement which is true about A, B and C must be true about D 
+	as well. That would basically require D to be one of A, B and C.
+
+	<p>
+	As discussed above, the successor - predecessor linked-list
+	approach fails easily.
+
+	<p>
+	A reasonably good criterion for consistent merging on one dimension
+	would seem to be the proper nesting of spliced segments in ranks.
+	The criterion itself is not terribly easy to formulate exactly;
+	let us start by some examples.
+
+<!--
+	<infigure img="SegCases.jpg" width="237px">
+
+	<infigure img="SegExamples.jpg" width="207px">
+-->
+
+	<img src="SegCases.jpg">
+	<img src="SegExamples.jpg">
+
+	<tjl>
+	After group discussion, still a bit confused, but a better criterion.
+
+	<figure img="RelationConflict.jpg" width="198px">
+	    A conflicting and non-conflicting change, based on the
+	    relationships between cuts.
+	</figure>
+
+	<p>
+	Basically, the focus should be on the invariants or logical
+	meanings of splitting and splicing.
+	Fundamentally, the relation between two adjacent cuts
+	of a rank must not be changed by the other changes:
+	if the rank is cut at A and B, the cells between them may 
+	be rearranged, some may be removed or added, but
+	if A and B are taken to different ranks or their mutual ordering
+	is changed, then this is a conflict.
+
+
+	<figure img="ConflictLevels.jpg" width="357px">
+	    Different levels of conflict.
+	    1. Lowest level: the same connection is changed in different
+	    ways.
+	    2. Medium level: the same rank has been altered in two different
+	    ways, so that a simple merge will mess things up, creating
+	    a strange ringrank etc.
+	    3. High level: changes that are near each other but which can't
+	    be seen to conflict algorithmically. Must be resolved by human.
+	</figure>
+
+
+	<rtr>
+	First attempt to define semantics for merge:
+
+	<rtr>
+	A rank in A may be rearranged, split and added to. (removal is
+	a special case of splitting) The semantics of merge must be
+	defined in terms of these operations, for they are how the
+	user sees the changes of the structure. The assumption is that
+	ranks are ordered lists, as unordered ones are almost
+	trivial.
+
+	<tjl>
+	Removal is an important special case, though.
+
+	<rtr>
+	Consider simple rearrangements of an ordered 1:n rank. Let C(r) be the
+	maximal set of "x &lt; y"-constraints of rank r. The only
+	information we have is C(a), C(b), C(c), and input from the
+	user. The constraints that are in both C(b) and C(c) will
+	obviously be required, but we should ignore anything else that
+	is in C(a): if only C(b) has changed in part x, we should
+	ignore the unchanged part x in C(c). If there are conflicting
+	constraints in (C(b) xor C(c)), we will have to disturb the user.
+
+	<benja>
+	...where 1:1 and 1:n dimensions are defined in the Semantics of ZigZag
+	Structures document.
+
+	<rtr>
+	For 1:1 ranks, we need to conflict more easily. The only relation that
+	matters is "a is posconnected to b", and we really can't do anything
+	automatical to conflicts. The 1:1 dimension cells should be connected
+	to Clang code that can do the merging. We <em>don't</em> want to
+	have many conflicts on d.cursor! If the conflict rises from trying
+	to point to the same cell from two different cells, we just
+	<em>have to</em> know about d.cursor-list.
+
+	<tjl>
+	Well, OTOH d.cursor is not supposed to be versioned that much, 
+	as it would be in the user's home slice. However, requiring
+	Clang code is probably too much. Allowing it is fine; it's
+	already stated elsewhere that applitudes should help.
+
+	<benja>
+	I don't think we need to use a clang <i>procedure</i> here. Some
+	logical rules should suffice. However, that's outside the scope of this
+	document; see the Semantics doc.
+
+	<p>
+	New cells inserted into the ranks require no change to the procedure
+	described above, as the only difference is that they have no
+	constraints in C(a), and that doesn't cause any problems.
+
+	<p>
+	Algorithm for multiple split ranks:
+	<ol>
+	<li> identity(rank) = (id cell, dim)<br>id cell = rank.h(dim)
+	<li> rank(rankID, version) = rank with identity [rankID] in
+	     [version]
+	<li> cells(rank) = set of cells on [rank]
+	<li> S(rankID, version) = set of ranks rank(rankID,a) is split to
+	     in [version] (i.e. all ranks that have cells from
+	     rank(rankID,a)) No rank with id [rankID] should be included.
+	<li> R(version) = set of identities of all modified ranks in [version]
+	     Note that all split parts are "modified ranks", as the exactly
+	     same rank doesn't exist in A.
+	<li> For all r in R(b) union R(c):<br>
+	     If there are x in S(r,b) and y in S(r,c)) such that identity(x) !=
+	     identity(y) and cells(x) intersects cells(y), we have a conflict.
+             That is, if a cell is moved to different ranks in b and c,
+             we don't try to guess what to do. When user resolves the
+	     conflict, both b and c should be changed accordingly, so that
+	     they agree on what rank each cell is on.
+	<li> At this point we know the destination rank of each cell,
+	     so we can handle the ranks independently. For all r in R(b)
+	     union R(c): Merge as described previously.
+	</ol>
+
+	The resolving of conflicts shouldn't be as sequential as described
+	above.
+
+	<rtr>
+	What to do about "n" dimensions? I still think that they are
+	bad structure design in general, but the d.cursor-list example
+	bothers me. What about using a normal 1:n dimension, and considering
+	d.cursor a list of <em>non-empty</em> lists?
+
+	<benja>
+	I don't understand the idea...
+
+	<tjl>
+	Same here...
+
+	<h3> Flexibility</h3>
+
+
+	<h3> User interface </h3>
+
+	<rtr>
+	The user determines which constraints are the most important
+	by e.g. modifying the 'first guess' structure and enforcing
+	before/after relations by "E [arrow key]". After each change, the
+	system should produce a new 'best guess' structure so that the work
+	the user must do is minimized. When doing this, the user should
+	be able to enter new data as well, or it will be too inconvenient.
+	[This paragraph describes the first prototype. It doesn't work well
+         with applitudes.]
+
+	<tjl>
+	I think this is the wrong approach.
+	More important is to divide the changes into chunks and then let the
+	user see the chunk's content.
+	There is no need to make anything complicated for choosing; 
+	in CVS it works fine that you should redo the conflicting changes; 
+	why not here?
+
+
+
+	<h3> Applitudes </h3>
+
+	<p>
+	Another thing that gives us difficulties when thrown into the mix is 
+	the fact that cells may not be just cells: they may be a part of 
+	a higher-level applitude. In such a case, showing the changes
+	may be more difficult, or possibly easier.
+	Applitude design does need to take versioning into account.
+
+	    <h4>Knowledge == power</h4>
+	    <p>
+	    On the other hand, applitudes may help in some cases: for example, 
+	    if it is known that order on a particular rank
+	    is not important, a default merged-in version
+	    can be created easily.
+
+	<h3> Cell IDs -- new cells </h3>
+
+	<p>
+	Under a simple space-wide numbered ID model,
+	creating new cells in different branches leads to ID conflicts.
+	So we need something more, identifying the origins of the cells.
+
+	<h3> Relevant IRC discussions </h3>
+
+	<pre>
+<@Rauli> tjl_: q:
+<@Rauli>  <@Rauli> Do we take all differences in connections as
+               conflicts, or do we do some heuristic like "if this is connected
+               from here to here in this version, and not connected in that,
+               then we 'obviously' take the connected one to be correct"?
+<@tjl_> define "differences in connections"
+<@Rauli> Not connected from same place to same place
+<@tjl_> Rauli: conflicts are not between connections. Conflicts are
+              between changes
+<@Rauli> ?!
+<@tjl_> Version A: x-y
+<@tjl_> Version B: x-z, Version C: x-y
+<@tjl_> no conflict
+<@tjl_> necessarily
+<@tjl_> (may be a higher-level conflict found by the invariants)
+<@Rauli> hmm
+<@Rauli> I'm not sure I like that
+<@tjl_> VersionB: x-z, Version C: x-q
+<@tjl_> conflict
+<@tjl_> Rauli: it works
+<@Rauli> Well, then the microversion thing needs to show all differences,
+               not conflicts
+<@tjl_> Rauli: what "microversion thing"?
+20:14 < benja> it's important beyond that. consider changes to a text
+20:14 < benja> we want to see them all
+20:14 <@Rauli> < benja> you need something like "commit there"
+20:14 <@Rauli> [19:44] < benja> so that you're basically editing a different
+               microversion
+20:15 < benja> too much of a chance of a semantic conflice
+20:15 < benja> conflict, too
+20:15 <@tjl_> WHAT are you two talking about?
+20:15 <@tjl_> What is a microversion?
+20:15 <@Rauli> [19:45] <@Rauli> Even if there are no conflicts, there may be
+               some changes I don't like after all
+20:15 <@tjl_> semantic conflicts are on a higher level than what Rauli and I
+              were talking right now
+20:15 <@tjl_> Rauli: that's what separating into chunks is for
+20:15 <@tjl_> !
+20:15 < benja> tjl: no, the approach to merging a text is different
+20:15 < benja> from what you described.
+20:16 < benja> tjl: you want to see all changes made to a text,
+20:16 <@tjl_> benja: I wasn't talking about seeing
+20:16 < benja> not just the conflics the computer detects.
+20:16 <@tjl_> I was talking about the way mergemath defines conflicts
+20:16 <@tjl_> there are other useful things
+20:16 <@tjl_> chunking the changes into groups that are probably related
+20:16 <@tjl_> that can then be shown easily together
+20:17 <@tjl_> that's more what you're looking for here
+20:17 < benja> yes
+20:17 <@Rauli> Microversions = I take the space, make experimental changes here
+               and there, decide I don't like most of them, want to see what
+               I've done and salvage good stuff, then discard the rest
+20:17 <@tjl_> fine
+20:17 <@tjl_> that works all right
+20:17 <@tjl_> just separate into chunks
+20:17 <@tjl_> the whole change
+20:17 <@tjl_> and then see which ones you like
+20:17 < benja> no, sorry, microversions is not the right word
+20:17 <@Rauli> Very well
+20:17 < benja> a separate version is more appropriate a term
+20:17 <@Rauli> It was the first one spoken, so I used it
+20:18 < benja> just want to get this clear :)
+20:18 <@Rauli> I'll let you linguists to talk about terminology :-)
+20:18 < benja> microversion is a single version of a space
+20:18 <@tjl_> microversion is probably what I'd call the result of applying a
+              change chunk
+20:18 < benja> like currently identified by a mediaserver id
+20:19 <@tjl_> ah, then not
+20:19 <@tjl_> that's a version
+20:19 <@tjl_> not a microversion
+20:19 <@Rauli> tjl_: It is useful to let the included spaces be saveable, so
+               that changes can be made to them
+20:19 < benja> then you're using version in a way
+20:19 <@Rauli> tjl_: Then a microversion would be just a new instance of an
+               included space
+20:19 < benja> which nobody but computer programmers understand.
+20:19 < benja> which is why ted invented
+20:19 < benja> the term microversion,
+20:19 < benja> i guess.
+20:19 <@tjl_> I see...
+20:20 <@tjl_> that's fine
+20:20 <@Rauli> Uhh? Nobody but computer programmers? What's the difference of a
+               "real" version and a "surreal version, that is like a real
+               version except that it's not usually saved"?
+20:20 < benja> Rauli: no
+20:21 < benja> as I explained, that's not
+20:21 < benja> the correct usage of "microversion"
+20:21 <@Rauli> ok
+20:21 < benja> rather, you create a new microversion each time you change
+               something little
+20:21 < benja> but a "version" is more like something you actually verbally
+               talk about, like
+20:21 < benja> I created a new version of that chapter yesterday
+20:21 <@Rauli> Hmm, ok, but it fits my description :-)
+20:21 < benja> or so
+20:22 < benja> Ted introduced the term in the OSMIC docs (or there I've read
+               it), and I actually really like it :)
+20:22 <@tjl_> oh, but the saved versions *would* be about that
+20:22 <@Rauli> (OC, I meant a discardable branch, but didn't actually say that)
+20:22 <@tjl_> but fine, we can call them microversions, I don't object
+20:23 < benja> ok
+20:23 <@Rauli> But, anyway, the inclusion stuff we spoke about today should be
+               able to handle that
+20:23 <@Rauli> tjl_: With any luck, you'll be able to code the merge stuff soon
+               :-)
+20:23 < benja> so what's new? that clasm can define *how* to include something?
+20:23 <@Rauli> Uhh, no, that's open
+
+
+
+	</pre>
+

@@ -1,0 +1,205 @@
+# ========================================================================
+# Abbreviated Configuration file for com.mortbay.Jetty.Demo
+#
+# The format of this file is parsed by the com.mortbay.Util.PropertyTree
+# class and interpreted by the com.mortbay.Jetty.Server class to 
+# construct, configure and start 1 or more HttpServer instances.
+#
+# This configuration file is abbrevited using the features of 
+# com.mortbay.Util.PropertyTree.  It can be run with the command
+#  java com.mortbay.Jetty.Server etc/JettyMinimalDemo.prp
+# 
+# A none abbreviated version of this configuration can be seen in
+# JettyDemo.prp and associated files
+# ------------------------------------------------------------------------
+
+# ======================================================================== 
+# Default CLASS definitions
+# ------------------------------------------------------------------------
+*.CLASS			  : com.mortbay.HTTP.HttpServer
+*.LISTENER.*.CLASS        : com.mortbay.HTTP.HttpListener
+*.*.Log.CLASS		  : com.mortbay.HTTP.Handler.LogHandler
+*.*.Auth.CLASS		  : com.mortbay.HTTP.Handler.BasicAuthHandler
+*.*.Alias.CLASS		  : com.mortbay.HTTP.Handler.TranslateHandler
+*.*.Filter.CLASS	  : com.mortbay.HTTP.Handler.FilterHandler
+*.*.Html.CLASS            : com.mortbay.HTTP.Filter.HtmlFilter
+*.*.Param.CLASS		  : com.mortbay.HTTP.Handler.ParamHandler
+*.*.Session.CLASS	  : com.mortbay.HTTP.Handler.SessionHandler
+*.*.Servlet.CLASS	  : com.mortbay.HTTP.Handler.ServletHandler
+*.*.File.CLASS		  : com.mortbay.HTTP.Handler.FileHandler
+*.*.Forward.CLASS	  : com.mortbay.HTTP.Handler.ForwardHandler
+*.*.NotFound.CLASS	  : com.mortbay.HTTP.Handler.NotFoundHandler
+*.*.Proxy.CLASS		  : com.mortbay.HTTP.Handler.ProxyHandler
+*.*.DefaultEx.CLASS	  : com.mortbay.HTTP.Handler.DefaultExceptionHandler
+*.*.TerseEx.CLASS	  : com.mortbay.HTTP.Handler.TerseExceptionHandler
+
+# ======================================================================== 
+# Default Servlet CLASS definitions
+# ------------------------------------------------------------------------
+*.*.Servlet.PROPERTY.SERVLET.Dump.CLASS        : com.mortbay.Servlets.Dump
+*.*.Servlet.PROPERTY.SERVLET.Exit.CLASS	       : com.mortbay.Servlets.Exit
+*.*.Servlet.PROPERTY.SERVLET.Session.CLASS     : com.mortbay.Servlets.SessionDump
+*.*.Servlet.PROPERTY.SERVLET.PropertyTree.CLASS: com.mortbay.Servlets.PropertyTreeEditor
+*.*.Servlet.PROPERTY.SERVLET.Config.CLASS      : com.mortbay.Servlets.ConfigDump
+*.*.Servlet.PROPERTY.SERVLET.Debug.CLASS       : com.mortbay.Servlets.DebugServlet
+*.*.Servlet.PROPERTY.SERVLET.Laf.CLASS	       : com.mortbay.Servlets.LookAndFeelServlet	       
+# ======================================================================== 
+# Default ServletHandler Properties
+# ------------------------------------------------------------------------
+*.*.Servlet.PROPERTY.PATHS                     : /servlet/;/SERVLET/;/Servlet/
+*.*.Servlet.PROPERTY.CLASSPATH                 : ./servlets
+*.*.Servlet.PROPERTY.Loader                    : com.mortbay.HTTP.Handler.FileJarServletLoader
+*.*.Servlet.PROPERTY.AutoReloadDynamicServlets : True
+*.*.Servlet.PROPERTY.SERVLET.*.Initialize      : False
+*.*.Servlet.PROPERTY.SERVLET.Dump.Initialize   : True
+*.*.Filter.PROPERTY.Html.CLASS                 : com.mortbay.HTTP.Filter.HtmlFilter
+
+# ======================================================================== 
+# Default FileHandler Properties
+# ------------------------------------------------------------------------
+*.*.File.PROPERTY.AllowPut	    : False
+*.*.File.PROPERTY.AllowDelete	    : False
+*.*.File.PROPERTY.AllowDir	    : True
+*.*.File.PROPERTY.Indexes	    : index.html;index.htm
+*.*.File.PROPERTY.MaxCachedFiles    : 100
+*.*.File.PROPERTY.MaxCachedFileSize : 8192
+
+
+# ======================================================================== 
+# Define the server instances to be configured by this file:
+# SERVERS           - list if defined server names
+# PROPERTY.*        - Definition of global properties
+# PROPERTIES        - File of globl properties 
+# servername.*      - PropertyTree describing server "servername".
+#
+# Defined global properties are:
+# DefaultPageType   - The class name of the default com.mortbay.HTML.Page 
+#                     type.
+# ------------------------------------------------------------------------
+SERVERS                                   : main;proxy
+PROPERTY.DefaultPageType		  : com.mortbay.Jetty.JettyLaF
+
+# ======================================================================== 
+# Define the server instance named "main"
+# CLASS               - The class name of the server. Must either be 
+#                       com.mortbay.HTTP.HttpServer or a decendant.
+# LISTENER.name.CLASS - HttpListener classname or decendant
+# LISTENER.name.ADDRS - List of addresses and ports to listen on
+# STACKS              - List of handler stack names.
+# EXCEPTIONS          - List of exception handler stack names.
+# PROPERTY.*          - Properties for this server
+# PROPERTIES          - File of properties for this server.
+#
+# Defined server properties are:
+# SessionMaxInactiveInterval - Max idle time Ms before session death
+# MinListenerThreads	     - Min listener threads per listener
+# MaxListenerThreads	     - Max listener threads per listener
+# MaxListenerThreadIdleMs    - Max idle time Ms before listen thread
+#                              death
+# MimeMap		     - Property file of MIME mappings
+# 
+# ------------------------------------------------------------------------
+main.LISTENERS                            : all
+main.LISTENER.all.ADDRS                   : 0.0.0.0:8080;127.0.0.1:8888
+main.STACKS				  : root;files
+main.EXCEPTIONS                           : defaultEx
+main.PROPERTY.SessionMaxInactiveInterval  : 3600
+main.PROPERTY.MinListenerThreads	  : 3
+main.PROPERTY.MaxListenerThreads	  : 20
+main.PROPERTY.MaxListenerThreadIdleMs	  : 60000
+# XXX
+# main.PROPERTY.MimeMap			  : ./etc/Mime.prp
+
+# ======================================================================== 
+# Define the handler instances handler stack "root" in server "main"
+# PATHS           - List of PathMap path specifiactions for this stack
+# HANDLERS        - List of handler names for this stack.
+# EXCEPTIONS      - List of exception handler names for this stack.
+# name.CLASS      - The classname for the handler "name"
+# name.PROPERTY.* - Properties defined for handler "name"
+# name.PROPERTIES - file of properties defined for handler "name"
+# ------------------------------------------------------------------------
+main.root.PATHS                           : /
+main.root.HANDLERS			  : Log;Auth;Alias;Filter;Param;Session;Servlet;File;Forward;NotFound
+main.root.Log.PROPERTY.File               : ./log/demo.log
+main.root.Log.PROPERTY.Append             : False
+main.root.Log.PROPERTY.LongForm           : True
+main.root.Log.PROPERTY.CountContentLength : False
+main.root.Log.PROPERTY.DateFormat         : dd/MMM/yyyy:HH:mm:ss
+# main.root.Auth.PROPERTIES		  : ./etc/JettyDemoRealms.prp
+# main.root.Alias.PROPERTIES		  : ./etc/JettyDemoAlias.prp
+main.root.Filter.PROPERTY.Html.PATHS      : /
+main.root.Param.PROPERTY.CookiesAsParameters : False
+# ------------------------------------------------------------------------
+main.root.Servlet.PROPERTY.SERVLET.Dump.PATHS		    : /Dump%;*.DUMP
+main.root.Servlet.PROPERTY.SERVLET.Dump.CHUNK		    : True
+main.root.Servlet.PROPERTY.SERVLET.Dump.PROPERTY.AttrX	    : ValueX
+main.root.Servlet.PROPERTY.SERVLET.Dump.PROPERTY.AttrY	    : ValueY
+main.root.Servlet.PROPERTY.SERVLET.Dump.PROPERTY.AttrZ	    : ValueZ
+# main.root.Servlet.PROPERTY.SERVLET.Dump.PROPERTIES	    : ./etc/JettyDemoDump.prp
+main.root.Servlet.PROPERTY.SERVLET.Exit.PATHS		    : /Exit
+main.root.Servlet.PROPERTY.SERVLET.Session.PATHS	    : /SessionDump
+main.root.Servlet.PROPERTY.SERVLET.PropertyTree.PATHS	    : /PropertyTree
+main.root.Servlet.PROPERTY.SERVLET.Config.PATHS		    : /Config$
+main.root.Servlet.PROPERTY.SERVLET.Debug.PATHS		    : /Debug$
+main.root.Servlet.PROPERTY.SERVLET.Multi.PATHS		    : /Demo/push
+main.root.Servlet.PROPERTY.SERVLET.Multi.CLASS		    : com.mortbay.Jetty.MultiPartCount
+main.root.Servlet.PROPERTY.SERVLET.Gen.PATHS		    : /Demo/generate
+main.root.Servlet.PROPERTY.SERVLET.Gen.CLASS		    : com.mortbay.Jetty.GenerateServlet
+main.root.Servlet.PROPERTY.SERVLET.GenL.PATHS		    : /Demo/generateLaf
+main.root.Servlet.PROPERTY.SERVLET.GenL.CLASS		    : com.mortbay.Jetty.GenerateLafServlet
+main.root.Servlet.PROPERTY.SERVLET.Upload.PATHS		    : /Upload$
+main.root.Servlet.PROPERTY.SERVLET.Upload.CLASS		    : com.mortbay.Jetty.UploadServlet
+main.root.Servlet.PROPERTY.SERVLET.Laf.PATHS		    : /Jetty/Demo/;/Jetty/Info/;/Jetty/Config/;/Jetty/Program/
+main.root.Servlet.PROPERTY.SERVLET.Laf.PROPERTY.ResourceBase: /laf
+main.root.Servlet.PROPERTY.SERVLET.Index.PATHS		    : /Jetty|;/Jetty/Info|;/Jetty/Demo|;/Jetty/Program|;/Jetty/Config|
+main.root.Servlet.PROPERTY.SERVLET.Index.CLASS		    : com.mortbay.Jetty.DemoIndex
+# ------------------------------------------------------------------------
+main.root.File.PROPERTY.FILES.FileBase.PATHS     : /;/FileBase%
+main.root.File.PROPERTY.FILES.FileBase.DIRECTORY : ./FileBase
+# ------------------------------------------------------------------------
+main.root.Forward.PROPERTY.FORWARD.demo.PATHS  : /Forward%
+main.root.Forward.PROPERTY.FORWARD.demo.URL    : http://localhost:8080
+main.root.Forward.PROPERTY.FORWARD.proxy.PATHS : http
+main.root.Forward.PROPERTY.FORWARD.proxy.URL   : http://localhost:8081
+
+
+# ======================================================================== 
+# Exception handler stacks 'default' and 'terse' for server 'main'
+# HANDLERS        - List of exception handler names for each stack.
+# PATHS           - List of PathMap path specifiactions for each stack
+# name.CLASS      - The classname for the handler "name"
+# ------------------------------------------------------------------------
+main.defaultEx.PATHS			  : /
+main.defaultEx.HANDLERS			  : DefaultEx
+main.defaultEx.DefaultEx.CLASS		  : com.mortbay.HTTP.Handler.DefaultExceptionHandler
+
+
+# ======================================================================== 
+# Define the  handler stack "files" in server "main"
+# ------------------------------------------------------------------------
+main.files.HOSTS			         :
+main.files.PATHS                                 : /javadoc%;/laf%
+main.files.HANDLERS                              : File;NotFound
+main.files.File.PROPERTY.FILES.Laf.PATHS         : /laf
+main.files.File.PROPERTY.FILES.Laf.DIRECTORY     : ./FileBase
+main.files.File.PROPERTY.FILES.Javadoc.PATHS     : /javadoc
+main.files.File.PROPERTY.FILES.Javadoc.DIRECTORY : ./javadoc
+main.files.File.PROPERTY.FILES.Servlet.PATHS     : /javadoc/javax/servlet
+main.files.File.PROPERTY.FILES.Servlet.DIRECTORY : ./src/javax/servlet/javadoc
+
+
+# ======================================================================== 
+# Define the server instance named "proxy"
+# ------------------------------------------------------------------------
+proxy.STACKS				  : root
+proxy.LISTENER.all.ADDRS                  : 0.0.0.0:8081
+
+# ======================================================================== 
+# Define the  handler stack "root" in server "proxy"
+# ------------------------------------------------------------------------
+proxy.root.HANDLERS			  : Log;Proxy;NotFound
+proxy.root.PATHS			  : /
+proxy.root.Log.PROPERTY.File              : /tmp/demo.log
+proxy.root.Log.PROPERTY.Append            : True
+proxy.root.Proxy.PROPERTY.PATHS           : /;http;ftp

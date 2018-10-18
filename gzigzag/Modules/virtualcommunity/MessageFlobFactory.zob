@@ -1,0 +1,547 @@
+/*   
+MessageFlobFactory.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Rauli Ruohonen
+ */
+
+package org.gzigzag.module;
+import org.gzigzag.module.multimedia.*;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+
+public class MessageFlobFactory implements FlobFactory, ZOb {
+    public static boolean dbg = false;
+    private static void p(String s) { if(dbg) ZZLogger.log(s); }
+    private static void pa(String s) { ZZLogger.log(s); }
+
+    private String d_image  = "d.images";
+    private String d_text   = "d.text";
+    private String d_author = "d.author";
+    private String d_handle = "d.kahva";
+
+    private MediaFlobFactory mediafact=new MediaFlobFactory();
+    private FTextLayouter ftext=new FTextLayouter();
+    
+    SceneFlob mysflob = null;
+
+    VirtualCommunity vc= null;
+
+    STRUCTPARAMS {
+	/* In pixels. */
+	int imgtxt_separator
+	    = 0;
+	/* Originally 1/Ph = img_h/txt_h =~ 0.618. (Ph = Golden Ratio) */
+	float imgtxt_min_ratio
+	    = (float)(2.0/(Math.sqrt(5.0)+1.0));
+	ScalableFont font
+	    = new ScalableFont("SansSerif", Font.PLAIN, 12);
+	/* color of the author blob */
+	Color authorColor
+	    = Color.yellow.brighter();
+	/* color of the message blob */
+	Color messageColor
+	    = new Color(0xffff8c);
+	Color auth_bg
+	    = new Color(0xffff28);
+	int border
+	    = 3;
+	int clipborder
+	    = 2;
+    }
+    
+    public MessageFlobFactory(VirtualCommunity vc){
+
+	this.vc = vc;
+    }
+    public MessageFlobFactory(){
+
+
+    }
+    
+    private Color back = Color.white;
+    
+    private FText makeFText(ZZCell c, ZZCell hc,float fract) {
+	Vector a=new Vector();
+	int scale=(int)(fract*1000);
+	Font f=font.getFont(scale);
+	FontMetrics fm=font.getFontMetrics(scale);
+	Color fg=Color.black;//,bg=Color.white;
+	LoopDetector l=new LoopDetector();
+	c = c.s(d_text,1);
+	Color fgt = fg;
+	while(c!=null) {
+	    fgt = fg;
+	    l.detect(c);
+	    /*if( c.s(d_handle,1) != null || c.s(d_handle,-1) != null){ 
+		fgt = Color.red;
+		}*/
+	    a.addElement(new FText.CellPart(c,c,0,-1,f,fm,null,fgt));
+	    //a.addElement(new FText.StringPart(c.getText(),f,fm,back,fgt));
+	    c=c.s(d_text);
+	}
+	return new FText(a);
+    }
+
+    public SceneFlob getSFlob(){
+
+	return mysflob;
+    }
+    
+    private int cacheW = -1;
+    private Dimension cacheTxt;
+    private ZZCell cacheC;
+    private float cacheFract;
+    private void getSizes(ZZCell c,float fract,int w,int h,Dimension img,
+			  Dimension txt) {
+	final int MAGIC=2147483647;
+	ZZCell imgc=c.h(d_image,true);
+	ZZCell textc=c.s(d_text);
+	img.width=0; img.height=0; txt.width=0; txt.height=0;
+	/* Calculate the maximum sizes for both image and text */
+	if(imgc!=null) img.setSize(mediafact.getSize(imgc,fract));
+	float aspect=img.width*1.0f/img.height;
+	if(textc!=null) {
+	    if (cacheW == w && cacheFract == fract && c.equals(cacheC))
+		txt.setSize(cacheTxt);
+	    else {
+		cacheTxt = ftext.place(null,makeFText(c,c,fract),
+				       new Rectangle(0,0,w,MAGIC),
+				       1,1,0,0xdeadbeef,false).getSize();
+		cacheW = w; cacheC = c; cacheFract = fract;
+		txt.setSize(cacheTxt);
+	    }
+	}
+	// Subj. + Auth.
+	txt.height += (font.getFontMetrics((int)(1000 * fract)).
+		       getHeight())*2;
+	if (imgc == null) {
+	    txt.height = h;
+	    return;
+	}
+	if (textc == null) {
+	    img.height=h-txt.height;
+	    img.width=(int)(img.height*aspect);
+	    if(img.width>w) {
+		img.width=w;
+		img.height=(int)(img.width/aspect);
+	    }
+	    txt.height = h-img.height;
+	    return;
+	}
+	h-=imgtxt_separator;
+	float imgtxt_ratio=(h-txt.height)/txt.height; // Text size constant
+	p("it_rat="+imgtxt_ratio);
+	if(imgtxt_ratio<imgtxt_min_ratio) imgtxt_ratio=imgtxt_min_ratio;
+	p("it_rat_fixedf="+imgtxt_ratio);
+	txt.height=(int)(h/(imgtxt_ratio+1));
+	img.height=(int)(h*imgtxt_ratio/(imgtxt_ratio+1));
+	img.width=(int)(img.height*aspect);
+	if(img.width>w) {
+	    img.width=w;
+	    int tmp=img.height;
+	    img.height=(int)(img.width/aspect);
+	    txt.height+=tmp-img.height;
+	    p("Adjusted.");
+	}
+	p("txt: "+txt+" img: "+img+ "world: "+new Dimension(w,h));
+    }
+    
+    public Dimension getSize(ZZCell c, float f) { return null; }
+    public int getHeight(ZZCell c, float fract, int w) {
+	w-= border*2;
+	final int MAGIC=2147483647;
+	ZZCell imgc=c.h(d_image,true);
+	ZZCell textc=c.s(d_text);
+	Dimension img = new Dimension(0, 0), txt = new Dimension(0, 0);
+	/* Calculate the maximum sizes for both image and text */
+	if(imgc!=null) img.setSize(mediafact.getSize(imgc,fract));
+	float aspect=img.width*1.0f/img.height;
+        img.height = (int) (w / aspect);
+	if(textc!=null) {
+	    if (cacheW == w && cacheFract == fract && c.equals(cacheC))
+		txt.setSize(cacheTxt);
+	    else {
+		cacheTxt = ftext.place(null,makeFText(c,c,fract),
+				       new Rectangle(0,0,w,MAGIC),
+				       1,1,0,0xdeadbeef,false).getSize();
+		cacheW = w; cacheC = c; cacheFract = fract;
+		txt.setSize(cacheTxt);
+	    }
+	}
+	// Subj. + Auth.
+	txt.height += (font.getFontMetrics((int)(1000 * fract)).
+		       getHeight())*2 + border*2 + 1;
+	p("getHeight(): w = "+w+", imgh = "+img.height+", txth = "+
+	  txt.height+", imsep = "+imgtxt_separator);
+	if (imgc == null) return txt.height;
+	if (textc == null) return img.height+txt.height;
+	return imgtxt_separator + img.height + txt.height;
+    }
+
+    public Flob makeFlob(FlobSet _into,
+			 ZZCell c, final ZZCell handleCell,
+			 float fract, int x, int y, int d, int w, int h,
+			 float rot) {
+	return makeFlob(_into, c, handleCell, fract, x, y, d, w, h, rot,
+			false);
+    }
+    public Flob makeFlob(FlobSet _into,
+			 ZZCell c, final ZZCell handleCell,
+			 float fract, int x, int y, int d, int w, int h) {
+	return makeFlob(_into, c, handleCell, fract, x, y, d, w, h, 0.0f);
+    }
+    /* animated text also means that beams are drawn :-) */
+    public Flob makeFlob(FlobSet _into,
+			 ZZCell c, final ZZCell handleCell,
+			 float fract, int x, int y, int d, int w, int h,
+			 double rot, boolean animateText) {
+	x+=border; y+=border; w-=border*2; h-=border*2;
+	int cx = x+w/2; int cy = y+h/2;
+	Dimension dfs = _into.getSize();
+	final int borderEdge = 5;
+	boolean doText = true;
+	if(cx < borderEdge || cx >= dfs.width - borderEdge ||
+	    cy < borderEdge || cy >= dfs.height - borderEdge)
+		doText = false;
+
+	Dimension img=new Dimension(),txt=new Dimension();
+	getSizes(c,fract,w,h,img,txt);
+	int imsep = 0;
+	if(img.height>0&&txt.height>0) imsep = imgtxt_separator;
+	x-=border; y-=border; w+=border*2; h+=border*2;
+	FlobSet into = _into;
+	SceneFlob sflob = null;
+	// XXX this shouldn't be here
+	ZZDrawingJ2D _drw = null;
+	if (ZZDrawing.instance instanceof ZZDrawingJ2D) {
+	    // SplitCellFlob1.doClip = false;
+	    into = new FlobSet(_into.getSize(),
+			       _into.getForeground(),
+			       _into.getBackground(),
+			       _into.getComponent());
+	    _drw = (ZZDrawingJ2D) ZZDrawing.instance;
+	    sflob = _drw.new RotatedSceneFlob(x, y, d, w, h, c,
+					      into, rot);
+
+	    mysflob = sflob;
+	    p("into = " +into);
+	}
+	final ZZDrawingJ2D drw = _drw;
+	Flob[] important = new Flob[1];
+	Flob bgfl=new CellBgFlob(x, y, d, w, h, c) {
+		public void render(Graphics g, int mx, int my, int md,
+				   int mw, int mh) {
+		    Color oldfg = g.getColor();
+		    g.setColor(bg);
+		    // g.setColor(Color.red);
+		    g.fillRect(mx+1, my+1, mw-2, mh-2);
+		    g.setColor(oldfg);
+
+		    /*boolean bup = ZZDrawing.instance.qualityEnabled();
+		    ZZDrawing.instance.enableQuality(true);
+		    ZZDrawing.instance.setQuality(g);*/
+
+		    if (!ZZDrawing.instance.qualityEnabled())
+			g.setColor(new Color(0x333322));
+		    if(mh >= 14)
+			((Graphics2D)g).setStroke(new BasicStroke(2.0f));
+		    g.drawRect(mx, my, mw-1, mh-1);
+		    ((Graphics2D)g).setStroke(new BasicStroke());
+		    /*if(mh >= 14) g.drawRect(mx+1, my+1, mw-3, mh-3);
+		      g.drawRect(mx, my, mw-1, mh-1);*/
+
+		    /*ZZDrawing.instance.enableQuality(bup);
+		      ZZDrawing.instance.setQuality(g);*/
+		    g.setColor(oldfg);
+		}
+		public Object hit(int x0,int y0) {
+		    if (x0 >= this.x && y0 >= this.y && x0 < this.x+this.w &&
+			y0 < this.y+this.h) return handleCell;
+		    return null;
+		}
+	    };
+	important[0] = bgfl;
+	sflob.setImportant(important);
+	sflob.setFocus(animateText);
+	p("MSGF: "+animateText);
+
+
+	x+=border; y+=border; w-=border*2; h-=border*2;
+	boolean mess = false;
+	ZZCell tmp=c.s(d_text);
+	if(tmp!=null) {
+	    int ystart=y+img.height+imsep;
+ 	    ZZCell locc = c.h(d_author,-1);
+	    Flob header = new Flob(x, ystart, d, w, 1, c) {};
+	    if( locc != c){
+		mess = true;
+		back = messageColor;
+		if(doText) {
+		    Flob sf = makeSubject(into, c, handleCell, fract, 
+					  x, ystart, d, w, bgfl, txt.height);
+		    ystart += sf.h;
+		    txt.height -= sf.h;
+		    sf = makeAuthor(into, locc, handleCell, 
+				    fract, x, ystart, d, w,fract,fract, bgfl,
+				    txt.height);
+		    ystart += sf.h;
+		    txt.height -= sf.h;
+		}
+		//p("ystart = " + ystart);
+	    } else if ( locc == c && c.getRankLength(d_author) > 1){
+		back = authorColor;
+	    }
+	    Flob tailer = null;
+		// new Flob(x, ystart, d, txt.width, txt.height,
+		//		   c.s(d_text)) {};
+	    //tailer.setParent(bgfl);
+	    //if (animateText) into.add(tailer);
+	    Rectangle r = new Rectangle(x,ystart,txt.width,txt.height);
+	    if(doText) {
+		ftext.place(into,makeFText(c,handleCell,fract),r,d,1,ystart,
+			0xdeadbeef, false, tailer);
+		if(dbg) {
+		    // p(into.findFlob
+		}
+	    }
+	}
+	tmp=c.h(d_image);
+	if(tmp!=c)
+	    mediafact.makeFlob(into,tmp,handleCell,fract,
+			       x+(w-img.width)/2,y,d,img.width,img.height).
+		setParent(bgfl);
+	((CellBgFlob)bgfl).setBg(back);
+	into.add(bgfl);
+	back = Color.white;
+
+	if( animateText ) {
+	    pa("LINK: " + c);
+	    tmp = c.s(d_text, 1);
+	    while((tmp = tmp.s(d_text, 1)) != null) {
+		ZZCell hea = tmp.h(d_handle, -1);
+		if(hea != tmp) {
+		    Flob f= into.findFlob(null, tmp);
+		    pa("FINDFLOB: "+f);
+		    if(f == null)continue;
+		    Point p = new Point(f.x + f.w/2, f.y + f.h/2);
+		    Point p2 = new Point();
+		    sflob.transform(p, p2, true);
+		    vc.product(hea, p2);
+		}
+	    }
+	}
+	
+	
+	if (sflob != null) {
+	    _into.add(sflob);
+	    //SplitCellFlob1.doClip = true;
+	    return sflob;
+	}
+	return bgfl;
+    }
+    
+    // The following are shamelessly pseudo-cut&pasted from CellFlobFactory1
+    
+    public Flob placeFlob(FlobSet into, 
+			  ZZCell c, ZZCell handleCell,
+			  float fract, 
+			  int x, int y, int depth,
+			  float xfract, float yfract) {
+	Dimension d = getSize(c, fract);
+	return makeFlob(into, c, handleCell, fract, 
+			(int)(x-xfract*d.width),
+			(int)(y-yfract*d.height),
+			depth, d.width, d.height);
+    }
+    public Flob centerFlob(FlobSet into,
+			   ZZCell c, ZZCell handleCell,
+			   float fract, Point p, int xalign, int yalign,
+			   int depth, Dimension d) {
+	if(d == null) d = getSize(c, fract);
+	int x, y;
+	x = p.x - d.width/2; y = p.y - d.height/2;
+	if(xalign < 0) x = p.x;
+	if(xalign > 0) x = p.x - d.width;
+	if(yalign < 0) y = p.y;
+	if(yalign > 0) y = p.y - d.height;
+	return makeFlob(into, c, handleCell, fract, x, y, 
+			depth, d.width, d.height);
+    }
+
+    public Flob centerFlob(FlobSet into,
+			   ZZCell c, ZZCell handleCell,
+			   float fract, Point p, int xalign, int yalign,
+			   int depth) {
+	return centerFlob(into, c, handleCell, fract, p, xalign, yalign,
+			  depth, null);
+    }
+
+    public Flob makeSubject(FlobSet into, 
+			    ZZCell c, ZZCell handleCell,
+			    float fract, 
+			    int x, int y, int depth,
+			    int w, Flob parent, int mh) {
+	
+	if (mh > 100) mh = 100;
+	Flob sc = new SubjCell(x,y,depth,w,mh,c, handleCell, fract);
+	sc.setParent(parent);
+	into.add(sc);
+	return sc;
+
+    }
+    
+    public Flob makeAuthor(FlobSet into, 
+			   ZZCell c, ZZCell handleCell,
+			   float fract, 
+			   int x, int y, int depth, int w,
+			   float xfract, float yfract, Flob parent, int mh) {
+	
+	if (mh > 100) mh = 100;
+	Flob ac = new AuthCell(x,y,depth,w,mh,c, handleCell, fract);
+	ac.setParent(parent);
+	into.add(ac);
+	return ac;
+
+    }
+
+     /**
+     * Flob for message subjects 
+     */
+    class SubjCell extends Flob {
+	
+	int ascent;
+	float fr;
+	ZZCell handle;
+	
+	public SubjCell(int x, int y, int d, int w, int h, ZZCell c, ZZCell hc,
+			float fract){
+            super(x,y,d,w,h,c);
+	    Font f = font.getFont((int)(1000 * fract));
+	    FontMetrics fm = font.getFontMetrics((int)(1000 * fract));
+	    ascent = fm.getAscent();
+	    this.h = fm.getHeight();
+	    if (this.h > h) this.h = h;
+	    //this.w = fm.stringWidth("Subject: " +c.getText());
+	    fr = fract;
+	    handle = hc;
+	    //p("FR = " + fr);
+	}
+	
+	public void renderInterp(Graphics g, float fract) { return; }
+        public void render(Graphics g, int mx, int my, int md,
+                           int mw, int mh) {
+	    /*ZZDrawingJ2D drw = null;
+	    if (ZZDrawing.instance instanceof ZZDrawingJ2D)
+		drw = (ZZDrawingJ2D)ZZDrawing.instance;
+	    if (drw != null) {
+		drw.setFIXME(false);
+		drw.setQuality(g);
+		}*/
+	    FontMetrics fm = font.getFontMetrics((int)(1000 * fr));
+	    Color old = g.getColor();
+	    g.setFont(font.getFont((int)(fr*1000)));
+	    g.setColor(auth_bg);
+	    Rectangle asd=g.getClipBounds();
+	    // g.setClip(mx-clipborder,my-clipborder,mw+clipborder*2,mh+clipborder*2);
+	    g.fillRect(mx,my,mw,mh);
+	    g.setColor(old);
+	    /*if (drw != null) {
+		drw.setFIXME(true);
+		drw.setQuality(g);
+		}*/
+	    if( fm.stringWidth("Subject: " + c.getText()) > mw ) 
+		g.drawString( c.getText(), mx,my+ascent);
+	    else g.drawString("Subject: " + c.getText(), mx,my+ascent);
+	    //g.drawLine(mx, my+h, mx+w, my+h);
+	    // g.setClip(asd);
+	}
+	
+	public Object hit(int x0, int y0) {
+	    if( x0 >= x && y0 >= y && x0 < x+w && y0 < y+h )
+		return handle;
+	    return null;
+	}
+	
+    }
+    
+    
+    /**
+     * Flob for message auth 
+     */
+    class AuthCell extends Flob {
+	
+	int ascent;
+	int height;
+	ZZCell handle;
+	
+	float fr = 1.0f;
+	
+	public AuthCell(int x, int y, int d, int w, int h, ZZCell c, ZZCell hc,
+			float fract){
+            super(x,y,d,w,h,c);
+	    Font f = font.getFont((int)(1000 * fract));
+	    FontMetrics fm = font.getFontMetrics((int)(1000 * fract));
+	    ascent = fm.getAscent();
+	    this.h = fm.getHeight();
+	    if (this.h > h) this.h = h;
+	    //this.w = fm.stringWidth("Author: " + c.getText());
+	    fr = fract;
+	    handle = hc;
+	}
+	
+	public void renderInterp(Graphics g, float fract) { return; }
+        public void render(Graphics g, int mx, int my, int md,
+                           int mw, int mh) {
+	    /*ZZDrawingJ2D drw = null;
+	    if (ZZDrawing.instance instanceof ZZDrawingJ2D)
+		drw = (ZZDrawingJ2D)ZZDrawing.instance;
+	    if (drw != null) {
+		drw.setFIXME(false);
+		drw.setQuality(g);
+		}*/
+	    Color old = g.getColor();
+	    FontMetrics fm = font.getFontMetrics((int)(1000 * fr));
+	    g.setFont(font.getFont((int)(1000 * fr)));	    
+	    Rectangle asd=g.getClipBounds();
+	    // g.setClip(mx-clipborder,my-clipborder,mw+clipborder*2,mh+clipborder*2);
+	    g.setColor(auth_bg);
+	    g.fillRect(mx,my,mw,mh);
+	    g.setColor(old);
+	    /*if (drw != null) {
+		drw.setFIXME(true);
+		drw.setQuality(g);
+		}*/
+	    if( fm.stringWidth("Author: " + c.getText()) < mw )
+		g.drawString("Author: " + c.getText(), mx,my+ascent);
+	    else g.drawString( c.getText(), mx,my+ascent);
+	    g.drawLine(mx, my+mh-1, mx+mw, my+mh-1);
+	    // g.setClip(asd);
+ 	}
+	
+	public Object hit(int x0, int y0) {
+	    if( x0 >= x && y0 >= y && x0 < x+w && y0 < y+h )
+		return handle;
+	    return null;
+	}
+    }
+}
+
+// vim: set syntax=java :

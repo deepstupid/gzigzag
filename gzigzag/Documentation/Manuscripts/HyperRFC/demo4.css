@@ -1,0 +1,55 @@
+pre {
+	font-size: 0.9em;
+	font-family: serif
+}
+
+.p1{
+	font-size: 1.0em
+}
+.p2{
+	font-size: 1.0em
+}
+.p3{
+	font-size: 1.0em
+}
+.p4{
+	font-size: 1.0em
+}
+.p5{
+	font-size: 1.0em
+}
+.p6{
+	font-size: 1.0em
+}
+.p7{
+	font-size: 1.0em
+}
+
+.t2{
+	margin: 0em;
+	margin-top: -2em
+}
+.t4{
+	margin: 0em;
+	margin-top: -2em
+}
+.t5{
+	margin: 0em;
+	margin-top: -1.5em
+}
+.t6{
+	margin: 0em
+}
+
+.a2{
+	display: none
+}
+.a4{
+	display: none
+}
+.a5{
+	display: none
+}
+.a6{
+	display: none
+}

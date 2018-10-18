@@ -1,0 +1,84 @@
+/*   
+SimpleTextView.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+ 
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+/** A view with the text of a single cell, layoutet as an FText.
+ */
+
+public class SimpleTextView implements FlobView, ZOb {
+public static final String rcsid = "$Id: SimpleTextView.zob,v 1.8 2001/04/02 20:02:51 bfallenstein Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** The font to use.  */
+	Font font
+	    = new Font("SansSerif", Font.PLAIN, 16);
+	
+	Color fgcolor
+	    = Color.black;
+	
+	Color bgcolor
+	    = Color.white;
+	
+	ZOb ftextlayouter
+	    = new FTextLayouter();
+    }
+
+    FontMetrics fm;
+
+    INITIALIZE {
+	fm = FONTMETRICS(font);
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+	FText ftxt;
+	
+	if(bgcolor != null) {
+	    ftxt = new FText(new FText.Part[] {
+		new FText.CellPart(accursed, 0, -1, font, fm, bgcolor, fgcolor)
+	    });
+	} else {
+	    ftxt = new FText(new FText.Part[] {
+		new FText.CursorCellPart(accursed, 0, -1, font, fm, null, fgcolor)
+	    });
+	}
+	
+	Dimension size = into.getSize();
+	Rectangle rect = new Rectangle(0, 0, size.width, size.height);
+
+	((FTextLayouter)ftextlayouter).place(into, ftxt, rect, 
+	    0, rect.y+rect.height/2,
+	    ZZCursorReal.getVisualTextOffset(view), 
+	    true, null);
+				
+    }
+}
+
+// vim: set syntax=java :

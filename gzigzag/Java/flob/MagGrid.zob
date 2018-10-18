@@ -1,0 +1,112 @@
+/*   
+MagGrid.java
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag;
+import java.awt.*;
+
+/** A grid magnified from the center.
+ */
+
+public class MagGrid extends GridGeom implements ZOb {
+public static final String rcsid = "$Id: MagGrid.zob,v 1.2 2000/10/22 09:15:09 tjl Exp $";
+
+    STRUCTPARAMS {
+	float[] shrink // 2..2
+	    = new float[] {(float)0.8, (float)0.95};
+	float[] initmul // 2..2
+	    = new float[] {(float)1.6, (float)1.7};
+	int[] gap // 2..2
+	    = new int[] {2, 2};
+	/** Whether to fit all cells into view or leave
+	 * edges hanging outside.
+	 */
+	boolean fit
+	    = false;
+    }
+
+    int[] xs;
+    int[] ys;
+    public Dimension setSizes(Dimension normalcell, Dimension canvas) {
+	Dimension ret = new Dimension();
+	ret.width = 1;
+	int cur = (int)(normalcell.width * initmul[0]);
+	int xw;
+	for(xw = cur; xw <= canvas.width && cur > 1; xw += 2*cur+2*gap[0]) {
+	    ret.width +=2;
+	    cur = (int)(cur * shrink[0]);
+	}
+	if(fit) {
+	    xw -= 2*cur+2*gap[0];
+	    ret.width -= 2;
+	}
+
+	xs = new int[ret.width + 1];
+	cur = (int)(normalcell.width * initmul[0]);
+	xs[ret.width / 2] = cur;
+	for(int i=1; i<ret.width/2+1; i++) {
+	    cur = (int)(cur * shrink[0]);
+	    xs[ret.width/2-i] = xs[ret.width/2+i] = cur;
+	}
+	cur = (canvas.width - xw)/2;
+	for(int i=0; i<xs.length; i++) {
+	    int l = xs[i];
+	    xs[i] = cur;
+	    cur += l;
+	}
+
+	cur = (int)(normalcell.height * initmul[1]);
+	int yw;
+	for(yw = cur; yw <= canvas.height && cur > 1; yw += 2*cur+2*gap[1]) {
+	    ret.height +=2;
+	    cur = (int)(cur * shrink[1]);
+	}
+	if(fit) {
+	    yw -= 2*cur+2*gap[1];
+	    ret.height -= 2;
+	}
+
+	ys = new int[ret.height + 1];
+	cur = (int)(normalcell.height * initmul[1]);
+	ys[ret.height / 2] = cur;
+	for(int i=1; i<ret.height/2+1; i++) {
+	    cur = (int)(cur * shrink[1]);
+	    ys[ret.height/2-i] = ys[ret.height/2+i] = cur;
+	}
+	cur = (canvas.height - yw)/2;
+	for(int i=0; i<ys.length; i++) {
+	    int l = ys[i];
+	    ys[i] = cur;
+	    cur += l;
+	}
+	return ret;
+    }
+    public Rectangle getCell(int x, int y, Rectangle rect) {
+	rect.x = xs[x];
+	rect.y = ys[y];
+	rect.width = xs[x+1]-xs[x] - gap[0];
+	rect.height = ys[y+1]-ys[y] - gap[1];
+	return rect;
+    }
+}
+
+// vim: set syntax=java :
+

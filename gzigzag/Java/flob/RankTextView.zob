@@ -1,0 +1,307 @@
+/*   
+VStreamRaster.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+ 
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+/** A raster of flowing text.
+ * The FlobRaster is implemented mostly for testing purposes - this class 
+ * would mostly be called from another raster.
+ */
+
+public class RankTextView implements FlobView, ZOb {
+public static final String rcsid = "$Id$";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** The width of the flowing text at maximum.  Negative value
+            means that the width of the window should be used. */
+	int width
+	    = 300;
+	
+	/** The font for the maximal line.  */
+	ScalableFont font
+	    = new ScalableFont("SansSerif", Font.PLAIN, 16);
+
+	/** The half-width of the bulge. */
+	int bulge
+	    = 10;
+
+	/** Whether to show cuts. */
+	boolean cuts
+	    = true;
+
+	/** Which dimension to use. */
+	String dim
+	    = "d.2";
+	
+	/** Whether to billow the text. */
+	boolean billow
+	    = true;
+	
+	/** Whether to show XOR cursors. */
+	boolean xor
+	    = true;
+
+        /** The backround colour for all flobs (or null if determined
+            from the cursors. */
+        Color bgcolor
+            = null;      
+
+    }
+
+    protected Font getfont(int scale) {
+	return font.getFont(scale);
+    }
+    protected FontMetrics getfontmet(int scale) {
+	return font.getFontMetrics(scale);
+    }
+    
+
+    SimpleLineInfo.Layout layb = new LayBillow();
+    SimpleLineInfo.Layout layf = new LayFlat();
+    SimpleLineBreaker brk = new SimpleLineBreaker();
+
+    protected int getFontScale(int line, boolean doBillow) {
+	    int w = (doBillow ? layb : layf).getWidth(line);
+	    
+	    return (1000*w)/width;
+	    
+    }
+
+    class LayBillow implements SimpleLineInfo.Layout {
+	public final FontMetrics getFontMetrics(int line) {
+	    return getfontmet(getFontScale(line, true));
+	}
+	public final int getWidth(int line) {
+	    if(bulge <= 0) return width;
+	    float bfunc = (float)(
+		1.0/ ( 1 + (line * (float)line) / (bulge * bulge) ) );
+	    return (int)(bfunc * width);
+	}
+	public final int getCenterLine() {
+	    return 0;
+	}
+    }
+
+    class LayFlat implements SimpleLineInfo.Layout {
+	public final FontMetrics getFontMetrics(int line) {
+	    return getfontmet(1000);
+	}
+	public final int getWidth(int line) {
+	    return width;
+	}
+	public final int getCenterLine() {
+	    return 0;
+	}
+    }
+
+    /** Raster an area.
+     * Returns a bounding rectangle for the text plotted.
+     */
+    public Rectangle raster(FlobSet into, ZZCell c, int offs, boolean doBillow,
+	    int startx, int starty, int xormode) {
+        if (width < 0) width = into.getSize().width;
+
+	Rectangle res = new Rectangle();
+
+
+	// read the whole string first
+	int soffs = -1;
+	StringBuffer s = new StringBuffer();
+	ZZCell head = c.h(dim, -1);
+	boolean first = true;
+	for(ZZCell h = head;
+	    h != null && (first || h!=head); h = h.s(dim, 1)) {
+	    first = false;
+	    if(h == c)
+		soffs = offs + s.length();
+	    s.append(h.getText());
+	}
+	if(soffs < 0) 
+	    throw new ZZError("??? ARGH");
+	String txt = s.toString();
+	SimpleLineInfo sli = new SimpleLineInfo(txt, soffs, 
+		(doBillow?layb:layf));
+	int[] linestops = brk.breakLines(sli);
+	p("Breaklines: "+offs);
+	for(int i=0; i<linestops.length; i++)
+	    p("Line: "+linestops[i]);
+	for(int i=-10; i<=10; i++) {
+	    p("WFM: "+layb.getWidth(i)+" "+getFontScale(i, doBillow));
+	}
+	
+	int ctr = -  linestops[0];
+
+
+	/** Current Y offset for the loop. */
+	int cury = starty;
+	// Calculate the starting Y coordinate
+	for(int i = ctr; i>=0; i--) {
+	    cury -= getfontmet(getFontScale(i-ctr, doBillow)).getHeight();
+	}
+
+	res.x = startx; res.width = width;
+	res.y = cury;
+
+	// Downwards from center.
+	// start-splitcellflob needs very careful attention.
+
+	/** Current offset in the whole string. 
+	 */
+	int curoffs = 0;
+	/** Current line.
+	 */
+	int curline = 0;
+
+	/** Current X-coordinate.
+	 */
+	int curx = startx;
+
+	int fi = getFontScale(curline - ctr, doBillow);
+	Font f = getfont(fi);
+	FontMetrics fm = getfontmet(fi);
+
+	SplitCellFlob1 latest = null;
+
+	first = true;
+	for(ZZCell h = head; 
+	    h != null && (first || h != head); h = h.s(dim, 1)) {
+	    first = false;
+
+	    final String st = h.getText();
+	    final int len = st.length();
+	    int nth = 0;
+	    SplitCellFlob1 parent = null;
+
+	    // Find the cursors on this cell. Only one is shown.
+	    int curs = ZZCursorReal.NO_OFFSET;
+	    ZZCell ccurs = h;
+	    while((ccurs = ccurs.s("d.cursor", 1))!=null) {
+		curs = ZZCursorReal.getOffs(ccurs);
+		if(curs != ZZCursorReal.NO_OFFSET) break;
+	    }
+
+	    if(h.s("d.cut", 1) != null) {
+		// There was a cut.
+		into.add(new LineDecor(curx, cury, curx, cury+fm.getHeight(),
+			Color.red, 1));
+	    }
+
+	    while(curoffs + len - nth > linestops[curline+1]) {
+		p("Parent: "+nth+" "+len+" "+curline+" "+linestops[curline+1]);
+		SplitCellFlob1 cur = new SplitCellFlob1(
+		    curx, cury, 100, fm.stringWidth(st.substring(nth,
+					nth+
+					(linestops[curline+1] - curoffs))),
+		    fm.getHeight(), h, f, fm, parent, 
+				nth, linestops[curline+1]-curoffs, xormode, bgcolor);
+		if(bgcolor == null) cur.showCursor();
+		cur.setPrev(latest); latest = cur;
+		if(curs != ZZCursorReal.NO_OFFSET)
+		    addCurs(into, cur, curs);
+		parent = cur;
+		into.add(cur);
+			    
+		// Split it.
+		nth += linestops[curline+1] - curoffs;
+		curoffs  =  linestops[curline+1];
+		curline ++;
+		cury += fm.getHeight();
+		curx = startx;
+		fi = getFontScale(curline - ctr, doBillow);
+		f = getfont(fi);
+		fm = getfontmet(fi);
+		if(curline >= linestops.length - 1) {
+		    p("LAST LINE: ALL OUT");
+		    break;
+		}
+	    }
+	    if(curline >= linestops.length - 1)
+		break;
+
+	    p("Last: "+nth+" "+len+" "+curline+" "+linestops[curline+1]+" "+
+		    st.length());
+	    int w = 0;
+	    String substr =  st.substring(nth, len);
+	    p("Substr: "+substr);
+	    SplitCellFlob1 last = new SplitCellFlob1(
+		curx, cury, 100, 
+		    (w = fm.stringWidth(substr)),
+		fm.getHeight(), h, f, fm, parent, nth, len-nth, xormode, bgcolor);
+	    if(bgcolor == null) last.showCursor();
+	    last.setPrev(latest); latest = last;
+	    
+	    if(curs != ZZCursorReal.NO_OFFSET)
+		addCurs(into, last, curs);
+	    curoffs += len-nth;
+	    curx += w;
+	    into.add(last);
+	}
+	p("FINISHED");
+	res.height = cury - res.y + fm.getHeight();
+	return res;
+    }
+
+    public Rectangle raster(FlobSet into, ZZCell c, int offs, boolean doBillow,
+	    int startx, int starty) {
+	return raster(into, c, offs, doBillow, startx, starty,
+	    SplitCellFlob1.XOR_NO);
+    }
+
+    private void addCurs(FlobSet into, SplitCellFlob1 sf, int ind) {
+	if(!(ind >= sf.start && ind <= sf.start + sf.n))
+	    return;
+	int x = sf.getStrX(ind);
+	if(x >= 0)
+	    into.add(new LineDecor(x, sf.y, x, sf.y+sf.h, 
+		    Color.black, sf.d));
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+	ZZCell c = ZZCursorReal.get(view);
+	int offs = ZZCursorReal.getOffs(view);
+	int xormode = SplitCellFlob1.XOR_LINE;
+	if(offs == ZZCursor.NO_OFFSET) {
+	    offs = 0;
+	    xormode = SplitCellFlob1.XOR_SOLID;
+	}
+	
+	if(!xor) xormode = SplitCellFlob1.XOR_NO;
+
+	Dimension d = into.getSize();
+	int cy = d.height / 2;
+
+	raster(into, c, offs, billow, 0, cy, xormode);
+    }
+
+    // public VStreamRaster() { }
+
+}
+
+// vim: set syntax=java :

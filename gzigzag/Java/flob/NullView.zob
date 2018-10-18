@@ -1,0 +1,41 @@
+/*   
+NullRaster.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Antti-Juhani Kaijanaho
+ */
+ 
+
+package org.gzigzag;
+
+/** A flobraster that just bails out (the default raster in case an
+    unknown raster was requested). */
+public class NullView implements FlobView {
+public static final String rcsid = "$Id$";
+    /** Should we print out debugging info? */
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) pa(s); }
+    static final void pa(String s) { System.out.println("(flob)NullRaster: " + s); }
+
+    STRUCTPARAMS {}
+
+    public void raster(FlobSet into, FlobFactory fact,
+                       ZZCell view, String[] dims, ZZCell accursed) {
+
+        throw new ZZError("null view invoked (please change view)");
+    }
+}

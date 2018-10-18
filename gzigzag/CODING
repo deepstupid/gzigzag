@@ -1,0 +1,125 @@
+Coding rules for GZigZag                                        -*- Text -*-
+========================
+	    Tuomas Lukka
+            Antti-Juhani Kaijanaho
+
+$Id: CODING,v 1.19 2001/07/02 04:08:25 tjl Exp $
+
+This document attempts to give a brief guide on how to write
+Java code for this project.
+
+- each Java file should contain the boilerplate copyright and
+  license notice (see e.g. Java/ZZCell.java).
+
+- all of the classes should be in a package. The packages are
+	org.gzigzag            -- general core stuff
+	org.gzigzag.module     -- modules
+	org.gzigzag.dimension  -- dimensions for use with DimSpace
+
+- The main Java/ subdirectory may only depend on the JDK 1.1.8 APIs.
+  Swing is not allowed
+  The java.util Collections API
+  (found in JDK 1.2, kaffe and as a separate download for 1.1) 
+  IS allowed.
+
+  There is also Java/exp for experimental things that touch the core
+  which may depend on anything but shall not be compiled by default.
+
+  Modules/ can depend on anything, as long as the dependency is documented.
+  Nothing in the main Java/ subdirectory may depend on anything in Modules/
+  This ensures that we retain portability and easy installation. All the user
+  has to do is to give up on a module that has an odd dependency, not the whole 
+  system.
+
+  Note that all modules need not be in the Modules/ subdirectory: for instance,
+  the TextCloud module does not depend on anything beyond the core Java code
+  and may in the future be called by the core Java code so it is located in
+  the core subdirectory.
+
+
+
+- Each class should start with the line (not indented to save space)
+
+public static final String rcsid = "$Id: CODING,v 1.19 2001/07/02 04:08:25 tjl Exp $";
+
+  except interfaces, which should have
+
+String rcsid = "$Id: CODING,v 1.19 2001/07/02 04:08:25 tjl Exp $";
+
+  instead.
+
+  This will pull in the version identifier from the CVS file. 
+  XXX IT SHOULD PROBABLY BE INCLUDED IN THE JAVADOC AS WELL!
+
+- For debugging log messages, use the code
+
+    public static boolean dbg = false;
+    protected static void p(String s) { if(dbg) ZZLogger.log(s); }
+    protected static void pa(String s) { ZZLogger.log(s); }
+
+  to print out messages. The System.out.println() is too verbose to insert
+  into code. This code can be added to the beginning of any class.
+
+  NOTE THE CHANGE FROM PREVIOUS: there is NO "final" qualifier for dbg,
+  as a non-final dbg can be used on the commandline to switch debugging
+  on at runtime, without a recompilation. Not all files have been changed yet.
+
+  NOTE THE CHANGE FROM PREVIOUS: We now use ZZLogger, allowing logging
+  the debug output into a file that can be sent to us in case of a
+  puzzling bug.  This avoids having to have a scrollback buffer in
+  your terminal emulator.
+
+  NOTE THE CHANGE FROM PREVIOUS: there are NO "final" qualifiers for p and pa,
+  because they are unnecessary for static methods. p and pa are now private.
+  Not all files have been changed yet.
+
+  NOTE THE CHANGE FROM PREVIOUS: The methods are now protected; this allows
+  them to be used in subclasses.  When they were private, debugging subclasses
+  was impossible.  Not all files have been changed yet.
+
+- If you want to kill the program, use SafeExit.exit instead of System.exit;
+  this allows consistent cleanup at exit time
+
+- Avoid both under- and overdocumenting.
+
+- Use Java 1.1.8: use of 1.2 features is allowable IF you carefully check
+  that the code works in 1.1.8, minus the features given by 1.2. So for
+  instance, if you make a cache that works with the garbage collector
+  interface in 1.2 to enable passive cleaning, the code should run on 1.1.8,
+  either without the cache, or without the cleaning (currently the ZZCellScroll
+  caches without any cleaning).
+
+  One of the considerations here is that Kaffe JVM provides a completely
+  free platform on which we can run the free GZigZag. If SUN or someone else
+  ever releases their Java implementation under a free license, the situation
+  is completely different.
+
+- Use anonymous classes freely
+
+- Try to keep the external APIs small, *with the exception* of providing
+  convenience routines for classes like ZZCell.
+
+- Indenting: tabstop==8, shiftwidth == 4, cuddled braces, i.e.
+	
+	public void method() {
+	    if(...) {
+		...
+	    } else {
+		...
+	    }
+	}
+
+  however, you may use smaller shiftwidth if the function really really requires
+  it (although you should try to split it up).
+
+- for any more complicated functionality, feel free to start a new
+  "white paper" -type documentation in the Documentation/ subdirectory.
+
+- make your code such that it can be compiled in jikes +P (pedantic),
+  JDK1.1.8 and JDK1.2.2 without warnings or errors.
+
+- as an aside, I really recommend using a coloring editor since there are
+  many points where significant sections have been commented out. This
+  is bad practice but inevitable in a system that doesn't easily allow
+  us to attach the sections which are not useful now but might be later
+  to the text in a xanadu-like manner.

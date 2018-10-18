@@ -1,0 +1,49 @@
+Nile Is a Literary Editor ;)
+=========================
+
+Hierarchical text structure
+Key-based simple selections *and* motions of the selected text
+word-by-word, sentence-by-sentence.
+
+Parallel markup stream, indicating the paragraphs and sectioning.
+Additionally, spaceparts that use this markup to imply various
+kinds of trees.
+
+With firstcap after any two spaces.
+
+Operations: (not yet implemented - this is a list of ideas)
+    Fundamental (required to create text that uses all features)
+	- insertion
+	- backspace, going over paragraph boundaries
+	- enter, split / start new paragraph
+	- cursor motion
+	- adjust paragraph level (P .. H1)
+	    (XXX mustn't take too much keyspace if we want e.g. ULs later)
+
+    Rearrangement (the real thing)
+	- selecting groups by word / sentence / paragraph using keyboard, 
+	  hopping those bits over the corresponding bits
+	- easily moving to outline view, outline hop
+	- splitting into implied fragments and hopping those as cells
+	- cutting into textcloud -style bits that float around paragraphs
+
+    Hyperconnections
+	- paragraph comments for outline
+	- sideways connected documents, using nile-anchor dimension between
+	  cells very simply. Like paralleltextview
+	
+    Versioning & transcluding
+	- need cellular versioning mechanisms
+	- side-by-side view with beams
+	    (the nile delta view ;)
+	- see all current documents that transclude given area
+
+    
+-----
+Refs:
+http://devworld.apple.com/techpubs/mac/HIGuidelines/HIGuidelines-224.html
+http://www.windowatch.com/firstwords/fw-cutpa.html
+http://www.windowatch.com/firstwords/first3.html
+http://www.oasis-open.org/cover/coombs.html
+
+Word's selection by words by default needs to be mentioned.

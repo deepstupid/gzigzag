@@ -1,0 +1,911 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	This is an article intended for the CyberText yearbook.
+
+	It is written in WML, which is close to HTML while providing 
+	some easier ways to create certain constructions, such as
+	the figure tag.
+
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>GZigZag: a platorm for Hypertext experiments</title>
+
+#include '../wmlinc/article.wml'
+
+
+ </head>
+ <body>
+ <substdims>
+<H1>GZigZag: a platorm for Hypertext experiments</H1>
+<pre>$Id: ct-old.wml,v 1.1 2001/06/21 09:27:17 tjl Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Tuomas Lukka</b> <br>
+ 	<code>lukka@iki.fi</code><br>
+        Dept. of Mathematical Information Technology <br>
+	University of Jyväskylä 
+ </cell>
+ <cell> <b>Vesa Parkkinen</b>
+ </cell>
+ <cell> <b>Katariina Ervasti</b></cell>
+ <cell colspan=3> and </cell>
+ <cell colspan=3> <b>Ted Nelson</b> </cell>
+</grid>
+
+<toc>
+
+
+<p>
+This is a preprint of an article to appear in the Cybertext Yearbook 2000,
+edited by Markku Eskelinen & Raine Koskimaa, to be published by Research Unit
+for Contemporary Culture.
+All trademarks are the respective trademarks of their owners.
+
+<warn>
+
+<abstract>
+We present a short summary of the ongoing work at the Hyperstructure Group
+in Jyväskylä University. 
+We are interested in structures that currently dominant software 
+paradigm makes difficult
+or impossible to express or edit. 
+For example, current operating systems are fixated on files and directories
+which could be replaced by a much more flexible and more
+fine-grained structural system.
+For many applications it would be useful to keep track of where text
+has been copied from via cut&paste. The current paradigm does not support
+this but e.g. the Xanadu88 paradigm does. 
+Additionally we are interested in useful visualizations of these structures.
+
+Most of our work is based on Nelson's ZigZag
+structure, and we have a prototype program GZigZag on which various 
+variations are tried.
+</abstract>
+
+
+<h2>Introduction</h2>
+
+<p>
+This article attempts to give an overview of the activities of the
+Hyperstructure Group at the University of Jyväskylä.
+The group, founded in fall-99 is focused on a long-term collaboration
+with Ted Nelson and implementing and testing
+his ZigZag design and some Xanadu designs.
+
+<p>
+The most basic idea
+underlying all of our work is that today's computers do not
+allow the user to store and visualize most of the real structure of
+his information.
+An interesting feature of this problem is that it is never visible
+on a small scale, with a few documents or files. On a small scale, the human
+brain is able to superimpose the true structure of the data on the
+structure forced by the computer (filenames and directory hierarchies).
+
+<p>
+Unfortunately, most software is only tested with small amounts
+of example data in the prototype stage.
+If there are hundreds of documents, modified by dozens of people,
+it is easy to fall into chaos unless the true structure of the data
+is used. One simple example of such true structure is that of origination(XXX):
+being able to track all text across several cut&paste operations and
+visualize this makes it simple to see what rearrangements other people
+have done on a piece of text after having seen it last time.
+
+<p>
+Our work is based on Nelson's ZigZag structure XXXREF, introduced below.
+We often use the term ``ZigZag structure''. This is an approximation:
+ZigZag is in a sense a metastructure with which it is easy to model any
+structure, even structures that would be difficult to model on paper 
+or on usual computer programs without a special program designed explicitly
+for that structure - for example a family tree. 
+
+
+<h2>Basics of ZigZag</h2>
+
+<p>
+ZigZag is a new way of putting information into computers, kind of a crossing
+between a database, a filesystem, a personal information manager and 
+many others. And even that isn't sufficient to describe it: it's simply 
+something new.
+There are two important differences between systems built on ZigZag
+and "normal" computer systems.
+
+<p>
+First of all, files and directories are unnecessary (REF paradigms).
+A traditional filesystem uses filenames to refer to large chunks of
+information and possibly HTML-like anchors to refer to smaller pieces
+inside the files. This is a fragile way of representing the information
+since the only <em>structure</em> stored by the system is the files based
+on the names - finding which files reference a given file is timeconsuming
+or requires a pre-indexing scheme.
+ZigZag is a flexible hyperstructure, allowing different micro-level
+connections between various pieces of information.
+In ZigZag all references are two-directional and do not work through
+user-visible namespaces. Rather, the micro-level two-directional 
+referencing is built right into the system. Changing some of
+the connections of a piece of information (e.g. renaming the "file" it
+is inside in the listing) will leave the other connections unchanged.
+
+<p>XXXXX
+Second, in ZigZag, <em>all</em>
+the information about the system will be stored in the same structure.
+In Windows, there is a filesystem and separately from it, there is the
+registry. In UNIX, there is just the filesystem with configuration
+information for applications being represented as text files inside
+the same filesystem; same tools can be used to edit normal text files
+and configuration files.
+ZigZag takes this a step further: all information is in the same fine-grained
+structure instead of the coarse "file-grained" structure.
+The same tools can be used to edit any part of data on the system, be it
+metadata, configuration information, user interface bindings or a spreadsheet
+or document. XXX selitä paremmin
+
+ <h3> Cells and dimensions </h3>
+
+	<figure img="rank1vert.png" width="250px">
+	 Two ranks on <CODE>d.2</CODE>. The rules of the ZZ structure
+	 are that each cell may only be on one rank along a given dimension.
+	</figure>
+
+	<figure img="rank2vert.png" width="250px">
+	 Two different ranks involving some of the same cells, on 
+	 a different dimension <CODE>d.1</CODE>
+	</figure>
+
+	<figure img="rank3both.png" width="250px">
+	 One possible way to flatten the ranks of the two previous
+	 figures to show both dimensions at once. Note how the structure
+	 feels locally spreadsheet-like at each cell but globally
+	 the connections between the cells must curve when flattened
+	 to a 2-D plane.
+	</figure>
+
+	<p>
+ 	In ZigZag, all data is in cells, much like a spreadsheet.
+	The only important difference is that while a spreadsheet enforces
+	a two- (or possibly three-) -dimensional lattice structure
+	between the cells, ZigZag allows the cells to be connected in 
+	a much freer way.
+
+	<p>
+	First of all, the number of dimensions is unlimited.
+	Like on a spreadsheet, a dimension is still structured so that
+	each cell may have one predecessor and one successor on each
+	dimension, and the converse relationship "A is B's successor
+	implies B is A's predecessor" holds.
+	However, there are no restrictions <EM>between</EM> the dimensions
+	for the connections: for example, in the figure,
+	the cell A is located two steps right and three steps up
+	from itself (right = <CODE>d.1</CODE>, down = <CODE>d.2</CODE>).
+
+	<p>
+	To manage the potentially infinite number of dimensions,
+	they are referred to with descriptive strings.
+	The most commonly used dimensions are the three general-purpose
+	dimensions <CODE>d.1</CODE>, 
+	<CODE>d.2</CODE> and <CODE>d.3</CODE> and then <CODE>d.clone</CODE>,
+	used for logical duplication of cells and <CODE>d.cursor</CODE>, used
+	for pointing. These uses are mostly a matter of convention.
+
+	<p>
+	The strength of using dimensions instead of names (as in filenames)
+	or numbers (as in pointers or references) to refer to other
+	information is that all references are two-directional. 
+	This is an important feature since a large fraction of programming
+	errors in languages such as HTML or C++ have to 
+	do with referring to things
+	that are no longer there: on WWW, moving a page or changing the
+	name of an anchor on a page breaks all links to that page or anchor,
+	because the links are strings, naming the previous location.
+	In C++, the references are pointers, i.e. numbers representing
+	memory addresses: if the object being referred to is not any
+	more at the given address, the program crashes.
+	ZigZag introduces the concept of connection
+	on a primitive level and obviates the need for making new systems
+	of referencing for each new program. XXX
+
+	<p>
+	There are many different possible structures with similar
+	capabilities. What makes ZigZag special is the beautiful tradeoff
+	between simplicity and complexity: each cell's neighborhood
+	is limited by the two-neighbours-per-dimension rule but further
+	away the cells can be connected to each other in a free fashion.
+
+ <h3> Rasters and operations: the default UI </h3>
+
+	<p>
+ 	Given the complexity of the structure, it is usually impossible
+	to see it all at once. Focus&context methods (XXXREF) are
+	useful for simple visualizations: two or more dimensions are
+	chosen, and the cells near the user's focus (cursor) are
+	laid flat on the screen using those dimensions, as far as is
+	possible within the limits of the structure. Since the structure
+	locally resembles a spreadsheet, this visualization is extremely
+	navigable, especially with animation between the motions.
+
+	<p>
+	There are several different possibilities for choosing which cells
+	to place where, called rastersXXX.
+	The vanishing raster, for example, renders all cells 
+	up to a given number of steps from the cursor, while 
+	gradually reducing the size of the cells. This gives the user a good
+	picture of what is happening slightly further along in the structure
+	and uses the depth perception cues of the human eye to a great
+	advantage. There are also rasters based on rectangular grids, 
+	with the two most important ones being the vertical and horizontal,
+	which 
+	Examples of these rasters showing a looping structure are shown in 
+	XXX.
+
+	<p>
+	Motion is performed through the keyboard or the mouse.
+	Many simple edit operations take directions as parameters, 
+	so for instance, creating a new cell leftwards from the current
+	cursor is achieved by pressing <KBD>n</KBD> and then the same
+	key that normally moves the cursor left (<KBD>l</KBD>).
+
+
+	<p>
+	The basic operations include connecting and disconnecting cells,
+	moving the cursor, rotating the view (choosing different dimensions
+	to show on the X, Y and Z axes) and modifying the text in a cell.
+	There are also some more complicated operations that are especially
+	useful, such as hop, an example of which is shown in XXX.
+	
+ <h3> Totality of the structure </h3>
+
+	<p>
+ 	Currently, computers are complicated and messy.
+	Application code has to worry about the structure of data on 
+	disk, the structure of data in memory, and the structure of data
+	held by the operating and windowing systems.
+	All these are usually different and cause applications to 
+	translate between each other, making the application overtly 
+	complicated.
+
+	<p>
+	ZigZag represents all this data in the structure: the structure is
+	persistent and unified.
+	Just as with virtual memory, 
+       	the program does not need to care whether a cell
+    	is in memory or on disk. The logical structure
+    	is the same. Of course, to retain an acceptable level of performance,
+	solutions such as transient cells or saving only every <i>n</i> 
+	seconds have to be devised but these are optimizations rather
+	than fundamental structure of the application.
+
+	<p>
+	The unification of the structure is more difficult to explain
+	since it reflects a completely different mindset from the ordinary.
+	Ideally, the lower-level code which takes the structure and renders
+	it on screen will have to know only one cell.
+	From this cell, it uses the structure to find what windows are 
+	where, which cells to show
+	in the centers (via <CODE>d.cursor</CODE>) and which dimensions 
+	to raster along (also via the structure). 
+
+	<p>
+	This greatly simplifies programming in ZigZag since <em>all</em>
+	operations can be expressed as alterations to the structure.
+	For example, when the user presses a key to move the cursor left,
+	what happens is that the callback code looks through the structure
+	to see which dimension is currently "left-right", then looks
+	for the cursor and the cell leftwards of it. Finally, the code
+	connects that cell in the structure so that it will thereafter
+	be interpreted as the cursor.
+
+	<p>
+	There are many other benefits as well: since all operations
+	are in the structure, scripting becomes trivial since everything
+	can be achieved simply through modifying the structure.
+
+	<p>
+	Unification of data is not a new idea: the original
+	UNIX philosophy of "everything is a file" contains some of the same 
+	spirit. However, the UNIX APIs still force the loading of files
+	into memory into a different representation; in ZigZag, the cell
+	structure is all you need.
+
+	<p>
+	Another previous version of the same basic idea is the
+	popular Model-View-Controller paradigm (XXXREF), where a program
+	with a user interface is split into a model and 
+	user interfaces (views and controllers) to that model. 
+	This structure makes it simple to add a new view to the same data.
+	ZigZag takes this approach to new heights by providing a 
+	<em>global</em> model which all features of the visible display
+	use. 
+
+ <h3> Permascrolls </h3>
+
+	<p>
+	Permascrolls are a concept that originated in Xanadu88 (XXX???).
+	The essential idea is that whenever a piece of <DFN>fluid media</DFN>
+	(i.e. text, audio, video, image) enters the system, it is assigned 
+	a permanent identifier. After that, all references to that
+	piece of media go through that identifier so that it is easy to find
+	where a particular piece of text has been cut&pasted to, for example.
+
+	<p>
+	Permascrolls seem to be the most easily misunderstood part of
+	Xanadu88 because with today's web, confusing the physical
+	location and the identity of a document is easy.  A permascroll
+	does <strong>not</strong> mean that all information should only be
+	stored in one place. It is not an URL, but more like an URI: it
+	is an identifier which is known to map to the same information
+	always. It is also more fine-grained than run-of-the-mill W3C
+	URIs, as it allows referencing any subset of the original up to
+	an atomic level.  
+	Most commonly it is not single atoms in the permascroll that
+	are referred to; rather, the reference type is
+	<DFN>span</DFN>, which is a reference to a single contiguous piece
+	of a permascroll.
+
+	<p> XXX SELITÄ VSTREAM HETI
+	In the permascroll paradigm, a particular version
+	of a "document" is represented as a vstream: a list
+	of spans. Editing a document then consists of adding a new
+	span, splitting existing spans, deleting existing spans and
+	rearranging spans.
+
+	<figure img="permascroll.png" width="250px">
+		Two different versions of a document using vstreams
+		and permascrolls. The second version is produced from the 
+		first by a rearrangement and an insertion.
+		When comparing the two versions side by side, it is
+		easy to determine 
+		which parts are the same and simply have been rearranged
+		by comparing the references to the permascroll.
+	</figure>
+
+	<p>
+	ZigZag supports permascolls by allowing a cell to contain 
+	a <DFN>span</DFN> (a reference to a single 
+	contiguous piece of the permascroll).
+	A rank of cells on a dimension (usually <CODE>d.2</CODE>)
+	can then be interpreted
+	(see next section) as a virtual text (or other media) stream.
+
+	<p>
+	To reiterate, a permascroll is not a place:
+	it is a state of mind, in which you keep track of what all
+	information copied or cut&pasted originally was. 
+	For example, it is planned that in a future version of GZigZag
+	the user will be able to send an email with some cells
+	as well as the parts of the permascroll that is referred to
+	by those cells. The recipient's computer can then
+	store those pieces of the permascroll and notice if any other
+	references to them exist.
+	In fact, permascrolls are excellent candidates for caching since
+	the identifiers to the content are indeed permanent, unlike
+	on WWW where the content of a cached URL can change at any time.
+
+
+	<p>
+	Another application where permascrolls show their power is
+	comparison: most utilities used for text comparison (e.g. the
+	unix <CODE>diff</CODE> utility) do a reasonably good job if the
+	user is simply adding or removing or changing small pieces of
+	text. However, such tools have great troubles with rearrangement,
+	exactly because of the lacking text model where only the content,
+	not the origin is stored. Thus, a rearrangement usually shows
+	up as large insertions and deletions, which is actually exactly
+	what it is, in the primitive text model.
+
+	<p>
+	It is possible to overcome some of this problem by writing
+	more and more refined algorithms for finding similar texts but
+	once we get to phrase-level elements, they become useless since
+	the same phrases can occur again and again in a document.
+
+	<p>
+	With permascrolls, rearranging a text file is not about moving
+	the text content - it's about moving <em>pointers</em> to the
+	content. So two different revisions, the latter of which has
+	been rearranged, still point to the same spans of text in the
+	permascroll. Now, visualizing the differences becomes easy:
+	all that is necessary is to point out to the user which pieces
+	of text are stored in the same place in the permascroll.
+	See Figure XXX below, where this is demonstrated.
+
+	<p>
+	This feature may seem like unimportant but in projects with more
+	than one worker and much rearrangement of the manuscript
+	it can be truly invaluable for finding where a certain part of the
+	previous version of the manuscript ended up.
+
+ <h3> Alternative visualizations: applitudes </h3>
+
+	<p>
+ 	Although interesting, the above structure and visualizations
+	would fit most applications rather poorly. However, given the
+	basic ZZ structure it is simple to define new visualizations.
+
+	<p>
+	Taken together, a visualization and operations are referred
+	to as an <dfn>applitude</dfn>, 
+	as opposed to the traditional term application
+	since all the data is still in the same structure and other
+	operations can be used to edit this data and these operations
+	can be used to edit other data.
+
+	<p>
+	For example, a vstream is a kind of an applitude: there is a 
+	clearly defined internal structure and special operations for
+	the vstream for inserting and deleting characters.
+	There is also a good visualization of a text vstream: simply
+	the characters in a paragraph (formatting capabilities will
+	be added later).
+	The default cell-based visualization and the natural vstream
+	visualization for a small piece of text is shown in XXX.
+	Note how the colored cursor is shown in both panes.
+
+	<p>
+	The interesting thing about applitudes is that they can be designed
+	to be connected to each other in a more fine-grained fashion than
+	current embedding frameworks such as Bonobo, KParts, or OLE/COM.
+
+
+
+
+<h2>Some Textual Applitudes of ZigZag</h2>
+
+<p>
+In this section, we'll look at some functioning applitudes.
+As explained in the previous section, the strength of ZigZag lies in that
+all these applitudes can be used together fairly easily since all the data
+is stored openly in the ZZ structure.
+
+<p>
+One important function that GZigZag provides for all applitudes is
+<em>animation</em>. This works by associating a cell with all "things"
+that are rendered on the screen.
+When two "things" in subsequent keyframes (i.e. the fully rastered frames)
+are associated with each other, the system generates as many interpolated
+frames between them as the speed of the host machine allows. 
+The time between keyframes is estimated from the interval between 
+the user's keystrokes: the system attempts to be ready 100ms before
+the user strikes the next key. This gives the system a fluid, responsive
+feel while allowing smooth, slow animation if the user is moving slower.
+
+<p>
+An example of such animation can be found in XXX ANIMATED GIF ON 
+GZIGZAG PAGES
+
+ <h3>Text cloud - <strong>real</strong> cut&paste</h3>
+ 	
+	<p>
+	One of the points Nelson has made in several talks (XXX??? on paper?)
+	is that the term "cut&paste", as used in the computer field, is
+	a really bad choice of words. Originally cut&paste meant physically
+	cutting a text into pieces, rearranging the pieces and glueing 
+	them together. This seems a little similar to what the computers
+	do. 
+
+	<p>
+	However, there is a crucial difference: in physical cut&paste,
+	the text can be cut up into as many pieces as desired; 
+	all the pieces are visible all the time; the pieces can be slowly
+	rearranged into the optimum order in a parallel fashion.
+	Indeed, when the text is cut up, the actual <em>data model</em> 
+	of the text
+	is changed from the single text stream to a cloud of text 
+	fragments.
+
+	<p>
+	Most current computer programs (XXX Exceptions?) force the user
+	to stay within the formal one-stream text model all the time during
+	editing, except for a single piece of text cut onto the "clipboard",
+	which is not seen.
+	This is why several people (REF: private communication) seem
+	to use a second window next to the main one to hold fragments.
+	This, of course, has several disadvantages: the fragments are
+	stored separately from the main body of text, the fragments still
+	have to be stored in the one-stream text model and the system is
+	rather clumsy. Of course, some people are able to write near-perfect
+	prose in near-perfect order.
+
+	<p>
+	One of the interesting differences between this system
+	and the dominant paradigm is the way of selecting text.
+	In most current systems, selecting text is performed by
+	painting, i.e. pressing the mouse button at one end of the
+	span being selected and releasing the mouse button at
+	the other end. In the TextCloud demo, text is never really
+	"selected" in the same way: instead, the user can make any
+	number of <dfn>cuts</dfn> into the document using the right
+	mouse button. Then, when the user presses the left mouse button 
+	on some text and drags, the text is separated at the neighbouring
+	cuts to allow the user move a single piece of text.
+
+	<p>
+	Already Nelson's original mockup pictures about Xanadu 
+	(see XXX (pic on WWW)) 
+	include transpointing windows, i.e. windows which show the 
+	connections of their respective contents graphically.
+	These connections can be either transclusions or links. In this
+	article, we concentrate on transclusions.
+
+	<p>
+	GZigZag is probably (XXX???) the first system to implement such
+	transpointing with beams: an earlier Xanadu client Pyxi by XXX
+	shows transclusions by colors but does not do transpointing.
+	The TextCloud applitude is a good place to see the transpointing beams
+	in action: simply copying (i.e. dragging with Shift-MouseButton1 instead
+	of just MouseButton1) a vstream creates a transclusion and the
+	beam appears. Then, when editing one (or both) of the streams by 
+	cutting&pasting text the beams remain 
+	connected; this is because the beams are really connected to the actual
+	text content, not just the external object.
+
+	<p>
+	The TextCloud is a simple model and its current implementation clear 
+	limitations: all text must be stored in this one area and the size
+	of the text cannot be changed. 
+	Also, it does not interface well with the other parts of the system.
+	It is simply one step on the way towards the full system, in order
+	to test one user interface aspect of it.
+
+
+ <h3>Editing longer documents using cells</h3>
+
+	<p>
+	A different way for editing longer documents is through putting
+	vstream fragments of the documents in ZZ cells which are then rendered
+	in a raster. All the structural capabilities of ZigZag are
+	then in use for rearranging the pieces.
+
+	<p>
+	This being ZigZag, note that "putting fragments in ZZ cells"
+	does not a literal inclusion but an <i>interpreted inclusion</i>:
+	the view has a special raster which knows how to look for
+	the vstream to include in a cell.
+	When the space is being rastered, 
+
+	<p>
+	Unfortunately this demo is not yet finished so we cannot offer
+	a screenshot.
+
+ <h3>Hypertext without lexias (XXX?)</h3>
+
+ 	<p>
+	Hypertext has come to mean "WWW-like" in many places:
+	a paradigm where the user is presented with one lexiXXX,
+	performs a selection, for example clicking with the mouse,
+	and is taken to another lexiXXX.
+
+	<p>
+	GZigZag makes it possible to easily create a wealth of flexible
+	visualizations that do not use such fixed screenfuls of text.
+	This is because GZigZag is built in a modular fashion and makes
+	it easy to describe a new visualization.
+
+	<p>
+	For example, let's start with a text model that contains 
+	simply paragraphs of text, one after another.
+
+
+ <h3>Email or forums with coordinates</h3>
+
+	<p>
+ 	In this section, we come once again to a problem which 
+	does not exist for small data sets. If there are
+	only 10 messages in 
+	a mailbox, it does not matter in the least how incredibly
+	bad the mail reading program is: 
+	humans can still manage since they can remember
+	and overlay the true structure on top of the rigid and unnatural
+	structure imposed
+	by the mail reader program.
+
+	<p>
+	However, consider the linux-kernel email list or
+	corresponding high-volume newsgroups on the usenet. 
+	Most programs for reading news or email are based on the assumption
+	that the reader wants to read all or most of the incoming messages -
+	a natural assumption stemming from the original volume of the forums.
+	However, with time the number of messages in a forum has grown
+	unmanageably yet programs mostly offer only rigid pre-selection systems
+	such as killfiles which remove all messages with a given subject 
+	or sender from the view.
+
+
+	<p>
+	ZigZag and FloatingWorld provide an interesting alternative
+	which we have so far had time to only scratch the surface of.
+	When a mailbox or a newsgroup is incorporated into the structure
+	correctly, it is simple to write interesting visualizations
+	that show some of the emails.
+
+	<p>
+	The structure underlying the email applitude is described in 
+	FIGUREXXX.
+	
+	<p>
+	The first, simplest visualization FIGUREXXX
+	is simply the traditional 
+	mailbox visualization, offered by many programs such as Pine, XXX.
+	This simply shows some of the most relevant header fields of
+	messages on each line, arranged vertically in the mailbox order.
+	Already here ZigZag has several tricks up its sleeve. For example,
+	a message may be stored in several "folders" (lists), either
+	by using different dimensions for different folders or by
+	cloning the headcell of the
+	message onto different ranks on the same dimension.
+	Another trick here is that it is easy to see which folders
+	a given message has been connected to, since all connections are
+	two-directional. This is an advantage caused by the fact that ZZ
+	considers the message to be an entity rather than a stream of 
+	characters that can be copied but has no <em>identity</em> 
+	(like emails in normal email folder files).
+	
+	<p>
+	Sorting the emails is of course possible, either by presorting
+	and making a rank of them and using that
+	or by post-sorting at each time they are shown.
+	For sorting, ZZ offers an interesting user interface: when the
+	user moves the active cell <em>horizontally</em>, the list of
+	mails is shown sorted according to that cell.
+	XXX Mailboxes, many folders per email!!!!!
+	XXX Good argument for postsorting or cached postsorting.
+	XXX Notifications
+
+	<p>
+	
+	<p>
+	Now, one interesting thing that ZZ offers is multiple windows
+	with different views whose cursors are bound together (using
+	the cursor-cargo mechanism; see the ZZ Spec XXXREF).
+	All the views above have one "active" cell. We can have several
+	useful views visible at the same time, which stay in lockstep with
+	each other.
+	
+
+	
+	<p>
+	The FloatingWorld model offers an alternative: messages
+	or icons of messages can be shown in a two- or three-dimensional
+	coordinate system. 
+
+	<p>
+	Such a system is trivial to implement in a general fashion
+	using ZigZag since the homogeneous structure makes it simple
+	to specify paths to obtain coordinates through, whereas if 
+	using a traditional programming language, it would be all too easy
+	to restrict the world of possible coordinates to some set
+	that is easily specifiable in the structure that was chosen.
+
+	<p>
+	Additionally, normal email programs or HyperMail (XXXREF) 
+	-like HTML indexers treat the messages as their own, making it
+	almost impossible to link the discussions into the places where
+	they would belong: for example, linking the discussion leading up
+	to a particular decision in a standard (say XHTML) into the place
+	in the standard would be an invaluable aid to those trying to
+	understand afterwards how something is supposed to work.
+
+	<p>
+	Consider, for instance, a document such as the Kernel Traffic
+	weekly newsletter (XXXREF) which summarizes the main discussion threads
+	on the Linux-Kernel mailing list that week. 
+
+	XXX transclusions, etc.
+
+ <h3>Editing hyperliterature with nodes</h3>
+	<p>
+	- editing trad. hyperliterature easier: visualize the STRUCTURE of
+	  the whole work, then rendered into HTML
+
+ <h3>Scientific publishing using Xanadu hypertext</h3>
+
+	<p>
+	A long-known problem in scientific publishing on paper media is
+	that bibliographic references are always backwards in time, while
+	it would often be more interesting for the reader to
+	know the future references, i.e. either articles that refer
+	to the current one or articles that the author has deemed
+	interesting enough to refer to at a later date from publication.
+
+	<p>
+	Now, in the Xanadu model, quoting is equivalent to linking because
+	of transclusions. 
+
+	<p>
+	Transclusions may seem foreign as an instrument of quoting and
+	responding to a selected portion of an article. However, they
+	are actually quite close to another widely used paradigm: quoting
+	when replying to an email. The only addition here is that 
+	the quoted parts (which are somehow visually indicated) are 
+	not copies but transclusions from the original article. Because of
+	this, they are actively connected to the originals in an implicit
+	two-way link.
+
+	<p>
+	The system of moderation used on sites such as <code>slashdot.org</code>
+	is surprisingly similar to the scientific refereeing process.
+	The privilege of moderating other users' comments is granted
+	to established members of the community (members whose previous
+	moderations have been approved by other members), the process
+	is anonymous and determines on whether users get to see the comment.
+	However, there are important differences:
+	<ul>
+	 <li> The moderation is not "accept/reject" but rather
+	      "leave as is/ increase score/ decrease score".
+	 <li> Comments are not deleted even if they have a low score;
+	      users browsing the site can set their comment limit
+	      themselves to determine what minimum rating for comments
+	      they wish to see.
+	 <li> A user has a default score based on his/her earlier
+	      success in posting comments
+	 <li> Comments are usually short notices on 
+	</ul>
+	Upon consideration, some of these points are quite applicable
+	to scientific publishing as well. Specifically, the "letters
+	to the editor" section of scientific journals seems to be the 
+	closest that print journals can come to this kind of convenience.
+
+	<p> 
+	Indeed, this sort of publishing system could create a far more
+	interactive scientific <em>discourse</em>.
+	For example, a user can choose which links he wishes to see
+	when reading an article: refereed links, all links, links by certain 
+	persons etc.
+
+
+
+
+<h2>The Code</h2>
+
+<p>
+GZigZag, which is the program that is shown in all of the screenshots
+in this article, is free software. It is distributed under the FSF's
+Lesser General Public License (LGPL) and is available on SourceForge.
+
+In the language of the free software community, "Patches accepted".
+
+<h2>Conclusions</h2>
+<p>
+
+<h2>Acknowledgements</h2>
+<p>
+
+<h2>References</h2>
+<p>
+http://www.acm.org/cacm/AUG96/antimac.htm
+
+<h2>Glossary</h2>
+
+<p>
+This article uses many terms that are most likely unfamiliar to the reader.
+We attempt to summarize the most important ones below.
+
+<hr>
+<dl>
+	<dt>ZigZag structure / space
+	<dd>	A simple structure, based on <i>cells</i> and <i>dimensions</i>
+		which the user is able to easily shape into any desired
+		structure. All interrelated pieces of information can be
+		close to each other on some dimension.
+	<dt>cell
+	<dd>	The smallest unit of information in ZigZag.
+		A cell can contain a text string or 
+		a single span in a permascroll; the separation is
+		because a text string can be edited but a span can only
+		be lengthened or shortened: no characters can be 
+		inserted. Cells are connected to each other along
+		dimensions.
+	<dt>dimension
+	<dd>	Connecting cells along dimensions is what ZigZag is
+		about. Locally, dimensions work just like on a spreadsheet:
+		each cell can be connected to one cell in the positive
+		direction and to one cell in the negative direction 
+		along each dimension. However, there are no global constraints
+		between the dimensions.
+		
+	<dt>rank
+	<dd>	A rank on a dimension D is simply a set of cells that are
+		connected to each other on D. A given cell can only
+		be on one rank on a given dimension.
+
+	<dt>raster
+	<dd>	A simple visualization of the ZZ structure.
+		A raster is given a cell to place in the center of
+		the view and a set of dimensions chosen for the coordinate
+		axes X, Y and possibly Z, and it starts at the center cell
+		and places other cells on the screen according to simple
+		rules.
+		There are several different rasters.
+</dl>
+<hr>
+<dl>
+
+	<dt>FloatingWorld
+	<dd>	Ted Nelson's design built on top of ZigZag structure,
+		based on <i>flobs</i>.
+	<dt>flob
+	<dd>	A multi-dimensional flying object. That is, an entity
+		representing something that may have any number of 
+		<i>flob coordinates</i>. For example, an email's sender is one
+		flob coordinate, its subject another.
+
+</dl>
+<hr>
+<dl>
+
+
+	<dt>Xanadu88
+	<dd>	A hypertext system, finished in 1988, which works by
+		stable <i>fluid media</i> content instead of URL-like pointers.
+	<dt>fluid media
+	<dd>	Any media types that can be subdivided.
+		Text, audio, video, images.
+	<dt>permascroll
+	<dd>	A storage philosophy for fluid media where
+		each smallest unit (e.g. character of text)
+		is assigned a permanent identifier when
+		it first enters the system. Of course, 
+		references to the smallest units usually happen
+		through <i>span</i>s for efficiency.
+	<dt>span
+	<dd>	A (reference to a) contiguous section of the permascroll.
+	<dt>vstream
+	<dd>	A list of spans that describe a virtual stream of
+	    	fluid media. A "document" or one version of a document.
+		Modifying a document does not modify the permascroll, except
+		by appending new inserted characters. Instead, the spans
+		of the vstream are modified: split apart, new spans
+		inserted etc.
+	<dt>transclusion
+	<dd>	The inclusion of the same material in a permascroll in 
+	    	two different documents. One of the fundamentals of the Xanadu88
+		model is that it is efficient to search for transclusions
+		of a given span.
+	<dt>transpointing windows
+	<dd>	Windows on a computer screen that show the connections or 
+		transclusions between each other.
+
+</dl>
+
+<h2>SCRATCH</h2>
+
+<p>
+<b>
+This section contains rejected pieces of text that may still
+have some interest.</b>
+
+	<p>
+	Naturally, if desired, dimensions can be used to construct
+	systems analogous to files and directories: for instance,
+	a number of cells going down <code>d.2</code> can contain names
+	and these cells are connected on some dimension to the content
+	for that "file".
+
+	<p>
+	This is somewhat analogous 
+	to the hyperbolic visualization
+	for graphs (XXXREF): hyperbolic space also looks locally like 
+	Euclidean space but there is more "room" because the correspondence
+	to Euclidean space does not hold over distances.
+	An interesting similarity between the two is the volume of balls: 
+	in hyperbolic space, the volume enclosed in a ball grows exponentially
+	with the radius and the same is true for ZigZag - <em>if</em> 
+	desired; ZigZag cells can also be arranged in a less complex 
+	fashion where the growth of the volume of balls is more restricted.
+
+<hr>
+ </substdims>
+ </body>
+</html>
+
+<!--
+	vim: set syntax=html :
+-->
+

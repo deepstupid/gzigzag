@@ -1,0 +1,107 @@
+Uudet tiedonhallintamenetelmät älykkäässä automaatiossa
+
+Taustaa
+
+Monissa ohjelmistoprojekteissa kehitys aloitetaan pienestä mallista
+ja käyttöliittymätestaus suoritetaan laboratorio-oloissa pienellä
+tietomäärällä.  Tässä lähestymistavassa ongelmana on, että tietomäärän
+ollessa pientä ihminen pystyy itse rakentamaan mielessään
+yleiskuvan ja tiedon sisältämät rakenteet, mutta kun tietomäärä kasvaa,
+rakennetun järjestelmän rajat tulevat helposti vastaan.
+
+Esimerkiksi sähköpostin lukemisessa huonokin käyttöliittymä toimii, jos
+päivässä saapuu yksi tai kaksi viestiä, mutta päivittäinen 100-200 viestin
+tulva vaatii aivan erilaisia työkaluja kuin useimmat olemassaolevat
+sähköpostiohjelmat tarjoavat.  Tämän vuoksi monet tietotyötä tekevät
+ihmiset kokevat hukkuvansa informaatiotulvaan; tietokoneet eivät tarjoa
+sopivia työkaluja kaiken saapuvan informaation käsittelemiseen.
+
+Yhteinen nimittäjä monille ongelmallisille systeemeille on,
+että vastaanotettavan tiedon rakenne on etukäteen päätetty
+ja jäykkä. Esimerkiksi sähköpostiohjelmat tarjoavat usein vain
+joukon postilaatikoita, joista kukin sisältää listan viestejä, ja
+käyttöjärjestelmät tarjoavat jäykän hierarkisen tiedostorakenteen, jossa
+käyttäjän on tietoa tallentaessaan päätettävä sille nimi ja sijoitettava
+se johonkin hakemistoon.  Ohjelmien kaatuilemisen vuoksi on tavallista
+pitää useita varmuuskopioita vanhoista versioista, mikä tekee jonkin
+tietyn tekstin löytämisen hyvin vaikeaksi.
+
+Ted Nelson on 1960-luvulta lähtien peräänkuuluttanut suurempaa
+rakenteellisuutta tietokoneissa: hän on käyttänyt mm. vertauskuvaa
+"tietokoneen käyttäminen paperin simulointiin on kuin se, että
+revittäisiin 747-lentokoneen siivet pois ja ajettaisiin sitä bussina
+maantiellä".  Ted Nelson ei itse ohjelmoi, mutta on kehittänyt
+merkittäviä ajatuksia rakenteellisista systeemeistä: Xanadu-rakenteen
+ja ZigZag-rakenteen.  Nämä rakenteet täydentävät toisiaan ja muodostavat
+yhdessä hyvin mielenkiintoisen kokonaisuuden, jota GZigZag-tutkimusryhmä
+on toteuttamassa.
+
+Xanadu-rakenne liittyy läheisesti materiaalin kopiointiin ja
+lainaamiseen. Perinteisesti ohjelmoijille opetetaan alusta lähtien,
+että teksti on merkkijonoja, ja merkkijonot ovat kirjaimellisesti jonoja
+merkkejä; tekstiin ei liity mitään muuta kuin se, mitkä kirjainmerkit
+siinä sattuvat olemaan; tekstin kopioiminen paikasta toiseen tarkoittaa,
+että kirjainmerkkejä kuvaavat numerot kopioidaan. Tällä filosofialla
+rakennetuissa järjestelmissä alkuperäisen tekstin ja kopioidun tekstin
+välillä ei ole mitään yhteyttä; jos ihminen haluaa sellaisen muistaa,
+hänen täytyy itse muistaa kopioineensa jotakin.  Xanadu-mallissa
+asia on toisin: siinä tekstin perusyksikkö ei ole kirjainmerkki
+vaan näppäimenisku: se merkki "a", joka kirjoitettiin 5.8.01 osana
+sähköpostia on täysin eri asia kuin se merkki "a", joka kirjoitettiin
+11.10.01 osana tätä tekstiä.  Kirjoitushetkellä kukin merkki saa pysyvän,
+maailmanlaajuisesti juuri sen näppäimeniskun yksilöivän tunnisteen. Kun
+Xanadu-mallissa kopioidaan materiaalia, ei kopioida pelkästään sitä
+tietoa, että kyseessä on "a"-kirjain, vaan tieto siitä, mikä näppäimenisku
+on kyseessä.
+
+Olennainen osa Xanadu-järjestelmää on järjestelmässä olevien samojen
+merkkien automaattinen etsiminen ja näyttäminen. Esimerkiksi jos käyttäjä
+lähettää osan tekstitiedostoa sähköpostitse toiselle käyttäjälle ja toinen
+käyttäjä vastauksessaan lainaa osan tätä tekstitiedostoa, niin tämän
+jälkeen katsoessaan alkuperäistä tekstitiedostoa käyttäjä voi halutessaan
+nähdä molemmat sähköpostiviestit, joissa sen sisältöä on lainattu.
+
+Nykyisiin järjestelmiin perehtyneelle tämä saattaa tuntua tuhlaavaiselta,
+koska kutakin merkkiä kohden joudutaan tallettamaan enemmän
+tietoa. Toisaalta lisätiedon määrä on hyvin pieni, kun otetaan huomioon
+se, että useimmiten merkkejä ei kopioida paikasta toiseen yksitellen ja
+voidaan siis tallettaa yhtä aikaa usealle merkille se, mistä ne on otettu.
+
+
+
+ZigZag-rakenne vuorostaan liittyy eksplisiittisesti rakennettaviin
+tietorakenteisiin, toisin kuin Xanadu-rakenne, joka rakentuu tavallaan
+itsestään. ZigZag-rakenne on moniulotteinen, lukusuorien lailla toimiviin
+dimensioihin perustuva rakenne.  Kaikki kytkennät ZZ-rakenteessa ovat
+kaksisuuntaisia, mikä helpottaa rakenteen käsittelyä huomattavasti;
+suuri osahan tavallisten järjestelmien virheistä johtuu vääriin
+paikkoihin sojottavista yksisuuntaisita pointtereista.  ZigZag-rakenne
+on lisäksi joustava: siinä ei ole ennalta asetettua jäykkää rakennetta
+kuten esimerkiksi hierarkisessa tiedostojärjestelmässä on. Mitä tahansa
+voidaan kytkeä minne tahansa.
+
+
+Tavoitteet; joustavan tiedonhallinnan käyttö automaatiossa
+
+Automaatiojärjestelmiä kehitettäessä, testattaessa ja käytettäessä
+joudutaan käsittelemään suuria määriä tietoa prosessin tilasta,
+järjestelmän toiminnasta ja mahdollisista ongelmatilanteista.
+
+Perinteiset tietojärjestelmät tekevät tällaisen tiedon käsittelemisen
+vaikeaksi, koska tieto on yleensä "vangittuna" jonkin tietyn sovelluksen
+sisään ja muistiinpanojen ja kytkentöjen tekeminen on mahdotonta.
+
+ZigZagin perusfilosofiaa on, että käyttäjä voi halutessaan kytkeä mitä
+tahansa mihin tahansa. Esimerkiksi ongelmatilanteen ajanhetken mittaustulokset
+ongelmatilanteita yleisemmin käsittelevään muistioon. Tällöin muistiota
+edelleen kirjoitettaessa ja asioitten vähitellen selkeytyessä muistiosta
+on helppo palata alkuperäiseen dataan ja tarkastella jotakin toista
+muuttujaa, jonka tärkeys havaittiin vasta myöhemmin.
+
+Samoin, kytkennät ovat kaksisuuntaisia: jos joku muu myöhemmin katsoo
+samaa ajanhetkeä, tietokone näyttää hänelle, että siihen ajanhetkeen
+joku toinen on kytkenyt tämän virhetilannemuistion.
+
+Joustavat visualisaatiot voidaan toteuttaa siten, että tämänhetkiseen
+käsiteltyyn asiaan liittyvät asiat kelluvat näytön marginaaleissa.
+

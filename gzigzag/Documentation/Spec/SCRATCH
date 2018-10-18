@@ -1,0 +1,287 @@
+
+<h2>Blobs</h2>
+
+<p>
+Blobs are a stop en route to full hyperFlobs.
+Blobs are basically objects whose coordinates and appearance
+in 2D come somehow from
+the ZZ space, according to user-given instructions, which are
+themselves stored in the ZZ structure.
+
+<p>
+A blob has two separate aspects: location and appearance.
+The location is composed of multiple dimensions, specified in some
+way by the structure, of which the user will select a subset of 
+two or three (or some more if using e.g. linear combinations).
+The appearance can also be selected from multiple possibilities,
+with different visual aspects showing different aspects of the
+entity the blob represents.
+
+<p>
+Throughout this section, I will use email as the recurring 
+example. Email is a good application for blobs since it makes
+it possible to see the usefulness of blobs in a practical setting.
+Everybody gets too much email. Current email programs are not
+able to handle the load - first of all, they are too slow, reading
+the entire mailbox every time the program is started and the mailbox
+is opened. The obvious solution of splitting your mail into several 
+folders is not nice either --- it makes it much more difficult to find
+anything. This problem is well solved by the stable media streams
+in the previous section: instead of different files as folders,
+folders are just sets of pointers to the original mailbox file.
+The algorithmically great thing is that the whole mailbox need not be
+reread at any point, only the new messages have to be inserted into 
+the structure. After that, the structure is a good way of accessing
+the contents of the mailbox.
+But I digress - back to blobs. 
+
+<p>
+In the world of blobs, each email would be represented as one blob.
+Likewise each person and subject line (modulus <code>Re</code>).
+
+
+
+
+<h3>Variables and constants</h3>
+
+<p>
+Each ``statement'' or ``expression' in the ZZ space will have
+some parameters. For instance, an expression of ``headcell'' will
+need a dimension and a direction. 
+
+<p>
+For maximum flexibility and ease, we want to be able to store the
+dimension parameter in two different ways: first, as a direct cell or
+clone of a cell, e.g. d.1, and second, as a pointer. 
+
+<p>
+For design considerations, the first thing to note about pointers
+is that it would be quite powerful if we could bind a number of pointers
+to point to the same cell --- just like cursors above. So why not
+equate pointer$=$cursor, so that a cell is interpreted as itself
+if there's no d.mycursor poswards and otherwise as a cursor.
+
+<h3>Dimensions</h3>
+
+<p>
+The whole concept of blobs (and flobs) is based on being able
+to grab visualizable dimensions from various user-defined places
+in the structure and throw the blobs on the screen at those coordinates.
+
+<p>
+Dimensions can be defined by the blobs themselves or by proxy (e.g.
+an email can have as one of its dimensions one of the dimensions
+of the sender of the email).
+
+<p>
+Eventually, it should be possible to edit some dimensions by just clicking
+and dragging. Some dimensions, like the date of an email, should be
+read-only but you should be able to drag email on an urgency dimension
+or some dimensions of your own (to arrange them in a pleasing way 
+in space).
+
+<p>
+Note that dimensions do not need to have numerical values.
+An ordering can be quite sufficient and useful.
+For example, a time dimension to email may be more useful if it is
+not represented linearly but rather nonlinearly, based on the message
+density, expanding dense places and possibly (like in billowing) places
+that are near the cursor.
+
+<h3>The structure of a blobview description</h3>
+
+<p>
+When the blobview is described in the structure, there will be
+one or many sets of blobs to render, as well as their connections.
+Each set of blobs is described by 
+<ul>
+<li> a set of rules and paths to
+find the maincells of the blobs to display, starting from the 
+cursor of the blobview, 
+<li> a set of rules to find the dimensions to show
+for each blob 
+<li> a set of rules to show each blob on the screen 
+(e.g.~which cells' text to draw and how to arrange it).
+</ul>
+All of these can be given directly or as (cursorial) references to 
+other places.
+In the future, they will be able to pass parameters to each other,
+so that it would be possible to implement the perspective view through
+cells as blobs.
+
+<p>
+The connections between blobs will currently be described simply by
+giving paths from the maincell to other maincells that may be shown
+on the screen and if it is shown, a line is drawn.
+
+<h3>A high-level example description of a blobview</h3>
+
+<p>
+I warned you that email would be the predominant example of this
+section. 
+First, let's see how we describe emails in the ZZ structure for
+this simple example. 
+
+<p>
+First of all, there is the <em>handle</em> for each email. This is just
+a cell that is used to designate the whole email.
+As emails contain the <em>Message-ID</em> field which is guaranteed
+to be unique, the handle cell will contain that string.
+Poswards on d.handle from the handle cell are the header, the body
+and the attachments. 
+
+<p>
+The header is a simple d.2 and d.1 job for the field type
+and contents. However, both the email address cells, the subject
+cell and the references (message ids) are connected structurally:
+all of them point on d.ref to the handle of the corresponding
+structure. It may be that the structure that these cells point to is
+not loaded, in which case they just form a rank on d.ref without
+the handle cell at the end.
+
+
+
+<h2>The old file format</h2>
+
+<p>
+This section describes the GZigZag file formats that store the low-level
+structure. This is separate from the space description which describes
+e.g. the system list: the file format is lower-level still.
+
+<p>
+The file format is arranged as several layers, in order to 
+make it more flexible in the future.
+
+    <h3>Runs</h3>
+    	
+	<p>
+	Runs are the lowest level of the file: they specify a sequence
+	of changes to the structure, moving forwards in time.
+
+	<p>
+	The run formats given are version 0 of the run format.
+
+	<h4>Dimension change run</h4>
+
+	<p>
+	A dimension change run is a sequence of instructions
+	telling how one dimension changed between two specific times.
+	It contains records specifying connecting and disconnecting cells.
+	The structure is that of a simple hash: disconnecting only
+	disconnects in one direction.
+
+	<p>The records are:
+	
+	<grid spacing=3 layout=2x6 border=2>
+	 <cell colspan = 2> 
+	 	Connect record: connect cell id 1 to cell id 2 poswards.
+	 </cell>
+	 <cell> nbytes </cell> <cell> content </cell>
+	 <cell> 1 </cell> <cell> 'c' (99). Record identifier. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Cell id 1. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Cell id 2. </cell>
+	</grid>
+
+
+	<grid spacing=3 layout=2x6 border=2>
+	 <cell colspan = 2> 
+	 	Disconnect record: disconnect cell id 1 in given direction.
+	 </cell>
+	 <cell> nbytes </cell> <cell> content </cell>
+	 <cell> 1 </cell> <cell> 'd' (100). Record identifier. </cell>
+	 <cell> 1 </cell> <cell> '+' (43) or '-' (45). Positive or negative direction. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Cell id. </cell>
+	</grid>
+
+	<p>
+	These records are concatenated with no record identifier in
+	between.
+
+	<h4>Content change run</h4>
+
+	<p>This is the corresponding sequence for cell content
+	changes.
+
+	
+	<grid spacing=3 layout=2x6 border=2>
+	 <cell colspan = 2>
+	 	New string content for a cell.
+	 </cell>
+	 <cell> nbytes </cell> <cell> content </cell>
+	 <cell> 1 </cell> <cell> 's' (115). Record identifier. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Cell id. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Text content. </cell>
+	</grid>
+	
+	<grid spacing=3 layout=2x6 border=2>
+	 <cell colspan = 2>
+	 	New span content for a cell.
+	 </cell>
+	 <cell> nbytes </cell> <cell> content </cell>
+	 <cell> 1 </cell> <cell> 'S' (83). Record identifier. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Cell id. </cell>
+	 <cell> 2..65537 </cell> <cell> Java UTF string. Content, 
+	 		as a string representation of a span. </cell>
+	</grid>
+
+	<h4>Character scroll</h4>
+
+	<p>The character scroll for text is simply a sequence of
+	16-bit unicode characters, addressable by offsets.
+
+    <h3>Run synchonization</h3>
+
+	<p>
+    	The dimensions and content (but not scrolls), are stored in
+	streams that contain synchronization markers between runs 
+	of changes.
+
+	<grid spacing=3 layout=2x10 border=2>
+	 <cell colspan = 2> 
+	 	Header, identifying the file type, the content type
+		and content version.
+	 </cell>
+	 <cell> nbytes </cell> <cell> content </cell>
+	 <cell> 4 </cell> <cell> ASCII "GZZ0". Magic "number". </cell>
+	 <cell> 4 </cell> <cell> Java int: wrapper version number. </cell>
+	 <cell> 4 </cell> <cell> Java int: content type. </cell>
+	 <cell></cell>    <cell> 42 = dimension </cell>
+	 <cell></cell>    <cell> 43 = content </cell>
+	 <cell> 4 </cell> <cell> Java int: content version. </cell>
+	</grid>
+
+	<p>
+	After the header, the actual data starts.
+	The data is given in runs:
+
+	<grid spacing=3 layout=2x8 border=2>
+	 <cell colspan = 2> 
+	 	Run: A single run between timestamps.
+	 </cell>
+	 <cell> nbytes </cell> <cell> content </cell>
+	 <cell> 1 </cell> <cell> 't' (114). Record identifier. </cell>
+	 <cell> 4 </cell> <cell> Java int: timestamp number. </cell>
+	 <cell> 4 </cell> <cell> Java int: number of bytes to follow. </cell>
+	 <cell> 0..2147483647 </cell> 
+	 		<cell> The run. </cell>
+	</grid>
+
+	<p>
+	Only the last timestamp before which changes occurred is stored:
+	empty runs are not necessarily stored except for the content file.
+	The time the save was done could be saved in a cell with the ID 
+	'savetime' to facilitate backup recovery by time.
+
+    <h3>Stream set</h3>
+
+    	<p>A stream set, then, is a container for all of the above
+	things, with streams named by unicode strings.
+
+	<p>Currently, this is implemented simply as a directory, which
+	means that using non-ascii characters, or anything that's not
+	alphanumeric or dots or slashes is a really bad idea.
+
+	<p>Later, it will probably be a single stream that encapsulates
+	the other streams; it may even be that runsynch and streamset
+	will be combined later on.
+

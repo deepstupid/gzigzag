@@ -1,0 +1,107 @@
+<html>
+<head>
+<title>Multimedia module</title>
+<!-- // $Id: readme.html,v 1.2 2001/03/05 08:44:14 deetsay Exp $ // -->
+<script language="javascript">
+<!--
+
+function nop(c)
+{
+	return '<td colspan="'+c+'"></td>\n';
+}
+
+function cell(p)
+{
+	return '<td>'
+		+ '<table cellspacing=0 cellpadding=2 border=0><tr><td bgcolor="#000000">'
+		+ '<table cellspacing=0 cellpadding=4 border=0><tr><td bgcolor="#ffff00">'
+		+ p + '</td></tr></table></td></tr></table></td>\n';
+}
+
+function hconn(p)
+{
+	var t = '';
+	var i;
+	for (i=0; i<8; i++) { t = t + '&nbsp;'; }
+
+	return '<td><font size="-1"><u>'+t+p+t+'</u></font></td>\n';
+}
+
+function vconn(p)
+{
+	return '<td>| <font size="-1">'+p+'</font></td>\n';
+}
+
+function figure(p, t)
+{
+	return '<center>'
+		+ '<table cellspacing=0 cellpadding=16 border=0><tr><td bgcolor="#ffcc00">\n'
+		+ '<table cellspacing=0 cellpadding=0 border=0><tr>\n'
+		+ p + '</tr></table></td></tr></table>\n'
+		+ '<b>Fig. ' + t + '</b><br>\n</center>\n';
+}
+
+// -->
+</script>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>1. How to use MediaZObs</h2>
+
+<script language="javascript">
+<!-- //
+document.write(figure(
+	cell('<i>The picture created by the MediaZOb would be shown in this cell. '
+		+'The text contents of this cell are inconsequential, for example it could be a name '
+		+'for this picture.</i>')
+		+hconn('d.1')+cell('<i>name of MediaZOb</i>')+hconn('d.1')+cell('&nbsp;')+nop(2)
+	+'</tr><tr>'
+	+nop(4)+vconn("d.2")+nop(2)
+	+'</tr><tr>'
+	+nop(4)+cell('parameter')+hconn('d.1')+cell('value')
+	+'</tr><tr>'
+	+nop(4)+vconn("d.2")+nop(2)
+	+'</tr><tr>'
+	+nop(4)+cell('parameter')+hconn('d.1')+cell('value')
+	+'</tr><tr>'
+	+nop(4)+vconn("d.2")+nop(2),
+	'1.1. The structure of a typical MediaZOb.'
+	));
+// -->
+</script>
+
+<h2>2. How to use macros</h2>
+
+To define a macro:
+<ul>
+<li>Just use the MediaZOb you want to use ("mm.rect" below).</li><br>
+<li>Replace some of the parameters with the word "param" :-)</li><br>
+<li>To the cell next from "param" on "d.1" write the name of your
+parameter. ("mywidth" below)</li><br>
+<li>Optional: To the cell next on "d.1" write a default value.</li><br>
+</ul>
+
+<script language="javascript">
+<!-- //
+document.write(figure(
+	nop(2)+cell('mm.rect')+hconn('d.1')+cell('&nbsp;')+nop(6)+'</tr><tr>'
+	+nop(2)+vconn('')+nop(1)+vconn('d.2')+nop(6)+'</tr><tr>'
+	+nop(2)+vconn('d.clone')+nop(1)+cell('width')+hconn('d.1')+cell('param')+hconn('d.1')+cell('mywidth')+hconn('d.1')+cell('50')+'</tr><tr>'
+	+nop(2)+vconn('')+nop(8)+'</tr><tr>'
+	+cell('<i>a rectangle will show up here</i>')
+		+hconn('d.1')+cell('mm.rect')+hconn('d.1')+cell('&nbsp;')+nop(6)+'</tr><tr>'
+	+nop(4)+vconn('d.2')+nop(6)+'</tr><tr>'
+	+nop(4)+cell('mywidth')+hconn('d.1')+cell('100')+nop(4),
+	'2.1. The structure of a macro.'
+	));
+// -->
+</script>
+
+To use a macro:
+<ul>
+<li>Clone the name of the MediaZOb...</li><br>
+<li>Give the clone some of the parameters you have used in your
+macro definition.</li><br>
+</ul>
+</body>
+</html>

@@ -1,0 +1,203 @@
+
+Contents of README for GZigZag source:
+1. Getting GZigZag to run
+	- please see file client/BINDINGS for current key bindings
+2. Mediaserver access
+3. The new organization of GZigZag source tree
+
+1. Getting GZigZag to run
+1.1. Getting GZigZag source code from CVS server
+
+Using anonymous access to CVS:
+$ cvs -d:pserver:anonymous@cvs.gzigzag.org:/cvsroot/gzigzag co gzigzag
+$ cvs -d:pserver:anonymous@cvs.gzigzag.org:/cvsroot/gzigzag co depends
+
+Using Sourceforge.net developer access to CVS:
+$ cvs -dtuukkah@cvs.gzigzag.org co gzigzag
+$ cvs -dtuukkah@cvs.gzigzag.org co depends
+where tuukkah must be replaced with your Sourceforge.net account.
+
+1.2. Dependencies for compiling
+You'll need python and perl for some code preprocessing.
+You'll have to have a working Java compiling environment. While compiling,
+some Java modules and a Python script from the "depends" module you have
+checked out will be needed; if you want to check out the "depends" module
+in a different directory than the "gzigzag" module, you should set the
+GZZ_DEPENDS environment variable to the depends/ directory.
+
+1.3. Compiling GZigZag
+If you have a working system with GNU make set up, you should be able to 
+compile with
+$ make dephack
+
+After you have retrieved a Mediaserver data pool that contains an initial 
+client space (see "Mediaserver access" below), you're ready to launch the 
+client with
+$ make runclient
+or written out:
+java org.gzigzag.client.Client ../../Z
+
+2. Mediaserver access
+GZigZag uses the Mediaserver P2P-framework to store and distribute its data. 
+You can't run GZigZag without a Mediaserver data pool containing an initial 
+ZigZag space with various client setup data. At the moment GZigZag client reads
+only pools stored on local filesystem, and you'll have to use some tool to
+retrieve and update data from remote locations.
+
+2.1. Available data pools
+Pool: gzz-base
+Contains: The initial client space and public data created by developers
+Read-access: public
+Write-access: GZigZag developers
+Local directory: ../../Z relative to gzigzag/src
+
+Pool: gzz-jyu-private
+Contains: JYU research group's private data, mostly pdf and ps files.
+Access: Research group in Jyväskylä
+Local directory: ../../Z-private relative to gzigzag/src
+
+In addition to these, every user can have their own pools and they can share 
+these with whom ever they want to. 
+
+2.2. Initializing local storages
+To create a local storage for a pool (your own or for a remote pool), create a 
+local directory for it in your filesystem and place there a file "properties"
+with following content:
+dirstorer.maxlen=240
+simplemediaserver.poolname=gzz-base
+
+Edit the maxlen if your filesystem doesn't support filenames that long. Also, 
+poolname should be changed to reflect the pool you wish to store there.
+
+2.3. Public HTTP access
+$�make httpsync
+will retrieve pool gzz-base from http://himalia.it.jyu.fi/ms/gzz-base to local 
+directory ../../Z
+Notice that if you don't have PUT permissions to the server, sending your 
+changes back to the URL will fail.
+
+Command line written out for customization:
+java org.gzigzag.impl.Synch -dir ../../Z -url http://himalia.it.jyu.fi/ms/gzz-base
+
+2.4. rsync access
+rsync access is at the moment available for developers only, and it's needed 
+for write access on the pools. First create an SSH key pair with ssh-keygen. 
+Next some developer should add the generated public key to 
+authorized_keys file of SSH at gzzpriv@himalia.it.jyu.fi. To test the setup
+$ ssh gzzpriv@himalia.it.jyu.fi
+should get you logged in without giving any password.
+
+$ make sync
+synchronizes the local ../../Z with public gzz-base pool and
+$ make sync-private
+synchronizes the local ../../Z-private with public gzz-jyu-private pool.
+
+2.5. Serving your own pools with HTTP
+You can serve your own pools using an HTTP server. Simply make the local pool 
+directory available through the HTTP server. The relative URL "dirlist.cgi"
+should give a list of all files in the directory. It can be a text file with
+one filename per line, or you can set up http://himalia.it.jyu.fi/ms/dirlist.sh
+CGI script for your server and create a link to it in pool directories. You can
+set access control in the way normal to your HTTP server. Note that for 
+writing pool changes back to the server you'll need to allow PUT requests -
+otherwise the access is read-only.
+
+3. The new organization of GZigZag source tree
+
+The old (dis-)organization is now too complex - we need a cleaner
+approach. At the same time, cleaning the core APIs is a priority.
+
+The new org:
+
+    */test/
+	- JUnit tests
+	"make test" runs the JUnit test environment. Get JUnit 3.5
+	from junit.org and try it.
+
+    core/ 
+	- contains ONLY slow-changing core APIs
+	- it is vital that any changes be discussed on the mailing
+	  list beforehand. 
+	  This goes for additions too: 
+            ******************************************************
+	    NO NEW METHODS OR CLASSES OR CHANGES OF SEMANTICS
+	    WITHOUT THE EXPLICIT APPROVAL OF THE PROJECT DIRECTOR,
+	    CURRENTLY (as of Apr 2001) TUOMAS LUKKA.
+            ******************************************************
+	  If you feel you need to do something which can't be done,
+	  Java does provide ways to do anything: simply create a new
+	  interface, make implementations of the core interfaces implement
+	  that too and then cast to that in your code. It is vital
+	  that the core stays small and clean.
+
+    core/test/
+	- contains abstract test classes, which can be subclassed
+	  by implementors to test the general invariants about various
+	  interfaces.
+
+    impl/
+	- contains our implementation of the core APIs.
+	- for changing these, discussion is encouraged but not
+	  absolutely required.
+
+	- ALL BUG FIXES MUST FIRST HAVE A JUNIT TEST WHICH FAILS BEFORE
+	  THE BUG IS FIXED AND WORKS AFTERWARDS. 
+
+	  This sounds laborious and painful but is 
+	  1) easier than you think
+	  2) VERY beneficial for the code in the long run, since
+	     regressions will be immediately noticed.
+
+    impl/constraints
+	- RR's constraint implementation. Not currently used.
+
+    client/
+	- The classes allowing the user to interface to the classes
+	  in impl/.
+
+    mediaserver/
+	- the implementation of the P2P globally unique id data storage.
+	- From Benja:
+	    Make work. Now we're dependent on HTTPClient
+	    (http://www.innovation.ch/java/HTTPClient/) which isn't as
+	    screwed-up as Java's HTTP implementation. Just download
+	    the .zip and put it to the classpath. It's LGPL, so we
+	    should probably move the parts we need to our codebase
+	    (because HTTP is *not* something we only want as a module,
+	    I should think). Rauli has set up a Mediaserver repository
+	    at fishy.it.jyu.fi. See "make sync".
+	- To be able to send blocks from your server to fishy, do:
+	    ssh -L4242:localhost:80 fishy.it.jyu.fi
+
+
+    vob/
+	- the part of the vob library that is independent of zz.
+	  No reference to Cells, Spans etc. is allowed here.
+
+    modules/
+	- as before: the wild side.
+
+
+    anytoimg/
+	- a perl utility to convert (as many as possible) filetypes
+	  into images readable by the current java vm.
+	  Uses external programs to perform most conversions.
+
+    doc/
+	- the directory in which the generated javadocs are placed
+	  by the "make doc" command.
+
+    doc-images/
+	- the directory in which there are various images for the javadocs.
+
+    gfx/
+	- potentially faster, optimized implementations of java.awt.Graphics.
+	  E.g. one for X11, using the RENDER extension to output
+	  antialiased text.
+
+    ideas/
+	- various classes to test out new ideas.
+
+    CLASSES/
+	- the directory that contains the .class files resulting
+	  from the compilation.

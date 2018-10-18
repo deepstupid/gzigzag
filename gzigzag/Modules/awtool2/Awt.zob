@@ -1,0 +1,484 @@
+/*   
+Awt.zob
+ *    
+ *    Copyright (c) 2000-2001 Ted Nelson and Tuomas Lukka
+ *    Copyright (c) 2000-2001 Kimmo Wideroos
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos (inspired by Benjamin Fallenstein's notemap module)
+ */
+
+/** Awt = A(ssociative) writing tool -demo
+*/
+
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.util.*;
+import java.awt.*;
+
+public abstract class Awt implements FlobView, FlobSet.DragCursor, ZOb {
+public static final String rcsid = "";
+    public static boolean dbg = true;
+    static void p(String s) { if(dbg) System.out.println(s); }
+    static void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** View dimension (not in use now...) */
+	int viewWidth
+	    = 600;
+        int viewHeight
+            = 600;
+        int viewX
+            = 100;
+        int viewY
+            = 100;
+    }
+
+
+    public static ZZCell focusView = null;
+    protected boolean NileOn = false;
+    protected static AwtDraggable dragObj = null;
+    protected static AwtResizable resizingObj = null;
+    protected static Point dragOffs = new Point(0, 0);
+    protected static Point dragCoord = new Point(0, 0);
+    protected static AwtNile.Tokenizer tokenizer = new AwtNile.Tokenizer();
+
+    protected static boolean resizeWidth = false, resizeHeight = false;
+ 
+    protected static boolean creatingArtef = false;
+
+    private static long focusChangedLastTime = -1; // millisecs
+
+    protected static ZZCell refreshLinkCache = null;
+
+    protected static Hashtable metricshash = new Hashtable();
+
+    public boolean accept(Object o) {
+	if(!(o instanceof ZZCell)) return false;
+	return true;
+    }
+
+    /** return active metrics
+     *  @vc view cell 
+     */
+    public static AwtMetrics getActiveMetrics(ZZCell vc) {
+	ZZCell metr; // = AwtCursors.get(AwtCursors.c_metrics, awtlocals);
+	if(metricshash.containsKey(vc)) {
+            return (AwtMetrics)metricshash.get(vc);
+        }
+        //if(metr==null) {
+	ZZCell home = vc.getSpace().getHomeCell();
+        metr = AwtUtil.findLocals("Metrics", home, false);
+        if(metr == null) 
+            throw new ZZError("Awtool2: Couldn't initialize metrics!!");
+        metr = metr.s("d.1");
+        //}
+
+        //pa("[AwtUtil]: Metrics: "+metr);
+        AwtMetrics M = (AwtMetrics)AwtUtil.readModuleZOb(metr);
+        M.setCell(metr);
+	// cache M
+	metricshash.put(vc, M);
+        return M;
+    }         
+
+    public static AwtMetrics changeActiveMetrics(ZZCell vc) {
+        AwtMetrics M = getActiveMetrics(vc);
+	ZZCell newmetr = M.getCell().s("d.2");
+	M = (AwtMetrics)AwtUtil.readModuleZOb(newmetr);
+        M.setCell(newmetr);
+	// cache M
+	metricshash.put(vc, M);
+        return M;
+    }
+
+
+    abstract public void raster(FlobSet into, FlobFactory fact,
+	    ZZCell view, String[] dims, ZZCell accursed);
+
+    static public ZZModule module = new ZZModule() {
+	public void action(String id,
+		ZZCell code, 
+		ZZCell target,
+		ZZView view, ZZView cview, String key, Point pt, ZZScene xi) {
+
+            ZZUpdateManager.setFast(view);
+
+            ZZCell vc = view.getViewcell();
+
+            // current focus is on this view;
+            focusView = vc;
+
+            ZZCell accursed = ZZCursorReal.get(vc);
+            AwtCursors awtcursors = new AwtCursors(accursed);
+
+	    if(id.equals("TESTWIN") || id.equals("LaunchView")) {
+                ZZCell c1 = awtcursors.get(AwtCursors.c_input1);
+                ZZCell trg, nvc;
+                if(c1!=null) trg=c1.h("d.clone");
+                else trg=target;
+                nvc = AwtUtil.launchView(
+                    trg.getSpace().getHomeCell(), trg);
+                if(true) { //c1==null) {
+                    awtcursors.set(AwtCursors.c_input1, ZZCursorReal.get(nvc));
+                }    
+                refreshLinkCache = nvc;
+                return;
+            }                
+
+            if(id.equals("Quit")) {
+		// Commit changes to space here 
+		accursed.getSpace().commit();
+		SafeExit.exit(0);
+	    }
+
+            Object awtobj = AwtUtil.getAwtObject(xi, pt, accursed);
+
+	    if(awtobj == null) {
+                ZZCell c1 = awtcursors.get(AwtCursors.c_input1);
+                if(c1 != null) awtobj = AwtUtil.getAwtObject(c1);
+            }
+
+            tokenizer.set_id(id);
+            id = tokenizer.short_id();
+            Nile2Unit unit = tokenizer.unit(); 
+
+	    //pa("Artefact action! '"+id+"' key: "+key);
+
+
+/*
+            pa("[Awt] accursed: "+accursed);
+            pa("[Awt] awtobj: "+awtobj);
+            pa("[Awt] draggable("+(awtobj instanceof AwtDraggable)+") accursable("+(awtobj instanceof AwtAccursable)+") awtartefact("+(awtobj instanceof AwtArtefact)+")");
+*/
+	    AwtMetrics M = getActiveMetrics(vc);
+
+            boolean forceOrigoChange = false;
+            Point artefRVCoord = null;
+            double[] artefVVCoord = null;
+            double deltaX, deltaY;
+
+            if(id.equals("StartDrag")) {
+                if(awtobj != null && awtobj instanceof AwtDraggable) {
+                    dragObj = (AwtDraggable)awtobj;
+                    artefRVCoord = M.mapToRealView(dragObj.getCoord());
+                    dragOffs.x = artefRVCoord.x - pt.x; 
+                    dragOffs.y = artefRVCoord.y - pt.y;
+                }
+            } else
+
+            if(id.equals("Dragged") && dragObj != null) {
+                artefVVCoord = M.mapToVirtualView(pt.x + dragOffs.x, 
+						  pt.y + dragOffs.y);
+                dragObj.setCoord(artefVVCoord[0], artefVVCoord[1]);
+                //dragObj.release();
+	    } else
+            
+            if(id.equals("StopDrag") && dragObj != null) {
+                //pa("dragged!");
+                artefVVCoord = M.mapToVirtualView(pt.x + dragOffs.x, 
+						  pt.y + dragOffs.y);
+                dragObj.setCoord(artefVVCoord[0], artefVVCoord[1]);
+                dragObj.release();
+                dragOffs.x = 0; dragOffs.y = 0;
+                dragObj = null;
+                refreshLinkCache = vc;
+                ZZUpdateManager.chg();     
+            } else
+
+            if(id.equals("StartResize")) {
+                if(awtobj != null || awtobj instanceof AwtResizable) {
+                    int dpx, dpy;
+                    Dimension dim;
+                    resizingObj = (AwtResizable)awtobj;
+                    resizeWidth = resizeHeight = false;
+                    artefRVCoord = M.mapToRealView(resizingObj.getCoord());
+                    dpx = artefRVCoord.x - pt.x; 
+                    dpy = artefRVCoord.y - pt.y;
+                    dim = M.getRealDimension(resizingObj.getCoord(), 
+                                             resizingObj.getDimension());
+
+                    if(Math.abs(dpx)>(dim.width>>1)-4)
+                        resizeWidth = true;
+                    if(Math.abs(dpy)>(dim.height>>1)-4)
+                        resizeHeight = true;
+
+                    if(!resizeWidth && !resizeHeight) {
+                        resizingObj = null;
+                    }
+                }
+            } else
+
+            if(id.equals("StopResize") && resizingObj != null) {
+                resizingObj.release();
+                resizingObj = null;
+                resizeWidth = resizeHeight = false;
+                refreshLinkCache = vc;
+                ZZUpdateManager.chg();                
+	    } else
+            
+            if(id.equals("Resizing") && resizingObj != null) {
+                int dpx, dpy;
+                Dimension dim;
+                double[] vdim;
+                double[] vcoord = resizingObj.getCoord();
+                artefRVCoord = M.mapToRealView(vcoord);
+
+                dpx = artefRVCoord.x - pt.x; 
+                dpy = artefRVCoord.y - pt.y;
+                dim = M.getRealDimension(vcoord, resizingObj.getDimension());
+                if(Math.abs(dpx)>dim.width>>1) resizeWidth = true;
+                if(Math.abs(dpy)>dim.height>>1) resizeHeight = true;
+
+                if(resizeWidth) dim.width = (dpx>=0) ? dpx<<1 : (-dpx)<<1;
+                if(resizeHeight) dim.height = (dpy>=0) ? dpy<<1 : (-dpy)<<1;
+                
+                vdim = M.getVirtualDimension(artefRVCoord.x, artefRVCoord.y, dim);    
+
+                resizingObj.setDimension(vdim[0], vdim[1]);
+            } else
+
+            if(id.equals("StartCreatingArtefact")) {
+                dragCoord = pt;
+                // this is chanced to 'true' when dragging occurs 
+                creatingArtef = false;                
+            } else
+ 
+            if(id.equals("CreatingArtefact")) {
+                creatingArtef = true;
+            } else
+
+            if(id.equals("StopCreatingArtefact") && creatingArtef) {
+                ZZCell newArtefCell;
+                AwtArtefact newArtef;
+                int cx = (dragCoord.x+pt.x)>>1;
+                int cy = (dragCoord.y+pt.y)>>1;
+                double[] adim, avcenter = M.mapToVirtualView(cx, cy); 
+                Dimension ad = new Dimension(Math.abs(dragCoord.x-pt.x), 
+                                             Math.abs(dragCoord.y-pt.y));
+                adim = M.getVirtualDimension(cx, cy, ad);
+
+                newArtefCell = AwtLayer.createNewArtefact(accursed);
+                //pa("[Awt] newArtefCell: "+newArtefCell);
+                newArtef = new AwtArtefact(avcenter, adim);
+
+                // store artefact in zz structure
+                newArtef.rollback(newArtefCell);
+
+                dragCoord.x = 0;
+                dragCoord.y = 0;
+                creatingArtef = false;
+                refreshLinkCache = vc;
+
+	    } else
+            
+            if(id.equals("RemoveArtefact") &&  awtobj != null && 
+                         awtobj instanceof AwtArtefact) {
+                //pa("removing...");
+                AwtOps.remove(((AwtArtefact)awtobj).getCell());
+                refreshLinkCache = vc;
+            } else 
+
+            if(id.equals("MainLayer")) {
+                ZZCursorReal.set(vc, vc.getSpace().getHomeCell().
+                                 s(AwtDim.d_artefact));
+                refreshLinkCache = vc;
+                return;
+            } else
+
+            if(id.equals("SetInput1") &&  awtobj != null && 
+                         awtobj instanceof AwtAccursable) {
+                ZZCell nac = ((AwtAccursable)awtobj).getCell();
+                AwtNile.setInputCursors(1, nac, awtcursors);
+            } else
+
+            if(id.equals("SetInput2") && awtobj != null && 
+                         awtobj instanceof AwtAccursable) {
+                ZZCell nac = ((AwtAccursable)awtobj).getCell();
+                AwtNile.setInputCursors(2, nac, awtcursors);
+
+            } else
+
+            if(id.equals("NewLink")) {
+                ZZCell c1, c2;
+                c1 = awtcursors.get(AwtCursors.c_input1);
+                c2 = awtcursors.get(AwtCursors.c_input2);
+                //pa("newlink:");
+                //pa("from(c1):"+c1);
+                //pa("to(c2):"+c2);
+                if(c1 != null && c2 != null && !c1.equals(c2)) {
+                    ZZCell lc=AwtLinkRelation.link(c1, c2);
+                    if(lc!=null) 
+                        AwtLinkRelation.change(lc);
+                    else
+                        AwtLinkRelation.make(c2, c1);
+                }
+                refreshLinkCache = vc;
+                ZZUpdateManager.chg();                
+            } else
+
+            if(id.equals("SplitNote") && awtobj != null && 
+                         awtobj instanceof AwtArtefact) {
+                ZZCell c = awtcursors.get(AwtCursors.c_input1);
+                AwtOps.split(unit, c);
+                refreshLinkCache = vc;
+            } else 
+
+            if(id.equals("JoinArtefacts") && awtobj != null && 
+                         awtobj instanceof AwtArtefact) {
+                ZZCell c1 = awtcursors.get(AwtCursors.c_input1);
+                ZZCell c2 = awtcursors.get(AwtCursors.c_input2);
+                if(!AwtArtefact.valid(c2)) return;
+                AwtOps.join(c1, c2, unit);
+                refreshLinkCache = vc;
+            }
+
+            if(id.equals("ChangeLayer") && awtobj != null) {
+                if(!(awtobj instanceof AwtArtefact) &&
+                   !(awtobj instanceof AwtLayer)) return;
+                ZZCell c1 = ((AwtAccursable)awtobj).getCell();
+                int dir = tokenizer.dir();
+                if(tokenizer.toks[2].equals("END")) {
+                    c1 = c1.h("d.clone", dir);
+                } else {
+                    ZZCell tmp = c1.s("d.clone", dir);
+                    if(tmp!=null) c1 = tmp;
+                } 
+                AwtNile.setInputCursors(1, c1, awtcursors);
+                //pa("new target="+c1);
+                ZZCell newlr = c1.h(AwtDim.d_member).h(AwtDim.d_layerset);
+                ZZCursorReal.set(vc, newlr);
+
+                refreshLinkCache = vc;
+            } else
+
+            if(id.equals("CloneArtefact") && awtobj != null &&
+                (awtobj instanceof AwtLayer)) {
+                ZZCell c1, c2, nac;
+                c1 = ((AwtLayer)awtobj).getCell();
+                c2 = awtcursors.get(AwtCursors.c_input2);
+                //pa("clone:");
+                //pa("layer(to):"+c1);
+                //pa("artef(from):"+c2);
+                if(!AwtArtefact.valid(c2)) return;
+                nac = c2.h("d.clone", 1).zzclone();
+                AwtLayer.addArtefact(c1, nac);
+                AwtArtefact artef = (AwtArtefact)AwtUtil.getAwtObject(c2);
+                double coord[] = artef.getCoord();
+                coord[0] *= 1.05;
+                coord[1] *= 1.05;
+                artef.setCoord(coord[0], coord[1]);
+                artef.rollback(nac);
+            }
+
+            if(id.equals("RemoveLink")) {
+                ZZCell c1, c2;
+                c1 = awtcursors.get(AwtCursors.c_input1);
+                c2 = awtcursors.get(AwtCursors.c_input2);
+                if(c1 != null && c2 != null && !c1.equals(c2)) {
+                    AwtLinkRelation.remove(c1, c2);
+                }
+                refreshLinkCache = vc;
+            } else
+
+
+
+            if(id.equals("ChangeMetrics")) {
+                // save current metrics (focus, origo, etc.)
+                //M.cellRepr();
+                //ZZCell mc = awtcursors.get(AwtCursors.c_metrics);
+                //pa("[Awt] metrics cell: "+mc);
+                //mc = mc.s("d.2");
+                //awtcursors.set(AwtCursors.c_metrics, mc);
+                //M = (AwtMetrics)AwtUtil.readModuleZOb(mc);
+                //M.setCell(mc);
+                changeActiveMetrics(vc);
+                refreshLinkCache = vc;
+                ZZUpdateManager.chg();
+            } else
+
+            if(id.equals("ChangeArtefactStyle") && awtobj != null) {
+                if(!(awtobj instanceof AwtArtefact) &&
+                   !(awtobj instanceof AwtLayer)) return;
+                ZZCell c1 = ((AwtAccursable)awtobj).getCell();
+                ZZCell style, olds, olds_clone = c1.s(AwtDim.d_style);
+                if(olds_clone == null) {
+                    olds_clone = AwtUtil.findLocals("Images", 
+	                             accursed, false);
+		    if(olds_clone == null) return;
+                    olds_clone = olds_clone.s("d.1", 2).zzclone();
+                    c1.connect(AwtDim.d_style, 1, olds_clone);
+                }
+                olds = olds_clone.h("d.clone");
+                int dir = tokenizer.dir();
+                style = olds.s("d.2", dir);
+                if(style==null) style = olds.h("d.2", -dir);
+                olds_clone.delete();
+                c1.connect(AwtDim.d_style, 1, style.zzclone());                
+            } else
+
+            if(id.equals("ResetOrigo")) {
+                //pa("ORIGO RESET!");
+                M.setOrigo(0.0, 0.0);
+                ZZUpdateManager.chg();
+            } else
+
+            if(id.equals("GridOnOff")) {
+                //pa("GRID ON/OFF!");
+	        boolean gon = M.GridOn;
+                M.GridOn = gon ? false : true;
+		if(M.GridOn != gon) {
+		    M.cellRepr();
+                }
+                ZZUpdateManager.chg();
+            } else 
+
+            if(id.equals("FocusOrigoAndSelect")) {
+                long elapsedTime = Long.MAX_VALUE;
+                long cur = System.currentTimeMillis();
+                double[] vf1, vf2;
+
+                vf1 = M.mapToVirtualView(pt.x, pt.y);
+                M.setFocusOrigo(pt.x, pt.y, accursed);
+                vf2 = M.mapToVirtualView(pt.x, pt.y);
+                M.moveOrigo(vf1[0]-vf2[0], vf1[1]-vf2[1]);
+                M.cellRepr();
+
+                forceOrigoChange = true;	
+            }
+
+
+            if(id.equals("ChangeOrigo") || forceOrigoChange) {
+                double[] vvp = M.mapToVirtualView(pt.x, pt.y);
+                // new origo is wanted to be in the center of realview
+                double[] realOrigo = M.mapToVirtualView(M.RealView[0]>>1,
+                                                        M.RealView[1]>>1);
+                M.moveOrigo(vvp[0]-realOrigo[0], vvp[1]-realOrigo[1]);
+                M.cellRepr();
+                ZZUpdateManager.chg();
+            }
+        }
+	public ZOb newZOb(String id) {
+	    if(id.equals("View2")) {
+		return new AwtView2();
+            }
+	    else
+		return null;
+	}
+    };
+}
+

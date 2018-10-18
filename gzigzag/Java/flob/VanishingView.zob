@@ -1,0 +1,317 @@
+/*   
+VanishingView.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+ 
+
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+/** A reimplementation of the vanishing raster.
+ * Much simpler than the original one since this one does not try
+ * to do the hard rasters as well.
+ */
+
+public class VanishingView implements FlobView, ZOb {
+public static final String rcsid = "$Id: VanishingView.zob,v 1.9 2000/12/11 02:54:44 tjl Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    // Following are the parameters out of which the constructor
+    // is created.
+
+    STRUCTPARAMS {
+
+	/** The factor to shrink the cells with when moving away from
+	 * center.
+	 */
+	float[] shrink // 2..2
+	    = new float[] {(float)0.9, (float)0.9}; 
+
+	/** The factor the center cell is enlarged with from default.
+	 */
+	float[] initmul // 2..2
+	    = new float[] {(float)1.6, (float)1.6};
+
+	/** The factor to enlarge the center cell on top of initmul.
+	 * This only has an effect on the center cell whereas initmul
+	 * affects all cells.
+	 */
+	float[] centermul // 2..2
+	    = new float[] {(float)1.0, (float)1.0};
+
+	/** The distance between neighbouring cells.
+	 */
+	int[] gap // 2..2
+	    = new int[] {5, 5};
+
+	/** The depth to raster to.
+	 */
+	int depth 
+	    = 5;
+
+	/** The precedence order of dimensions.
+	 */
+	int[] pref // 2..5
+	    = new int[] {0, 1, 2};
+
+	/** Whether to allow cell sizes to vary.
+	 */
+	boolean varsize
+	    = false;
+	
+	/** Whether alignment around visual flob center is to be used.
+	 *  If true, halign is ignored.
+	 */
+	boolean centeralign
+	    = true;
+
+	/** Distance reverse perspective.
+	 */
+	float revper
+	    = (float)1.00;
+
+	/** Horizontal alignment. 
+	 * 0 = center, -1 = left, 1 = right.
+	 */
+	int halign
+	    = 0;
+    }
+
+    // XXX This should be a structparam later on.
+    FlobDecorator linker = new StdLinks();
+
+
+    // Offsets of x and y
+    static int[] xoffs = new int[] {1, 0, 1};
+    static int[] yoffs = new int[] {0, 1, 1};
+
+    
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+
+	Dimension fs = into.getSize();
+	
+	// Precalculate sizes and gaps.
+	int[] xgap = new int[depth];
+	int[] ygap = new int[depth];
+
+	int[] xsize = new int[depth+1];
+	int[] ysize = new int[depth+1];
+	float[] sizfact = new float[depth+1];
+
+	float xf = initmul[0];
+	float yf = initmul[1];
+	Dimension d0 = fact.getSize(null, yf);
+	Dimension d = (varsize ? fact.getSize(accursed, yf) : d0);
+	
+	xsize[0] = d.width;
+	ysize[0] = d.height;
+	sizfact[0] = yf;
+	float yf0 = yf, xf0=xf;
+
+	for(int i=0; i<depth; i++) {
+	    xf *= shrink[0];
+	    yf *= shrink[1];
+	    xsize[i+1] = (int)(d.width * xf/xf0);
+	    ysize[i+1] = (int)(d.height * yf/yf0);
+	    sizfact[i+1] = yf;
+	    xgap[i] = (int)(gap[0] * xf);
+	    ygap[i] = (int)(gap[1] * yf);
+	    p("D: "+i+" "+xsize[i+1]+" "+xgap[i]);
+	}
+
+	xsize[0] *= centermul[0];
+	ysize[0] *= centermul[1];
+
+	// flob depth multiplier and offset.
+	// flob depth = d1 + dm*depth
+	int d1 = 1;
+	int dm = 10;
+	int maxd = d1 + dm * depth;
+
+	// The set of cells already put into the flobset
+	Hashtable cellsDone = new Hashtable();
+
+	// The set of flobs for which the given dimensions have been finished
+	// XXX ndims
+	Hashtable []did = new Hashtable[] {
+	    new Hashtable(),
+	    new Hashtable(),
+	    new Hashtable()
+	};
+
+	// The index up to which the cells have been done
+	// for the given dimension
+	// XXX ndims
+	int dimdone[] = new int[] { 0, 0, 0 };
+
+	// The storage of all flobs put.
+	// Relevant only up to min(dimdone).
+	Vector cur = new Vector();
+
+	int cx = fs.width/2-(1+halign)*xsize[0]/2 + halign * d0.width / 2;
+	int cy = fs.height/2-ysize[0]/2; 
+	Flob flob = fact.makeFlob(into, accursed, accursed,
+	    sizfact[0] , cx, cy, d1, xsize[0], ysize[0]);
+	cur.addElement(flob);
+	cellsDone.put(accursed, accursed);
+
+	// p("Van Start: "+isGrid+" "+shrink[0]+" "+gap[0]+" "+xgap[0]);
+	Flob[] curFlob = new Flob[2];
+
+	Point aligned = new Point();
+
+	for(int dim = 0; dim < pref.length; dim++) {
+	    boolean added = false;
+	    int start = dimdone[dim];
+	    dimdone[dim] = cur.size();
+
+	    for(int i=start; i<cur.size(); i++) {
+		curFlob[0] = curFlob[1] = (Flob)cur.elementAt(i);
+		if(curFlob[0].d >= maxd) continue;
+		if(did[dim].get(curFlob[0].c) != null) continue;
+		did[dim].put(curFlob[0].c, curFlob[0].c);
+
+		// Current depth
+		int curd = (curFlob[0].d - d1) / dm;
+
+		ZZIter.NEnum rank = ZZIter.alternate(curFlob[0].c, false, dims[pref[dim]], 1);
+		ZZCell next;
+		while((next = rank.nextCell()) != null) {
+		    int curind = (rank.nth() < 0 ? 0 : 1);
+		    int dir = curind * 2 - 1;
+		    int xdep = (rank.nth() < 0 ? -rank.nth() : rank.nth());
+		    Flob f = curFlob[curind];
+
+		    if(cellsDone.get(next) != null ||
+		       curd + xdep  >= depth) { 
+			rank.stop(); 
+			continue; 
+		    }
+
+		    cellsDone.put(next, next);
+
+		if(centeralign) {
+		
+		    // First, determine alignment.
+		    int xalign = dir * xoffs[pref[dim]];
+		    int yalign = dir * yoffs[pref[dim]];
+		
+		    // Then, find alignment point in last cell,
+		    // centered on center of screen
+		    f.getPoint(aligned, xalign, yalign);
+		    
+		    // Using that, find alignment point
+		    // in the next cell.
+
+		    aligned.x -= fs.width / 2;
+		    aligned.x *= revper;
+		    aligned.x += fs.width / 2;
+
+		    aligned.y -= fs.height / 2;
+		    aligned.y *= revper;
+		    aligned.y += fs.height / 2;
+
+		    aligned.x += xalign*xgap[curd+xdep-1];
+		    aligned.y += yalign*ygap[curd+xdep-1];
+		
+		    Dimension size = new Dimension(xsize[curd+xdep],
+						   ysize[curd+xdep]);
+		    f = curFlob[curind] = fact.centerFlob(into, next, next,
+			sizfact[curd+xdep], aligned, -xalign, -yalign,
+			d1 + dm * (curd + xdep), varsize ? null : size);
+
+		} else {
+			
+		    int x=0, y=0, w=0, h=0;
+		    if(varsize) {
+			Dimension dvar = fact.getSize(next, sizfact[curd+xdep]);
+			w = dvar.width;
+			h = dvar.height;
+		    } else {
+			w = xsize[curd+xdep];
+			h = ysize[curd+xdep];
+		    }
+		
+		    // A bit tricky due to flob coords being
+		    // UL corner.
+
+		    // First, find alignment point in last cell,
+		    // centered on center of screen
+		    int alignedX = 
+			f.x + (halign+1)*f.w/2 - fs.width/2;
+		    int alignedY = 
+			f.y + f.h/2 - fs.height/2;
+
+		    // Then, using that, find alignment point
+		    // in the next cell.
+		    int xof = xoffs[pref[dim]];
+		    alignedX += dir * xof * (
+			xgap[curd+xdep-1] + (1-dir*halign) * f.w/2
+			  + (1+dir*halign) * w/2
+			);
+		    alignedY += dir * yoffs[pref[dim]] * (
+			ygap[curd+xdep-1] + f.h/2 + h/2
+			);
+
+		    // Expand the coordinate system around the
+		    // origin
+		    alignedX *= revper;
+		    alignedY *= revper;
+
+		    // Finally, find upper left corner of next cell.
+		    x = alignedX - (halign+1)*w/2 + fs.width/2;
+		    y = alignedY - h/2 + fs.height/2;
+
+		    p("Vanishing: puttig "+next+
+			x+" "+y+" "+w+" "+h);
+
+		    f = curFlob[curind] = fact.makeFlob(into, next, next, 
+			sizfact[curd+xdep], x, y, 
+			d1 + dm * (curd + xdep), w, h);
+			
+		}
+			
+		    cur.addElement(f);
+		    did[dim].put(f.c, f.c);
+		    added = true;
+		}
+	    }
+	    // If we added cells, and we're not doing a hard
+	    // raster, start doing dimensions all over again.
+	    if(added) dim = -1;
+	}
+
+	linker.decorate(into, "", view);
+
+       // Do the dimensions. 
+        if(true)
+	    ZZUtil.showFlobDims(into, fact, view, 3);
+    }
+
+}
+
+
+// vim: set syntax=java :

@@ -1,0 +1,60 @@
+\documentclass{article}
+
+\usepackage{bbm}
+\usepackage{amsmath}
+
+\newcommand{\N}{\mathbbm{N}}
+
+\newtheorem{Def}{Definition}
+\newtheorem{The}{Theorem}[Def]
+
+\DeclareMathOperator{\Dom}{Dom}
+\newcommand{\Dim}[1]{\tilde{#1}}
+
+\begin{document}
+
+Note: we assume here that dimensions are cells instead of strings.
+
+\begin{Def}[space]
+A ZigZag space is the triplet $Z = (X, c, C)$ where $X$ is the set of
+cells, $c : X \rightarrow \Sigma^*$ is the cell content mapping
+and $C \subset X^3$ is the set of connections, if the following hold:
+%
+\begin{enumerate}
+%
+\item If $(d, e, f) \in C$ and $(d, e', f) \in C$ then $e = e'$.
+%
+\item If $(d, e, f) \in C$ and $(d, e, f') \in C$ then $f = f'$.
+%
+\end{enumerate}
+\end{Def}
+
+\begin{Def}[subspace]
+A ZigZag space $Z' = (X', c', C')$ is a subspace of another ZigZag
+space $Z = (X, c, C)$ if the following hold:
+%
+\begin{enumerate}
+%
+\item $X' \subset X$
+%
+\item $c'(x) = c(x)$ for every $x \in X'$.
+%
+\item $C' \subset C$
+%
+\end{enumerate}
+\end{Def}
+
+\begin{The}
+  Let $Z = (X, c, C)$ be a ZigZag space.  For every $d \in X$, there
+  exists a maximal $X' \subset X$ and a unique $\Dim{d} : X'
+  \rightarrow X$ such that for every $x \in X'$ it holds that $(d, x,
+  \Dim{d}(x)) \in C$.  Additionally, $\Dim{d}$ is an injection.
+\end{The}
+
+\begin{Def}[clone dimension]
+  Let $Z = (X, c, C)$ be a ZigZag space.  We say that $d \in X$ is a
+  clone dimension if, for every $x \in \Dom d$ it holds that $c(x) =
+  c(\Dim{d}(x))$.
+\end{Def}
+
+\end{document}

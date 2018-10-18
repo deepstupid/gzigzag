@@ -1,0 +1,8 @@
+*.xyc
+*.aux
+*.dvi
+*.ps
+*.log
+picced.tex
+picced.toc
+picced.lof

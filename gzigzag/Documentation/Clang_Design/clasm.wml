@@ -1,0 +1,246 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.5 [de] (Macintosh; I; PPC) [Netscape]">
+   <title>clasm.wml</title>
+</head>
+<body>
+
+<h1>
+Clasm</h1>
+
+<ul>
+<li>
+Simple</li>
+
+<li>
+Imperative</li>
+
+<li>
+Higher-order</li>
+</ul>
+
+<h2>
+Design</h2>
+
+<h3>
+Callables</h3>
+A <i>callable</i> is a Clasm entity that can be called with zero or more
+parameters, depending on the type of callable. Each parameter passed to
+the callable can be seen as an <i>expression</i> (see below). <i>Calling</i>
+a callable may be destructive, which means that it may change something
+in the environment (most importantly, a variable, or the ZigZag space).
+<p>There are four types of callables:
+<ul>
+<li>
+Expressions, defined in the space through a <i>literal reference, </i>a
+<i>variable
+reference,</i> or the <i>expression abstraction,</i></li>
+
+<li>
+Functions, defined in the space through the <i>function abstraction,</i></li>
+
+<li>
+Variables, defined in the space as parameters or local variables through
+the <i>function abstraction </i>and</li>
+
+<li>
+Primitives, defined in Java code.</li>
+</ul>
+Note that even though parameters to callables are expressions, which again
+are callables, this doesn't mean there is some kind of infinite recursion
+in the definition, because the special thing about expressions is that
+they <i>don't</i> accept parameters. Also note, though, that although an
+expression may not take parameters, it may well have side-effects when
+called (which is why we do not simply pass values, but expressions returning
+that value).
+<h3>
+Expressions, and the expression abstraction</h3>
+Expressions are callables which do not accept parameters. They can be defined
+through a <i>literal reference </i>(see below), a <i>variable reference</i>(see
+below), or recursively through the <i>expression abstraction.</i>
+<p>The expression abstraction is a rank on <tt>d.clasm-parameter</tt> representing a
+call. It has a stackframe as its context, which it uses to differentiate
+between variables and literals. An expression abstraction can be seen as
+holding:
+<ul>
+<li>
+a <i>callable</i>, which it calls, and</li>
+
+<li>
+a <i>list of parameters</i> for that callable, each of which is an expression.</li>
+</ul>
+The expression abstraction parser is given a single cell and returns an
+expression. It first <i>gets the expression represented</i> (see below)
+by the cell it was called with. It calls that expression; the result is
+the callable of this expression abstraction. Next, it builds a list of
+the cells on the halfrank poswards on <tt>d.clasm-parameter</tt> from the cell it was
+called with. Finally, it builds a list of expressions, with the same size
+as the list of cells, and for each cell with index <i>i</i> in the list
+of cells, it <i>gets the expression represented by</i> that cell and sets
+the expression with index <i>i</i> in the list of expressions to be that
+expression.
+<p>To <i>get the expression represented by a cell,</i> the parser:
+<ul>
+<li>
+First checks whether the cell has a posward connection on <tt>d.clasm-call</tt>.
+If so, the parser calls itself with that cell (and the same stackframe
+it is using itself): the expression returned by the parser is the expression
+it was searching for.</li>
+
+<li>
+If there is no posward connection on <tt>d.clasm-call</tt>, it checks whether the
+cell is in its stackframe; in this case the cell is a <i>variable reference</i>.
+If so, an expression is created which, when called, returns the variable
+(see below) which the stackframe associates with the cell. This expression
+is the expression the parser was searching for.</li>
+
+<li>
+If the cell is not a variable reference, the parser checks whether the
+rootclone of this cell accurses something. If so, it creates an expression
+which returns the accursed cell.</li>
+
+<li>
+Else, an expression is created which returns the rootclone of the cell
+itself.</li>
+</ul>
+
+<h3>
+Variables</h3>
+<b>NOTE:</b> A <i>variable reference</i> is <i>not</i> the same thing as
+a variable's value. A variable reference is an expression returning that
+variable, which is a callable.
+<p>A <i>variable</i> is a callable which internally stores a single value.
+When called without parameters, it returns that value. When called with
+a single parameter, it evaluates the expression that is that parameter,
+stores the resulting value, and also returns it (in this sense, it works
+much like the Java assignment operator (=)). (Note that it is easy to create
+the equivalent of the assignment operator: simply make a <i>variable reference</i>
+to the variable one of the parameters, and the value to set the variable
+to the second. The assignment operator would be a <i>function</i> calling
+its first parameter, passing it its second parameter.)
+<h3>
+Functions, and the function abstraction</h3>
+variable declaration
+<h3>
+Primitives</h3>
+All primitives are refered to by the <tt>getJavaObject()</tt> method of
+<tt>Cell</tt>.
+The most important primitives are:
+<ul>
+<li>
+step,</li>
+
+<li>
+headcell,</li>
+
+<li>
+connect, disconnect,</li>
+
+<li>
+new cell,</li>
+
+<li>
+(also, get homecell),</li>
+
+<li>
++, -, *, / (also %, **, root),</li>
+
+<li>
+String operations (concatenation, substring),</li>
+
+<li>
+Equality (of cells, numbers, and strings),</li>
+
+<li>
+if() and while(), the latter because Clasm doesn't support tail recursion,</li>
+
+<li>
+save space, and possibly a few Mediaserver actions.</li>
+</ul>
+From that, pretty much everything we'll initially need can be built up,
+I think.
+<h3>
+Values</h3>
+Clasm recognizes the following types of values:
+<ul>
+<li>
+Cells, represented inside ZZ by a cell accursing them;</li>
+
+<li>
+Strings, represented inside ZZ by a cell containing them;</li>
+
+<li>
+Ints, like strings represented inside ZZ by a cell containing them;</li>
+
+<li>
+Booleans, represented inside ZZ by a cell containing 'true' or 'false'
+(caps do not matter);</li>
+
+<li>
+Callables:</li>
+
+<ul>
+<li>
+Expressions, represented inside ZZ as parameterless functions;</li>
+
+<li>
+Functions, represented inside ZZ as (clones of) themselves;</li>
+
+<li>
+Primitives, like functions represented inside ZZ as (clones of) themselves.</li>
+</ul>
+</ul>
+
+<h2>
+Implementation</h2>
+
+<h3>
+<tt>Callable</tt> class hierarchy</h3>
+
+<ul>
+<li>
+<tt>Callable</tt>, representing any callable entity. <tt>Callable</tt>
+has an <tt>Object call(Object[] params)</tt> method.</li>
+
+<ul>
+<li>
+<tt>Expression</tt>. All clasm expressions are callables which can be called
+without parameters; thus, <tt>Expression</tt> has an <tt>Object eval()</tt>
+method which intermally calls <tt>call</tt> with an empty parameter list.</li>
+
+<ul>
+<li>
+<tt>ConstantExpression</tt>, an expression which simply returns a constant
+value passed to its constructor.</li>
+
+<li>
+<tt>CallExpression</tt>, an expression which performs a call on a given
+<tt>Callable</tt>
+with a given list of parameters. For testing purposes, the <tt>Callable</tt>
+and the parameters can be passed to the constructor; in the real world,
+a second constructor is used which parses (see below) an <i>expression
+abstraction</i> (see above).</li>
+</ul>
+
+<li>
+<tt>Function</tt>, a <tt>Callable</tt> representing a <i>function abstraction
+</i>in
+the space, parsed (see below) by the constructor.</li>
+
+<li>
+<tt>Primitive</tt>, a Java class</li>
+
+<ul>
+<li>
+(.... different Java primitives ....)</li>
+</ul>
+
+<li>
+<tt>Variable</tt>,</li>
+</ul>
+</ul>
+
+</body>
+</html>

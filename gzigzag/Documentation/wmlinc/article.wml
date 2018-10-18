@@ -1,0 +1,6 @@
+#include "common.wml"
+
+<style type="text/css">
+#include "art.css"
+</style>
+

@@ -1,0 +1,283 @@
+/*   
+HyperGenealogy.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+import java.io.*;
+ 
+/** A simple keyframe-based lifeline/meeting tracer.
+ * There is: one cell for each meeting, one cell for each person 
+ * and one cell for each person of a meeting.
+ * We plot the cells of the people and meetings.
+ * The meeting cell can have a short label. The fuller explanation
+ * should be elsewhere.
+ * <p>
+ * Dimension names give the dimension along which to find the cell
+ * with the number, except "time", which shows the keyframes.
+ * <p>
+ * All numbers are floats between 0 and 1.
+ * <p>
+ * There must be a root cell which starts the list of all persons
+ * on d.persons and the timeline on d.events.
+ */
+
+public class HyperGenealogy implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    static public ZZModule module = new ZZModule() {
+	public ZOb newZOb(String id) {
+	    if(id.equals("R"))
+		return new HyperGenealogy();
+	    return null;
+	}
+	public void action(String id,
+		ZZCell code, 
+		ZZCell target,
+		ZZView view, ZZView cview, String key, Point pt, ZZScene xi) {
+	}
+    };
+
+    STRUCTPARAMS {
+	Font meetfont 
+	    = new Font("Serif", Font.BOLD, 11);
+
+    }
+
+    FontMetrics meetfm;
+
+    INITIALIZE {
+	meetfm = FONTMETRICS(meetfont);
+    }
+	
+
+    static public class dc {
+	/** The dimension from the meeting cell to the participants,
+	 * and from the root to the peoples' cells.
+	 */
+	final String persons = "d.persons";
+	/** The dimension from the person's cell to the events in his life,
+	 * and from the root cell to all timeline cells.
+	 * All these cells should go forwards in the "time" dimension.
+	 */
+	final String events = "d.events";
+	/** The dimension from a timeline cell to meeting cell.
+	 */
+	final String at = "d.at";
+    }
+    static dc d = new dc();
+
+    public float tofloat(ZZCell c) throws NumberFormatException {
+	return (Float.valueOf(c.getText())).floatValue();
+    }
+
+    /** Return the value the given cell has for the particular dimension.
+     * This routine understands the special dimension <code>time</code>,
+     * which it takes to mean the number at the headcell of 
+     * <code>d.persons</code>
+     * and <code>d.at</code>. That cell is assumed to be on the timeline.
+     */
+    public float dim(ZZCell c, String dimname) {
+    try {
+	ZZCell dc;
+	if(dimname.equals("time")) {
+	    dc = c.h(d.persons, -1).h(d.at, -1);
+	    if(dc == c) dc = null;
+	} else {
+	    dc = c.s(dimname, 1);
+	}
+	if(dc == null) return -1;
+	return tofloat(dc);
+    } catch(NumberFormatException e) {
+	return -1;
+    }
+    }
+
+
+    /** 
+     * @param from Meeting cell
+     */
+    public void place(FlobSet into, int x, int y, int w, int h,
+	FlobFactory fact,
+	String[] dims, ZZCell from, int depthleft) {
+
+	from = from.h(d.persons);
+
+	for(ZZCell c = from.s(d.persons, 1);
+	    c != null;
+	    c = c.s(d.persons, 1)) {
+
+	    if(into.findFlob("", c) != null)
+		return;
+	    
+	    float dx = dim(c, dims[0]);
+	    if(dx < 0) return;
+	    float dy = dim(c, dims[1]);
+	    if(dy < 0) return;
+
+	    Flob flob = fact.placeFlob(into, from, c,
+		1, 
+		(int)(x + dx * w), (int)(y + dy * h),
+		1,
+		(float)0.5, (float)0.5);
+	    Flob f2 = fact.placeFlob(into, c.h(d.events), c,
+		1,
+		(int)(x + dx * w), (int)(y + dy * h + flob.h/2),
+		1,
+		(float)0.5, (float)0.0);
+	    f2.flobPath = "evPers";
+
+	    if(depthleft <= 0) continue;
+	    ZZCell n = c.s(d.events, 1);
+	    if(n != null)
+		place(into, x, y, w, h, fact, dims, n, depthleft-1);
+	    n = c.s(d.events, -1);
+	    if(n != null)
+		place(into, x, y, w, h, fact, dims, n, depthleft-1);
+	}
+    }
+
+    /** Place the cells at a given instant of time.
+     */
+    public void placeTime(FlobSet into, int x, int y, int w, int h,
+	    FlobFactory fact,
+	    String[] dims, ZZCell from, float at) {
+	// This assumes the root...
+	ZZCell root = from;
+	LoopDetector ld = new LoopDetector();
+	p("Placetime");
+	for(ZZCell p = root.s(d.persons); p != null; p = p.s(d.persons)) {
+	    ld.detect(p);
+	    // Find the right time interval. Move poswards until greater
+	    // or eq than current.
+	    ZZCell prevev = null;
+	    float prevt = 0;
+	    float t = 0;
+	    ZZCell ev;
+	    p("Pt1: "+p);
+	    for(ev = p.s(d.events); ev != null; ev = ev.s(d.events)) {
+		t = dim(ev, "time");
+		p("Pt2: "+ev+" "+t);
+		if(t >= at) break;
+		prevev = ev;
+		prevt = t;
+	    }
+	    p("Pt3: "+prevev+" "+ev+" ");
+
+	    float dx, dy;
+	    if(ev == null) continue;
+
+	    if(prevev == null) {
+		if(t > at) continue;
+		dx = dim(ev, dims[0]); if(dx < 0) continue;
+		dy = dim(ev, dims[1]); if(dy < 0) continue;
+	    } else {
+		float f = 1 - (at - prevt) / (t - prevt);
+		// Now we've got it in the aim... get the coordinates
+		// and interpolate.
+		float dx0 = dim(prevev, dims[0]); if(dx0 < 0) continue;
+		float dx1 = dim(ev, dims[0]); if(dx1 < 0) continue;
+		float dy0 = dim(prevev, dims[1]); if(dy0 < 0) continue;
+		float dy1 = dim(ev, dims[1]); if(dy1 < 0) continue;
+
+
+		dx = f * dx0 + (1-f) * dx1;
+		dy = f * dy0 + (1-f) * dy1;
+	    }
+
+	    Flob flob = fact.placeFlob(into, p, p,
+		1,
+		(int)(x + dx * w), (int)(y + dy * h),
+		1,
+		(float)0.5, (float)0.5
+	    );
+
+	    // ZZCell 
+	}
+    }
+
+    // If accursed cell is a timeline cell, do all persons
+    public void raster(final FlobSet into, FlobFactory fact,
+	ZZCell view, String[] dims, ZZCell accursed) {
+
+	Dimension s = into.getSize();
+
+	int x = s.width / 10;
+	int y = s.height / 10;
+	int w = s.width - 2 * x;
+	int h = s.height - 2 * y;
+
+	if(accursed.s(d.at, 1) != null) {
+	    placeTime(into, x, y, w, h, fact, dims, 
+			accursed.h(d.events), tofloat(accursed));
+	} else {
+	    place(into, x, y, w, h, fact, dims, accursed.h(d.persons), 3);
+	}
+
+	// selection: 3 next/prev meetings of current person,
+	// 1 next/prev of those he met.
+
+        final LineDecor.Builder ldb = new LineDecor.Builder(into, null);
+        final LineDecor.Builder ldbm = new LineDecor.Builder(into, Color.red);
+	final Hashtable done = new Hashtable();
+
+	into.iterDepth(new FlobSet.DepthIter() {
+	    final void dline(Flob from, String dim, int dir,
+		    LineDecor.Builder bu) {
+		ZZCell c = from.c.s(dim, dir);
+		if(c == null) return;
+		if(done.get(c) != null) return;
+		Flob to = into.findFlob("", c);
+		if(to == null) return;
+		//draw the line
+		bu.l(from.x, from.y+from.h/2, to.x, to.y+to.h/2);
+	    }
+	    public void act(Flob[] flobs, int start, int n) {
+		ldb.startl(4*n, flobs[start].d);
+		ldbm.startl(4*n, flobs[start].d);
+		for(int i=start; i<start+n; i++) {
+		    Flob cur = flobs[i];
+		    if(cur.flobPath != "") continue;
+		    done.put(cur.c, cur.c);
+		    // see if we have positive or negative connections
+		    // on d.events and draw lines if we do.
+		    dline(cur, d.events, -1, ldb);
+		    dline(cur, d.events, 1, ldb);
+
+		    // see if we have positive or negative connections
+		    // on d.persons and draw lines
+		    dline(cur, d.persons, -1, ldbm);
+		    dline(cur, d.persons, 1, ldbm);
+		}
+		ldb.endl();
+		ldbm.endl();
+	    }
+	}, true);
+
+	ZZUtil.showFlobDims(into, fact, view, 2);
+    }
+    
+}
+// vim: set syntax=java :

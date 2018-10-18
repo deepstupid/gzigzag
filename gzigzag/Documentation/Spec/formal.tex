@@ -1,0 +1,30 @@
+\documentclass[a4paper]{article}
+
+\usepackage{oz}
+
+\begin{document}
+
+\title{A formal specification of GZigZag\\WIP}
+\author{Antti-Juhani Kaijanaho}
+\maketitle
+
+\begin{zed}
+  [Cell].\\
+\end{zed}
+
+\begin{schema}{StaticSpace}
+  allcells : \pset Cell \\
+  connections : Cell \pfun (Cell \rel Cell) \\
+  \ST \\
+  \dom connections \subset allcells  \\
+  \dom \ran connections \subset allcells  \\
+  \ran \ran connections \subset allcells  \\
+  \forall d \in Cell @ \forall c \in Cell @ \forall c' \in Cell @
+  \forall c'' \in Cell @ \\\quad((c, c') \in connections(d) \land (c, c'') \in
+  connections (d)) \imp c' = c''\\
+  \forall d \in Cell @ \forall c \in Cell @ \forall c' \in Cell @
+  \forall c'' \in Cell @ \\\quad((c', c) \in connections(d) \land (c'', c) \in
+  connections (d)) \imp c' = c''
+\end{schema}
+
+\end{document}

@@ -1,0 +1,218 @@
+/*   
+CursorView.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Antti-Juhani Kaijanaho
+ */
+ 
+
+package org.gzigzag;
+
+import java.awt.*;
+import java.util.*;
+
+class CursorView implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) ZZLogger.log(s); }
+    static final void pa(String s) { ZZLogger.log(s); }
+    
+    STRUCTPARAMS {
+        float horizonlevel
+            = (float) 0.5;
+
+        float pointerradius
+            = (float) 0.3;
+
+        float sizefactor
+            = (float) 0.8;
+
+        int initdepth
+            = 2;
+
+        int maxdepth
+            = 8;
+
+        Color linecolor
+            = Color.blue;
+
+        double arrowhead_angle
+            = Math.PI / 6;
+
+        int arrowhead_length
+            = 5;
+    }
+
+    // translation (rotation && scaling) matrices
+    double a00, a01, a10, a11, b00, b01, b10, b11;
+
+    INITIALIZE {
+        if (!(0 < horizonlevel && horizonlevel < 1)) {
+            throw new ZZError("horizonlevel parameter outside ]0,1[");
+        }
+        if (!(0 < pointerradius && pointerradius < 1)) {
+            throw new ZZError("pointerradius parameter outside ]0,1[");
+        }
+
+        a00 = arrowhead_length * Math.cos(arrowhead_angle);
+        a01 = arrowhead_length * Math.sin(arrowhead_angle);
+        a10 = arrowhead_length * -Math.sin(arrowhead_angle);
+        a11 = arrowhead_length * Math.cos(arrowhead_angle);
+
+        b00 = arrowhead_length * Math.cos(arrowhead_angle);
+        b01 = arrowhead_length * -Math.sin(arrowhead_angle);
+        b10 = arrowhead_length * Math.sin(arrowhead_angle);
+        b11 = arrowhead_length * Math.cos(arrowhead_angle);
+        
+    }
+
+    Hashtable drawn;
+
+    private void drawPointerCells(FlobSet into, FlobFactory fact,
+                                  ZZCell centercell, Point centerpoint,
+                                  int radius, int level, float sfactor) {
+        if (level > maxdepth) return;
+
+        if (drawn.containsKey(centercell)) return;
+
+        Vector pointers = new Vector();
+
+        {
+            Dimension s = fact.getSize(null, 1);
+            int width =  (int) (s.width * sfactor);
+            int height = (int) (s.height * sfactor);
+            int x = centerpoint.x - width / 2;
+            int y = centerpoint.y - height / 2;
+            p("radius = " + radius + ", x = " + x + ", y = " 
+              + y + ", width = " + width + ", height = "
+              + height + ", centercell = " + centercell);
+            Flob fl = fact.makeFlob(into, centercell, centercell, 1,
+                                    x, y, level, width, height);
+            drawn.put(centercell, centercell);
+        }
+
+        for (Enumeration e = ZZCursorReal.getPointers(centercell);
+             e.hasMoreElements();) {
+            ZZCell c = (ZZCell) e.nextElement();
+            pointers.addElement(c);
+            p("Found cursor " + c);
+        }
+
+        int n = pointers.size();
+        p("n = " + n);
+
+        if (n == 0) return;
+
+        int prad = (int) (pointerradius * radius);
+
+        double baseangle = Math.PI / (n + 1);
+
+        int newradius;
+        {
+            double a = prad - prad * Math.cos(baseangle);
+            double b = prad * Math.sin(baseangle);
+            newradius = (int) Math.sqrt(a * a + b * b);
+            p("a = " + a + ", b = " + b + ", newradius = " + newradius);
+        }
+
+        for (int i = 0; i < n; i++) {
+            ZZCell c = (ZZCell) pointers.elementAt(i);
+            if (ZZCursorReal.get(c) != centercell) pa("WRONG CURSOR CELL FOUND!!!");
+            double angle = (i + 1) * baseangle;
+            p("angle = " + angle + " rad, " + angle * 180 / Math.PI + " deg");
+            int x = (int)(centerpoint.x + prad * Math.cos(angle));
+            int y = (int)(centerpoint.y + prad * Math.sin(angle));
+            drawPointerCells(into, fact, c, new Point(x, y), newradius,
+                             level + 1, sfactor * sizefactor);
+        }
+        
+
+
+    }
+
+    public void raster(final FlobSet into, FlobFactory fact,
+                       ZZCell view, String[] dims, ZZCell accursed) {
+        ZZCell c = accursed;
+        Point pt = new Point(into.getSize().width / 2,
+                             into.getSize().width / 2);
+        ZZCell ccand = ZZCursorReal.get(c);
+        if (ccand != null) {
+            c = ccand;
+            pt.y /= 2;
+        }
+        drawn = new Hashtable();
+        drawPointerCells(into, fact, c, pt,
+                         into.getSize().width, initdepth, 1);
+
+        // Draw the cursor arrows
+        into.iterDepth(new FlobSet.DepthIter() {
+                public void act(Flob[] flobs, int start, int n) {
+                    for(int i = start; i < start+n; i++) {
+                        ZZCell pointer = flobs[i].c;
+                        if (pointer == null) continue;
+                        ZZCell pointee = ZZCursorReal.get(pointer);
+                        if (pointee == null) continue;
+                        p("pointer = " + pointer + ", pointee = " + pointee);
+                        Flob from = flobs[i];
+                        Flob[] tos = into.findFlobs(null, pointee);
+                        for (int j = 0; j < tos.length; j++) {
+                            Flob to = (Flob) tos[j];
+                            int[] cs = new int[16];
+                            // we make the arrow body in two parts:
+                            // one from head to arrow point and one
+                            // from arrow point to tail
+                            cs[0] = from.x + from.w / 2;
+                            cs[1] = from.y;
+                            cs[2] = to.x + to.w / 2;
+                            cs[3] = to.y + to.h;
+                            double or1 = (cs[0] + cs[2]) / 2;
+                            double or2 = (cs[1] + cs[3]) / 2;
+                            cs[6] = cs[2];
+                            cs[7] = cs[3];
+                            cs[2] = (int) (or1 + 0.5);
+                            cs[3] = (int) (or2 + 0.5);
+                            cs[4] = cs[2];
+                            cs[5] = cs[3];
+                            double v1 = cs[0] - cs[2];
+                            double v2 = cs[1] - cs[3];
+                            double vlen = Math.sqrt(v1*v1 + v2*v2);
+                            v1 = v1 / vlen;
+                            v2 = v2 / vlen;
+                            cs[8] = (int) (or1 + 0.5);
+                            cs[9] = (int) (or2 + 0.5);
+                            cs[10] = (int) (v1 * a00 + v2 * a01 + or1 + 0.5);
+                            cs[11] = (int) (v1 * a10 + v2 * a11 + or2 + 0.5);
+                            cs[12] = (int) (or1 + 0.5);
+                            cs[13] = (int) (or2 + 0.5);
+                            cs[14] = (int) (v1 * b00 + v2 * b01 + or1 + 0.5);
+                            cs[15] = (int) (v1 * b10 + v2 * b11 + or2 + 0.5);
+                            into.add(new LineDecor(cs, cs.length,
+                                                   linecolor,
+                                                   (from.d + to.d) / 2));
+                        }
+                        
+                    }
+                }
+            }, true);
+        
+
+    }
+
+
+}
+
+
+

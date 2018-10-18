@@ -1,0 +1,140 @@
+Uudet tiedonhallintamenetelmät
+
+Taustaa
+
+Monissa ohjelmistoprojekteissa kehitys aloitetaan pienestä mallista
+ja käyttöliittymätestaus suoritetaan laboratorio-oloissa pienellä
+tietomäärällä.  Tässä lähestymistavassa ongelmana on, että pienen
+tietomäärän kyseessä ollessa ihminen pystyy itse rakentamaan mielessään
+yleiskuvan ja tiedon sisältämät rakenteet, mutta kun tietomäärä kasvaa,
+rakennetun järjestelmän rajat tulevat helposti vastaan.
+
+Esimerkiksi sähköpostin lukemisessa huonokin käyttöliittymä toimii, jos
+päivässä saapuu yksi tai kaksi viestiä, mutta päivittäinen 100-200 viestin
+tulva vaatii aivan erilaisia työkaluja kuin useimmat olemassaolevat
+sähköpostiohjelmat tarjoavat.  Tämän vuoksi monet tietotyötä tekevät
+ihmiset kokevat hukkuvansa informaatiotulvaan; tietokoneet eivät tarjoa
+sopivia työkaluja kaiken saapuvan informaation käsittelemiseen.
+
+Yhteinen nimittäjä monille ongelmallisille systeemeille on,
+että vastaanotettavan tiedon rakenne on etukäteen päätetty
+ja jäykkä. Esimerkiksi sähköpostiohjelmat tarjoavat usein vain
+joukon postilaatikoita, joista kukin sisältää listan viestejä, ja
+käyttöjärjestelmät tarjoavat jäykän hierarkisen tiedostorakenteen, jossa
+käyttäjän on tietoa tallentaessaan päätettävä sille nimi ja sijoitettava
+se johonkin hakemistoon.  Ohjelmien kaatuilemisen vuoksi on tavallista
+pitää useita varmuuskopioita vanhoista versioista, mikä tekee jonkin
+tietyn tekstin löytämisen hyvin vaikeaksi.
+
+Ted Nelson on 1960-luvulta lähtien peräänkuuluttanut suurempaa
+rakenteellisuutta tietokoneissa: hän on käyttänyt mm. vertauskuvaa
+"tietokoneen käyttäminen paperin simulointiin on kuin se, että
+revittäisiin 747-lentokoneen siivet pois ja ajettaisiin sitä bussina
+maantiellä".  Ted Nelson ei itse ohjelmoi, mutta on kehittänyt
+merkittäviä ajatuksia rakenteellisista systeemeistä: Xanadu-rakenteen
+ja ZigZag-rakenteen.  Nämä rakenteet täydentävät toisiaan ja muodostavat
+yhdessä hyvin mielenkiintoisen kokonaisuuden, jota GZigZag-tutkimusryhmä
+on toteuttamassa.
+
+Xanadu-rakenne liittyy läheisesti materiaalin kopiointiin ja
+lainaamiseen. Perinteisesti ohjelmoijille opetetaan alusta lähtien,
+että teksti on merkkijonoja, ja merkkijonot ovat kirjaimellisesti jonoja
+merkkejä; tekstiin ei liity mitään muuta kuin se, mitkä kirjainmerkit
+siinä sattuvat olemaan; tekstin kopioiminen paikasta toiseen tarkoittaa,
+että kirjainmerkkejä kuvaavat numerot kopioidaan. Tällä filosofialla
+rakennetuissa järjestelmissä alkuperäisen tekstin ja kopioidun tekstin
+välillä ei ole mitään yhteyttä; jos ihminen haluaa sellaisen muistaa,
+hänen täytyy tehdä itse muistaa kopioineensa jotakin.  Xanadu-mallissa
+asia on toisin: siinä tekstin perusyksikkö ei ole kirjainmerkki
+vaan näppäimenisku: se merkki "a", joka kirjoitettiin 5.8.01 osana
+sähköpostia on täysin eri asia kuin se merkki "a", joka kirjoitettiin
+11.10.01 osana tätä tekstiä.  Kirjoitushetkellä kukin merkki saa pysyvän,
+maailmanlaajuisesti juuri sen näppäimeniskun yksilöivän tunnisteen. Kun
+Xanadu-mallissa kopioidaan materiaalia, ei kopioida pelkästään sitä
+tietoa, että kyseessä on "a"-kirjain, vaan tieto siitä, mikä näppäimenisku
+on kyseessä.
+
+Olennainen osa Xanadu-järjestelmää on järjestelmässä olevien samojen
+merkkien automaattinen etsiminen ja näyttäminen. Esimerkiksi jos käyttäjä
+lähettää osan tekstitiedostoa sähköpostitse toiselle käyttäjälle ja toinen
+käyttäjä vastauksessaan lainaa osan tätä tekstitiedostoa, niin tämän
+jälkeen katsoessaan alkuperäistä tekstitiedostoa käyttäjä voi halutessaan
+nähdä molemmat sähköpostiviestit, joissa sen sisältöä on lainattu.
+
+Nykyisiin järjestelmiin perehtyneelle tämä saattaa tuntua tuhlaavaiselta,
+koska kutakin merkkiä kohden joudutaan tallettamaan enemmän
+tietoa. Toisaalta lisätiedon määrä on hyvin pieni, kun otetaan huomioon
+se, että useimmiten merkkejä ei kopioida paikasta toiseen yksitellen ja
+voidaan siis tallettaa yhtä aikaa usealle merkille se, mistä ne on otettu.
+
+ZigZag-rakenne vuorostaan liittyy eksplisiittisesti rakennettaviin
+tietorakenteisiin, toisin kuin Xanadu-rakenne, joka rakentuu tavallaan
+itsestään. ZigZag-rakenne on moniulotteinen, lukusuorien lailla toimiviin
+dimensioihin perustuva rakenne.  Kaikki kytkennät ZZ-rakenteessa ovat
+kaksisuuntaisia, mikä helpottaa rakenteen käsittelyä huomattavasti;
+suuri osahan tavallisten järjestelmien virheistä johtuu vääriin
+paikkoihin sojottavista yksisuuntaisita pointtereista.  ZigZag-rakenne
+on lisäksi joustava: siinä ei ole ennalta asetettua jäykkää rakennetta
+kuten esimerkiksi hierarkisessa tiedostojärjestelmässä on. Mitä tahansa
+voidaan kytkeä minne tahansa.
+
+
+Tavoitteet
+
+GZigZag-projekti on ennen kaikkea vapaa ohjelmistoprojekti. Projektin
+tuotoksena kasvaa koko ajan vapaa GZigZag-prototyyppi, jota levitetään
+GNU LGPL -lisenssin mukaisesti. Tällä hetkellä prototyyppi on toiminnassa
+ja sitä pystytään käyttämään erilaisiin käyttöliittymäkokeiluihin.,
+
+Tavoitteena on kehittää mielenkiintoisia käyttöliittymiä rakenteelliseen
+tietoon käyttäen ZigZag- ja Xanadu-rakenteita.
+
+Tärkeänä osana projektin filosofiaa ovat epätavalliset COTS (Common,
+Off-The-Shelf components: hyllytavara) -laitteet.  Useimmissa hypermediaan
+liittyvissä tutkimuksissa käytetään joko 1) hiirtä, näppäimistöä
+ja näyttöä, ns. standardiympäristöä tai 2) erikseen juuri kyseistä
+projektia varten rakennettuja kalliita laitteita.  GZigZag-projektin
+filosofia tähtää eri suuntaan: peliteollisuudessa on rakennettu paljon
+mielenkiintoisia mutta silti halpoja ohjauslaitteita, esim. 3D-joystikit,
+ohjauspyörät ja polkimet. Näitten laitteiden soveltaminen käyttöliittymiin
+antaa toisaalta standardiympäristöä joustavamman ja luontevamman
+tavan liittyä informaatioon mutta toisaalta ei nosta lopputuotteen
+käyttöönottokuluja ja käyttöympäristövaatimuksia kohtuuttomasti;
+kohtuullisen laadukas 3D-joystick maksaa nykyisin n. 200-300mk.
+
+
+Toimenpiteet
+
+) 
+Yksi suuri osa tutkimusryhmän työstä on käyttää GZigZagia itse 
+jokapäiväisessä toiminnassa. Yksi tärkeistä projekteista on 
+rakentaa yhteenveto akateemisesta hypertekstikirjallisuudesta
+rakenteessa kollaboratiivisesti.
+
+)
+Uusien näkymien kehittäminen; käyttöliittymän yleinen parantaminen.
+
+)
+Uusien ohjauslaitteiden yhdistäminen GZigZagiin
+
+)
+Xanadu-mallin jatkotutkimus sekä käytettävyyden että tehokkaamman
+toteutuksen kannalta.
+
+)
+Artikkelien kirjoittaminen prototyypin tämänhetkisistä piirteistä.
+Artikkelit on myös tarkoitus kirjoittaa GZigZagilla itsellään.
+
+)
+Prototyypin yleinen kehitys (bugien korjaukset tms) ja virallisten
+versioitten julkaiseminen.
+
+
+
+Resurssointi
+
+Projektin kesto 3v, kunakin vuonna
+2 maisteria, 2 tutkimusapulaista
+
+
+

@@ -1,0 +1,58 @@
+
+A(ssociative) writing tool -demo
+--------------------------------
+Usage:
+- create new notes by dragging mouse and keeping
+  mouse1-key pressed
+- drag and drop notes created before
+- resize note by ctrl-mouse1
+- link notes by attaching cursors (click mouse1 / shift-mouse1
+  on a note) to a pair of notes and pressing 'l' (uncapitalized 'L')
+- change metrics by pressing 'm' (currently 3 possibilities)
+- get rid of the grid by 'g'
+- change focus (click mouse3-button)
+- change origo (click shift-mouse3)
+- chance to/from nile mode by 'alt-n'
+
+To start:
+- create new action 'Awtool.TESTWIN' in zz-system
+- use it to invoke awtool
+
+About the view:
+- Real view (rendered part) is mutable
+- Virtual view is fixed, all objects' places
+  are based on virtual view coordinates (-1.0<x,y<1.0),
+  These in turn correspond with some pixel-coordinates.
+- Origo (o) is related to Virtual view
+- Focus (f) is related to Real view 
+  
+
+------------------------------------
+|(Virtual view 800x600, -1 ... 1)  |
+|  ________________________        |
+|  |Real view              |       |
+|  |400x300                |       |
+|  |                       |       |
+|  |                       |       |
+|  |                       |       |
+|  |           o=(0.0, 0.0)|       |
+|  |                       |       |
+|  |                       |       |
+|  | f=(50, 250)           |       |
+|  |                       |       |
+|  |                       |       |
+|  -------------------------       |
+|                                  |
+|                                  |
+|                                  |
+------------------------------------
+
+
+
+Misc:
+Special dimensions. Awtool uses its own system-dimension 
+'d.awtool', which stores the state of the applitude. So, 
+if you quit awtool and start it newly with datacursor pointing 
+to the same cell, you should end up with the old working-view 
+(layer or category of notes).   
+

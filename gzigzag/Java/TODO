@@ -1,0 +1,155 @@
+Currently, the up-to-date task list is at sourceforge.net's task manager for
+gzigzag project. All the tasks below have not yet been added, but there are 
+several interesting tasks there already which are mostly more well-defined 
+and important than the ones below.
+
+If you want to work on any major task, please contact lukka@iki.fi first
+to avoid overlapping work. The order below is random, not importance nor
+a plan.
+
+The two MAJOR design questions: these are not easy to solve
+since there are many issues here
+
+- 3rd generation file format: caching of saves to speed up operation
+    - the three features:
+	- micro-level undo
+	- cache saves
+	- use as notification buffer: check notifications all at once when
+	  the code has finished.
+- slices
+    - code complexity
+    - lazy loading
+
+Minor design questions:
+- circulars: different ops for going over back to headcell?
+ 	-> right now too easy to lock up.
+
+Next major code cleanup:
+- event queues, caching of some renderings?
+- go through ZZCell, VStream and other APIs, check function names and parameters
+  for consistency.
+- move packages
+- document some APIs
+- Redo ZZPrimitiveActions using clang as an intermediator.
+- StringScroll -> interface!
+
+Ted's requests:
+- g to home cell, G ctrl home cell
+- m marks current cell, M ctrl
+    (m done, M not)
+- flags:
+	- no splines
+	- continuous drawing i.e. show same cell more than once
+- repeat bars
+- viewspecs also visible
+- 4th dim?
+- search -> mark
+- place for marks (system list)
+- number up/down
+- washcloth windows / iris windows
+
+Need more specs from Ted for:
+- flob coordinate handling: zoom, setting etc.
+- textcloud UI - two textclouds
+- outline + expanded view using billowing
+- vstream internal structure + markup + cursor handling when vstream
+  changed
+
+Jobs for Vesa:
+- Make FileWritable cache things:
+	- cache writes until a non-contiguous one is made, or
+	  a read is done.
+	- cache reads by a readahead
+	- use a fixed buffer of e.g. 256 or 512 bytes.
+	- make caching optional and timetest with and without
+	- be very surprised about the results ;)
+
+	- MAKE SURE TO PUT AN EXPLICIT FLUSH COMMAND INTO WRITABLE AND
+	  CALL IT AFTER EVERY FULL RECORD IS WRITTEN!
+
+	(If you want justification for this, just try strace'ing
+	a run and see how many system calls are completely redundant)
+		
+- MBox reader: make it structural, i.e. connect values of a field on 
+  a d.byfield (sorted!), split multi-values into several cells and use clones for
+  the same people and msgids.
+- undo 
+- move all AbstractView functionality to ZZDefaultSpace
+  --> think about the function names, propose better if you can.
+- printing ? Export to html. 
+- Extern module for external commands
+
+AJK:
+project infrastructure:
+- a test build daemon using JDK not Jikes
+- javadoc autobuild daemon?
+development:
+- WET raster, structure
+- add an option to TreeRaster for showing less-deep cells as larger
+- fix the billowing bug in TreeRaster
+
+Anyone:
+
+- Do an RFC (e.g. 822) in a REAL, proper hypertext fashion.
+
+- vstream -> enfilade-like thing
+  + paragraph jumping
+
+- tight brick links & edges with lighter color
+
+- allow changing direction associated with dimension
+- allow changing priorities - joystick & other controls?
+
+- improve updatemanager and the views:
+	- updatemanager should take care of all animation lengths etc.
+	- there should be a parameter "complexity" which would allow
+	  the updatemanager to tell a view to update itself only partially
+	  (e.g. on animation on slow machines).
+
+- change ViewCell to Viewcell everywhere
+  XXX to viewspecs / ???
+
+- put debug info configuration into structure!!
+  - all involved classes in structure. Really neat.
+
+- finish defaultspace
+
+- separation into a global zigzag interface and a gzigzag implementation
+  for a standard (e.g. DOM-like) API separation
+
+- grep the source for 'XXX'
+
+- create a singlecellraster that shows all the connections from the given
+  cell along dimensions on a given list.
+
+- check double clicks! If one click rerasters, what happens after?
+
+- better rasters
+  - e.g. headcell-based.
+
+- change dimensions to cells instead of strings.
+  - think about slicing problems... must handle when bringing
+    in the slice.
+
+- first personal space: BOOKMARKS
+
+- Clang
+	- primitive and advanced
+
+- slices
+
+- cursorspaces: d.cursor implemented transiently, to avoid lengthening
+  the cellscroll -
+	- possibly implement in ZZGlobal using FLAG_TRANSIENT cells?
+
+- a view of the filesystem as a ZZ space.
+
+- cellscrolls: The data is there but the access isn't
+	- animate through a cellscroll
+	- undo from cellscroll.
+  (XXX Not cellscroll but persistentdimspace now!)
+
+- an HTML page showing pictures and applets to introduce people to ZZ:
+  show an image of the space and then an applet where you can move through
+  that space. Start by just viewing, then allow people to change the space.
+

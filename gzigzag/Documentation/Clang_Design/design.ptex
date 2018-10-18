@@ -1,0 +1,456 @@
+% BE SURE TO EDIT design.ptex    -*- LaTeX -*-
+\documentclass{article}
+
+\usepackage{rcs}
+\RCS $Date: 2000/08/19 12:16:43 $
+\RCS $Revision: 1.9 $
+\date{Rev.\RCSRevision~~\RCSDate}
+
+\title{Clang Design Document}
+\author{Tuomas J. Lukka\and Antti-Juhani Kaijanaho}
+\begin{document}
+\maketitle
+
+\newcommand{\zz}{ZigZag}
+
+\section{Introduction}
+
+.PS
+box "Clang" ht 0.25
+.PE
+$$\box\graph$$
+
+A cellular language, based on the structure of ZigZag has been in Ted Nelson's
+plans all along. This document attempts to clarify the various issues in
+Clang's design and propose various solutions.
+
+\subsection{The role of Clang}
+
+The exact role of Clang in the various uses of \zz\ is still unclear.
+The \zz\ system will interface to a wide variety of languages (currently 
+Java and Perl), and all these can be used to perform various tasks.
+
+One possible role is as a beginners' language, especially if good visualizations
+and ways to write programs in Clang are devised.
+
+Another possibility is as a kind of device-independent
+virtual machine from which code can be compiled to a faster representation
+or directly interpreted.
+
+A further possibility (one being realized right now (Dec.1999)) is a 
+least-common-denominator scripting language, allowing a simple pure Java 
+implementation of \zz\ for demonstrations as well as practical use, without
+requiring the recipient to set up many libraries and interpreters.
+
+The ability to record macros directly from user input is a great thing.
+
+\subsection{Relevant ZigZag features}
+
+In this section, we shall look at some of the less obvious features
+of \zz\ that might be useful.
+
+\subsubsection{Intersections}
+
+One of the important operations in ZigZag that is quite relevant
+to Clang is the ability to take intersections of ranks.
+As an example, this can be used to find an entry at the intersection
+of a row and column in a traditional 2-dimensional table. 
+Of course, as often is with ZigZag, there is a twist: there may be
+many different intersection points, since the relationships between
+the different ranks are not restricted on a global level.
+
+For most of Clang we are however only interested in single 
+intersection points, e.g. to find the value of a given variable in 
+a give stack frame or the code for a given virtual method in an object.
+
+Eventually, the server should allow requests to store tables
+of intersections so that certain predefined sets of intersections can 
+be found in $O(1)$ time instead of the most general $O(N+M)$ where $N$ 
+and $M$ are the lengths of the two ranks (you get $O(N+M)$ instead of
+the horrible $O(NM)$ through using a hash table).
+However, this is not yet implemented.
+
+\subsubsection{Clones}
+
+Clones are quite an interesting concept. Basically, they are just
+cells that are on a rank on \texttt{d.clone} with the ``original'' as
+the headcell. What is important about clones is the two implications:
+the visual and the semantic. The visual implication is that 
+the rest of the cells will always show the same contents as the
+headcell and all modifications are done to the headcell, not the clones.
+The semantic implication is more important: it says that the clones
+are somehow \emph{same} as the original.
+
+As with the intersection above, clones can be used e.g.~to clone
+method names from an interface to an implementation or something like that.
+
+But now, the important thing to realize about clones is that they
+are special only in these two senses and that we can, if we need 
+(and we will, as you'll see), define other dimensions with similar
+properties.
+
+\section{Global goals}
+
+\subsection{Structure-based referencing}
+
+The most fundamental thing about Clang is that references to various
+structures are structure- and not name-based.  Thus, a variable is
+defined by a cell, which is e.g. cloned along \texttt{d.clone} or some
+other suitable dimension to all the places in a subroutine where it
+occurs.
+
+This makes easy many of the functionalities that the so called
+Integrated Development Environments (IDEs) work very hard to provide
+such as jumping to the definition of a variable or subroutine.
+Also, along with some special rasters the structure allows many
+useful visualizations of the resulting program structure.
+
+The question this change raises, of course, is development speed.
+Will it be significantly slower to write Clang code than corresponding
+Java code? However, some consideration shows this point to be moot: it
+is not at all difficult to come up with suitable macros so that Clang
+can be \emph{written} like a normal name-based language, but where at
+the moment of writing the interpretation to structure takes place.
+
+\subsection{Compilability}
+
+Clang code should be relatively easily compilable into a strongly-typed
+language such as Java in order to gain execution speed.
+
+\subsection{Simplicity}
+
+Ideally, Clang should be simple so that even a beginner is able to write
+simple scripts. 
+
+\subsection{Power}
+
+However, many simple languages lack the power to do complicated things.
+
+\subsection{Self-implementability}
+
+To ensure Clang's power as a general-purpose structural language, it should
+be possible to completely implement a Clang interpreter using Clang itself.
+The only potential problem for this is the dimension along which cell 
+pointers are used (see Cell pointers below). 
+
+
+
+
+
+\section{Interesting ideas}
+
+\subsection{Visible stack}
+
+Stack frames can be represented as sets of clones from the local
+variables (along a different dimension from the cloning to the references
+to the variable in the code). 
+
+Then, the primitive rank-intersection operation in ZigZag can be used
+to find the value of a local variable in a stackframe or thread.
+
+\subsection{Trace}
+
+A trace of executed code can easily be shown on a dimension, with
+relation cells if necessary, along with information about the status
+of data at any point. On the other hand, in a fully versioning ZigZag
+space the whole history of the state of the space is conserved throughout
+the execution (although this may not be wise for complicated scripts 
+where the space overhead would grow too much -- there only the space being
+operated on should be versioned and even that possibly at the beginning
+and the end of a script run).
+
+\subsection{Objects and virtual tables}
+
+It is delightfully simple to do objects and virtual tables using the 
+ZigZag structure.
+
+Quite simply, a virtual interface can be defined simply as a rank of 
+cells and a type implementing them will have the methods' implementations
+start on the intersection of the cell describing the type and the cell
+naming the method.
+
+As an interesting side, since the pointers are bidirectional it is always
+possible to find all the instances of a given class or traverse
+structures both ways, something that 
+programmers in more traditional languages would never dream of.
+Naturally this comes at a some performance penalty but the coherence
+of the structure makes finding bugs in programs far easier.
+
+
+
+
+
+
+
+
+
+\section{Questions}
+
+\subsection{Context}
+
+How much context should the virtual machine have?
+This is an important issue for short scripts
+which should be definable with the minimum effort. 
+Ted says (and I agree) that it should be at least a cursor and three
+dimensions (also as cursors), i.e. a viewspex.
+
+\subsection{Cell pointers}
+
+A variable should in general hold a pointer to a cell (possibly also 
+a direct value
+but this could just as well be implemented as a temporary cell). 
+
+The problem here is clean self-referencing: how can all the cells involved
+in a cell pointer structure be referenced in another cell pointer structure?
+
+SUGGESTION1: "Local" dimensions? This would lead the ZigZag model closer
+to a model of ordered triplets of cells...
+
+SUGGESTION2: Use the same cursor mechanism (the two dimensions \texttt{d.mycursor}
+and \texttt{d.cursor} as the rest of GZigZag).
+
+\subsection{Parameter passing}
+
+\subsection{Expressions}
+
+A rather neat way of doing expressions for parameter passing 
+to primitives and functions:
+the first cell on \texttt{d.1} gives the primitive or function to call.
+Then, on \texttt{d.1} come the parameters - either directly \emph{or} if
+they are connected along \texttt{d.mycursor}, using cursors (global variables)
+\emph{or} if they are connected using \texttt{d.clone} to a parameter cell,
+that parameter. 
+
+However, this is only the beginning: from each parameter, you can 
+start a path down on \texttt{d.2}, which would mean 
+
+\subsection{Exceptions}
+
+
+
+\subsection{Typing}
+
+Typing for Clang is a difficult issue. 
+On the one hand, Perl-like weak typing would suit the ZigZag paradigm
+quite well but on the other hand, compiling a strongly typed program
+into e.g. Java is much easier as well as much more efficient.
+
+SUGGESTION: Have two different languages (Clang and Cling?), one
+strongly and one weakly typed. The one we would first define is 
+the weakly typed one which is generally easier to use for humans.
+
+POSSIBLE IDEA: Dynamically type cell content in Perl style (assign
+dynamically a union of types to a cell based on an analysis of the
+content, for example whether the content string can be parsed as a
+number), but have statically typed cell references.  We'll need here a
+powerful type system (look into type theory, Hindley-Milner typing
+etc), a Java-like type system would probably kill this idea.
+
+\section{Extra-primitive Clang}
+
+XXX This is NOT what is implemented - see the next section!!!!
+
+This section describes the very first steps taken towards
+a cellular language since one is now needed in a hurry to get
+a pure Java implementation of \zz\ out soon (Dec.1999)
+
+This is a testbed-version only and any or all features may be broken
+by further versions. Especially the dimensions may be changed (the first
+version tries to use as few as possible to facilitate viewing on the 
+current primitive rasters).
+This version has no expressions so it is rather like an assembly 
+language instead of a scripting language.
+
+That said, let's begin. 
+
+First of all, we shall have subroutines or procedures.
+They are defined by a cell with the name of the subroutine,
+which has some cells on {\tt d.args} describing the arguments the
+routine requires. The cells on {\tt d.args} will be cloned later
+to refer to the arguments (structural reference).
+NOTE: there is a potential problem here: we also want to be able
+to clone parameter sets for virtual methods and standard routines,
+e.g.~for keybindings). Thus, the cloning dimension may change.
+
+Negwards on {\tt d.args} (later, with better visualizations, on
+{\tt d.retval} or somesuch) are the return values of the subroutine.
+
+The next cell from the main subroutine cell on {\tt d.xeq} is 
+a clone of the cell {\tt VAR}, introducing the local variables just
+like usual languages.
+
+After this, on {\tt d.xeq} the body of the subroutine follows.
+The cell on {\tt d.xeq} is a clone of the operation (or subroutine)
+cell and 
+like above, {\tt d.args} contains the parameters (clones of
+the parameter or variable cells) that are given to the operation,
+and negwards are the return values.
+
+\begin{figure}
+{
+\tt
+.PS
+linewid=0.15;
+lineht=0.15;
+boxwid=0.55;
+SUM: box "sum" ht 0.25; line; DIFF: box "diff" same; line;
+SH: box "sumdiff" same; line; X: box "x" same; line; Y: box "y" same;
+move to SH.s; down; line; box "VAR" same; line; 
+PLUS: box "+" same; line; 
+MINUS: box "-" same;
+move to PLUS.e; right; line; X2: box "x" same ; line; Y2: box "y" same ;
+move to MINUS.e; right; line; X3: box "x" same ; line; Y3: box "y" same ;
+move to PLUS.w; left; line; SUM2: box "sum" same; 
+move to MINUS.w; left; line; DIFF2: box "diff" same; 
+spline from X.s then down 0.1 right 0.1 then down 0.2 left 0.2 to X2.n;
+spline from Y.s then down 0.1 right 0.1 then down 0.2 left 0.2 to Y2.n;
+spline from X2.s then down 0.05 right 0.02 to X3.n;
+spline from Y2.s then down 0.05 right 0.02 to Y3.n;
+spline from SUM.s down 0.1 then right 0.65 down 0.1 to SUM2.n
+spline from DIFF.s down 0.3 then left 0.65 down 0.1 then down 0.4 to DIFF2.n
+.PE
+\box\graph
+}
+\caption{A simple Clang routine {\tt sumdiff} 
+that calculates the sum and difference
+of two numbers by calling the more primitive {\tt +} and {\tt -}
+operations. Horizontally we see {\tt d.args} and vertically {\tt d.xeq}.
+The curvy lines indicate clones along {\tt d.clone}.}
+\end{figure}
+
+The model used to store the parameters is, as alluded to above, difficult,
+as it will be difficult to accommodate the self-referentiality and
+self-implementability.
+For the extra-primitive version, we'll just make do with Clang pointers
+being ordinary relcells. 
+Parameters are passed by value.
+
+\begin{figure}
+{
+\tt
+.PS
+boxht=0.25
+SUM: box "+"; line; X1: box "a"; Y1: box "b";
+move to SUM.s; down; line;
+SUMDIFF: box "sumdiff"; move to last box.e; right;
+line 0.5; X2: box "x"; Y2: box "y"
+move to X1.s ; line to 2/1 of the way between X1.s and X2.s; down; box "Param1";
+move to Y1.s ; line to 2/1 of the way between Y1.s and Y2.s; down; box "Param1";
+.PE
+\box\graph
+}
+\caption{The stack of the virtual machine at the call to the {\tt +} 
+operation. 
+We see vertically {\tt d.stack}, horizontally {\tt d.args}
+and diagonally {\tt d.clangref}.
+Note that the cells {\tt +}, {\tt sumdiff}, {\tt a}, {\tt b}, {\tt x} and 
+{\tt y} are clones of the cells defining the procedures.
+The result cells are not shown, they are referenced the same way
+except through {\tt d.clangretref}, in order to allow passing of 
+variables by reference.
+}
+\end{figure}
+
+
+\section{Clang1}
+
+This section describes the first clang, called Clang1 to distinguish.
+
+The basic concepts are as above: execution down {\tt d.2}, 
+parameters and formal parameters (prototype) on {\tt d.1}, 
+parameters by cloning.
+
+However, there is one important detail which makes programming easier.
+This is the concept of ``it'' which is one cell that is in a special 
+case position. This can later be extended to a stack, if it is felt that
+that is appropriate but that might not be quite as helpful (we do not want
+FORTH, do we?). Now, this concept is there so that it is simple
+to express paths from cells, to be used as expressions. 
+
+Now, all scripts are associated with a viewspecs cell that contains
+at least a cursor and usually some dimensions. 
+The cursor is then equated to the ``it'' so on the main level, moving
+``it'' corresponds to moving the cursor (possibly optimized so that the
+cursor is moved once, at the end of the script).
+
+\begin{figure}
+\caption{
+An expression as a parameter to an operation. 
+The main operation is {\tt Op}, the cell we start from is {\tt v},
+and we use a route that takes us to the cell representing the dimension
+that the view whose maincell is {\tt v} is showing on the Z axis
+(the cursor three steps on {\tt d.dims} from the maincell).
+}
+{\tt
+.PS
+box "Op"; arrow; box "v"; 
+down; move to last box.s;
+arrow; 
+STEP: box "step"; 
+right; move to STEP.e;
+arrow; box "d.dims"; arrow; box "+3";
+.PE
+\box\graph
+}
+\end{figure}
+
+In the first implementation, to make it as fast as possible to implement
+(and to save some space since the current cellscroll does not support
+transient cells), the stack is not stored in the structure. This is
+unfortunate but since no semantics change, it is quite simple to change
+this later.
+
+As some examples, we'll implement some operations here explicitly in
+Fig.~\ref{fig:ops}
+\begin{figure}
+\caption{\label{fig:ops}
+Some operations. a) move poswards on the X axis. b) advance the X dimension
+to the next on the X dimlist. c) One possible alternative, allowing the 
+user to clone "X" only once by expressing the cursor to use negwards on d.1.
+In this case, the {\tt SETC} operation would not be necessary at all.
+}
+{\tt
+.PS
+STEP:box "STEP"; line; box "X"; line; box "+"
+move to STEP.s; line down;
+move to STEP.n; line up;
+.PE
+a)\box\graph\\
+.PS
+STEP: box "SETC"; line; box "X"; line; box "X"; 
+down; move to last box.s; line; box "STEP"; 
+right; move to last box.e; line; box "d.2"; line; box "+"
+move to STEP.s; line down;
+move to STEP.n; line up;
+.PE
+b)\box\graph\\
+.PS
+box "X"; line; STEP:box "STEP"; line; box "d.2"; line; box "+"
+move to STEP.s; line down;
+move to STEP.n; line up;
+.PE
+c)\box\graph
+}
+\end{figure}
+
+\section{Greek Clang}
+
+My (Antti-Juhani's) intention is to build several parallel prototype
+versions of Clang.  Since the version of Clang which will be adopted
+might well use ideas from several orthogonal Clang prototypes, these
+``Greek Clang'' prototypes are not successive versions, improving one
+another, but separate parallel ventures into the design space.  Thus
+they will not be version numbered; instead I'm going to name them
+after ancient Greek philosophers.
+
+\subsection{Thales Clang}
+
+Thales Clang is a small nonstrict, weakly typed procedural-functional
+language with a design in many ways owing to Lisp and nonstrict
+functional languages.
+
+\end{document}
+
+
+%
+% vim: set syntax=tex :

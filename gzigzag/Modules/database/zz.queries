@@ -1,0 +1,18 @@
+
+-- Taulut
+
+SELECT * FROM members;
+
+SELECT * FROM positions; 
+
+SELECT * FROM sigs;
+
+-- Kaikkien tekijöiden kaikki projektit
+
+SELECT members.name,sigs.name FROM members, positions, sigs WHERE members.id = positions.person AND sigs.id = positions.sig ORDER BY members.name, sigs.name;
+
+-- Kaikkien projektien kaikki tekijät
+
+SELECT sigs.name,members.name FROM members, positions, sigs WHERE members.id = positions.person AND sigs.id = positions.sig ORDER BY sigs.name, members.name;
+
+

@@ -1,0 +1,69 @@
+pre {
+	font-size: 0.9em;
+	font-family: serif
+}
+
+.p1{
+	font-size: 0.5em;
+	color: aaaaaa
+}
+.p2{
+	font-size: 0.6em;
+	color: 999999
+}
+.p3{
+	font-size: 0.7em;
+	color: 888888
+}
+.p4{
+	font-size: 0.8em;
+	color: 666666
+}
+.p5{
+	font-size: 1.0em
+}
+.p6{
+	font-size: 0.8em;
+	color: 666666
+}
+.p7{
+	font-size: 0.7em;
+	color: 888888
+}
+
+.t1{
+	font-size: 0.4em
+}
+.t2{
+	font-size: 0.5em
+}
+.t3{
+	font-size: 0.6em
+}
+.t4{
+	font-size: 0.7em
+}
+.t5{
+	margin: 0em;
+	margin-top: -1.5em
+}
+.t6{
+	font-size: 0.7em
+}
+.t7{
+	font-size: 0.6em
+}
+
+.a2 {
+	display: none
+}
+.a4 {
+	display: none
+}
+.a5 {
+	margin: 0em;
+	margin-bottom: -1em
+}
+.a6 {
+	display: none
+}

@@ -1,0 +1,146 @@
+General
+=======
+
+Contact Tuomas Lukka at lukka@iki.fi if you want to help hack on this.
+
+Start the Java GZigzag through the org.gzigzag.Main class, e.g.
+
+	java org.gzigzag.Main [options] cellscrollfile
+
+where the options are detailed in the javadoc for org.gzigzag.Main.
+
+IF IT IS TOO SLOW, CHECK THE FAQ (../Documentation/FAQ), question
+II.1.5 TO GET HELP AT STARTUP, SEE ../Documentation/STARTING.  There
+is a quick-hack user's guide in ../Documentation/UsersGuide/ .
+
+Note that org.gzizgag.Main opens up two windows, showing the same
+(vanishing) view of the structure.  There are a lot of other views;
+you can cycle a short list with `v' (data window) or `Shift-v'
+(control window); more can be added to that list (Views) by cloning
+views from the AllViews list.
+
+Note that some classes are currently work-in-progress and some are
+abandoned. Some are just being tried on for size (ZZPath).  See what
+org.gzigzag.Main (Main.java) uses for what's reasonably current. The
+truly deprecated ones will be removed little by little.  Tuomas
+recommends a coloring editor so you can easily see which parts are
+commented out -- there are quite many of them, which will be removed
+shortly. Tuomas uses gvim.
+
+Structure
+=========
+
+The structure of the source is still evolving. Right now, there are
+several meaningful subdirectories below this directory, including
+
+media/   - handling fluid media (text etc)
+storage/ - how to store the ZZ information on disk in a few different formats
+flob/    - all the current basic views and their support
+clang/   - cellular programming language experimentation
+
+
+Commands
+========
+
+See the user's guide for more info.
+
+Compiling
+=========
+
+Note that some Java compilers may have trouble with dependencies so 
+you may have to run "make" several times. REMEMBER TO SET YOUR CLASSPATH
+CORRECTLY!
+
+Bug reporting
+=============
+
+Bug reports are gladly accepted. See the FAQ for more info.
+
+Please run
+
+	java org.gzigzag.ChkVersion
+
+and include the output so we can be sure which version of each file
+you're running.
+
+
+Requirements
+============
+
+First of all, the center of it all: make. GNU make version 3.78.1 is
+known to work.
+
+Java Developer's Kit, version 1.1 or later.  Kaffe won't work.
+
+Swing is no longer required.
+
+Perl, version 5.004 or later, is required by the zob stuff.
+
+This is all you need to compile & run the core GZigZag. In the 
+directory ../Modules are some modules useful for various things. For
+convenience, they are called from the Makefile in this directory.
+
+IF YOU DO NOT WANT TO INSTALL THE REQUIREMENTS FOR A MODULE, JUST
+REMOVE IT FROM THE 
+
+	MODULES=...
+
+LINE IN THE MAKEFILE.  You can also specify it on the make command
+line like this:
+
+       make MODULES=""
+
+
+Requirements for modules
+========================
+
+1. xml
+
+To use the XML module, you need the Xerces  libraries from 
+http://xml.apache.org, version 1.1.2 or later. 
+If there is a problem, please report it to me.
+
+2. mbox
+
+You need the GNU regexp libraries, version 1.0.8, for parsing mailboxes.
+Note that this module is not yet very useful so it's developers only.
+
+3. test
+
+This just contains small test classes for various features and is 
+mostly useful for developers only. Use the source, Luke.
+
+4. sound
+
+This module requires JMF, the Java Media Framework, version 2.0,
+available from java.sun.com either as a pure Java download or an accelerated
+version for Solaris or NT.
+
+5. applet
+
+This module requires the XML module. If you would like to use ZZApplet
+from a browser, like netscape navigator, you must have OpenXML
+libraries in the path the browsers JVM searches.  Tuomas got it
+working by copying openxml.jar to netscapes library directory. ( vp )
+
+Documentation
+=============
+
+The javadocs embedded in the sources (which may be converted to HTML
+using the Sun javadoc program) may help quite a bit.
+
+See also the directory ../Documentation
+
+
+A weird JNI Perl scripting thing
+================================
+
+In the script/ subdirectory there is a JNI interface to the Perl scripting
+module of the C++ side, which works: this is intended as a temporary
+measure to allow scripting within the Java client. Eventually this should
+be replaced with the ZZ Scripting language plus TCP/IP connection to a
+Perl script server, if required. Compiling the jzigzag program can be
+a bit difficult but is well worth it.
+
+
+ -- The GZigZag team

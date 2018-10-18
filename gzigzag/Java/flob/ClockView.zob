@@ -1,0 +1,117 @@
+/*   
+ClockView.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos 
+ */
+ 
+
+package org.gzigzag;
+import java.awt.*;
+import java.util.*;
+
+public class ClockView implements FlobView, ZOb {
+public static final String rcsid = "$Id: ClockView.zob,v 1.2 2001/06/13 11:29:06 wikikr Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	boolean allow_ellipse
+	    = true;
+	boolean show_flob_dim
+            = false; 
+	boolean include_this
+            = false;
+	boolean show_marked
+            = true;
+    }
+
+    void place(FlobFactory fact, FlobSet f, ZZCell c, float circumpos, 
+	       Dimension realdim, boolean is_focus) {
+	float x, y, mx, my, maxd, dx, dy, dist, fract; 
+	mx = (float)(realdim.width>>1); 
+	my = (float)(realdim.height>>1);
+	maxd = (float)Math.sqrt(mx*mx + my*my);
+	dx = (float)(Math.cos(circumpos) * mx * (float)0.618); 
+	dy = (float)(Math.sin(circumpos) * my * (float)0.618);
+	dist = (float)Math.sqrt(dx*dx + dy*dy);
+	x = mx; y = my; 
+        fract = (float)1.0;
+	if(!is_focus) { 
+            x += dx; y += dy; 
+            fract -= dist/(maxd*(float)2.0);
+        }
+	fact.placeFlob(f, c, c, fract, (int)x, (int)y, 
+                       1, (float)0.5, (float)0.5);
+    }
+    
+    public void raster(final FlobSet into, final FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+	final Dimension fs = into.getSize();
+	Dimension realdim;
+
+	if(!allow_ellipse) {
+            int min_dim = fs.width < fs.height ? fs.width :  fs.height;
+	    realdim = new Dimension(min_dim, min_dim);
+        } else realdim = fs;
+	
+	LoopDetector l = new LoopDetector();
+	String dim = dims[0];
+	ZZCell start = accursed.h(dim);
+	if(!include_this) start = start.s(dim);
+
+        ZZCell cur = start;
+        Vector roundRank = new Vector();
+        while(cur != null) {
+            if(!show_marked)
+                roundRank.addElement(cur);
+            else if(cur.s("d.mark-set") != null)
+                roundRank.addElement(cur);
+            l.detect(cur);
+            cur = cur.s(dim);
+	    // single loop is allowed
+	    if(cur == start) break;
+        }
+
+	int n = roundRank.size();
+	float incr, circumpos = (float)0.0;
+	if(n == 1) 
+            incr = (float)0.0;
+	else 
+	    incr = (float)6.28/(float)(n-1);
+
+	boolean is_focus;
+	ZZCell c_focus = ZZCursorReal.get(view);
+	for(int i=0; i<n; i++) {
+	    ZZCell c = (ZZCell)roundRank.elementAt(i);
+	    is_focus = c.equals(c_focus);
+	    place(fact, into, c, circumpos, realdim, is_focus);
+	    if(is_focus) continue;
+            circumpos += incr;
+        } 
+
+	// linker.decorate(into, "", view);
+
+       // Do the dimensions. 
+        if(show_flob_dim)
+	    ZZUtil.showFlobDims(into, fact, view, 1);
+    }
+}
+

@@ -1,0 +1,136 @@
+/*   
+DefaultInputReader.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+
+/* Default class for reading/interpreting map inputs.
+ */
+
+package org.gzigzag.map;
+import org.gzigzag.*;
+import java.util.*;
+
+public class DefaultInputReader implements ZZMap.InputReader, ZOb {
+
+    STRUCTPARAMS {}
+
+    private String[] cur_dims = null;
+    private ZZCell cur_context = null;
+
+    public boolean contextChanged(String[] dims, ZZCell new_context) {
+        if(!new_context.equals(cur_context)) return true;
+        if(dims.length != cur_dims.length) return true; 
+	for(int i=0; i<dims.length; i++) {
+            if(!dims[i].equals(cur_dims[i])) return true;
+        }
+        return false;
+    }
+
+    /* This is simple, experimental way to do things. Currently,
+     * inputs are all (clone head)cells on dimensions 'dims' starting 
+     * from 'context'. Input vectors consist of dims.length*digitsPerDim
+     * numbers. If 'digitsPerDim' = 8, then ivec is 
+     * XXXXxxxxYYYYyyyyZZZZzzzz, where x, X, y, Y, z, Z are {0/1}.
+     * Leftmost digit has index 0.
+     * Example: ivec = ( 0001 0000  0011 0000  0000 0001 )
+     * means that the correspoding inputvec is 1-step poswards from 
+     * maproot cell along dim x, 2-steps poswards from maproot (=context) 
+     * along dim 'y' and 1 step negwards along the last dim.
+     */
+    public void read(String[] dims, ZZCell new_context, 
+                     ZZCell[][] cells, int[][][] inputs) {
+        cur_dims = dims;
+        cur_context = new_context;
+
+        System.out.println("default reader!");
+
+        Hashtable cellh = new Hashtable();
+        int digitsPerDim = 8;
+        int input_length = dims.length * digitsPerDim;
+        int pos, max_pos = -1, max_pos_ = -1;
+        ZZCell ch;
+        ZZCell[] c = new ZZCell[2];
+        for(int i=0; i<dims.length; i++) {
+            pos = 0;
+            c[0] = new_context;
+            c[1] = new_context.s(dims[i],-1);
+            while(c[0] != null || c[1] != null) {
+                for(int j=0; j<2; j++) {
+                    if(c[j] == null) continue;
+                    if(c[(j+1)%2] != null) {
+                        if(c[0].equals(c[1])) {
+                            c[0] = c[1] = null; 
+                            break;
+                        }
+                    }
+                    int dir = j==0 ? 1 : -1; 
+                    ch = c[j].h("d.clone");
+                    if(cellh.containsKey(ch)) {
+                        ((Vector)(cellh.get(ch))).add(
+                                            new int[] {i, dir*(pos+j)});
+                    } else {
+                        Vector v = new Vector();
+                        v.add(new int[] {i, dir*(pos+j)});
+                        cellh.put(ch, v);
+                    }
+                    c[j] = c[j].s(dims[i], dir);
+                }
+                pos++; 
+
+                System.out.println("pos="+pos);
+            }
+        }
+        int n, i=0, j;
+        inputs[0] = new int[cellh.size()][];
+        cells[0] = new ZZCell[cellh.size()];
+        for(Enumeration e=cellh.keys(); e.hasMoreElements(); ) {
+            ch = (ZZCell)e.nextElement();
+            Vector dim_pos_vec = (Vector)cellh.get(ch); 
+            cells[0][i] = ch;
+            inputs[0][i] = new int[input_length];
+            for(j=0; j<dim_pos_vec.size(); j++) {
+                int[] dimAndPos = (int[])dim_pos_vec.elementAt(j);
+                int segm = dimAndPos[0]*digitsPerDim;
+                segm += dimAndPos[1]>=0 ? 0 : digitsPerDim>>1;
+                int ones;
+                ones = Math.min(Math.max(dimAndPos[1], -dimAndPos[1]), 
+                                digitsPerDim>>1);
+                if(ones==0) {
+                    inputs[0][i][segm] = 1;
+                    inputs[0][i][segm+(digitsPerDim>>1)] = 1;
+                } else 
+                    for(int offs=0; offs<ones; offs++) {
+                        inputs[0][i][segm+offs] = 1;                    
+                    }
+            }
+            i++;
+        }
+        /*        
+        for(i=0; i<inputs[0].length; i++) {
+            System.out.println("input("+i+") = ");
+            for(j=0; j<inputs[0][i].length; j++)
+                System.out.print(inputs[0][i][j]+",");
+        }
+        */
+       
+    }
+}
+
+
+

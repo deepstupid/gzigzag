@@ -1,0 +1,492 @@
+/*   
+TreeRaster.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Antti-Juhani Kaijanaho
+ */
+ 
+
+package org.gzigzag;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
+import java.util.NoSuchElementException;
+
+/** A flobraster showing the ZZ space as a tree-like structure. */
+public class TreeView implements FlobView, ZOb {
+public static final String rcsid = "$Id$";
+    /** Should we print out debugging info? */
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) pa(s); }
+    static final void pa(String s) { System.out.println("(flob)TreeRaster: " + s); }
+
+    STRUCTPARAMS {
+
+        /** The size factor applied to cells.  */
+        float initmul
+            = (float)1.6;
+
+        /** How many recursion levels shall we render (half up, half
+            down depthwise)? */
+        int maxdepth
+            = 4;
+
+        /** The distance between neigbouring cells.
+         */
+        int[] gap // 2..2
+            = new int[] {3, 6};
+
+        /** The factor of enlargement of cells as they move away
+            depthwise from the accursed cell.  Element 0 is
+            horizontal, element 1 is vertical. */
+        float[] shrink
+            = new float[] {(float) 0.7, (float) 0.8};
+
+        /** Should the tree lines be drawn at all? */
+        boolean treelines
+            = true;
+
+        /** Should the tree be shown "depthhorizontal", ie. depth rightwards? */
+        boolean depthhorizontal
+            = false;
+    }
+    
+    int recdepth;
+
+    public TreeView() { recdepth = 0; }
+
+    /** A dimension vector in the ZZ space. A dimension vector is
+        immutable. */
+    private static final class DimVector {
+        /** The dimension along which this vector goes. */
+        private String dim;
+        /** The direction (poswards or negwards) along the dimension. */
+        private int dir;
+
+        /** Constructor from dimension and direction. */
+        public DimVector(String dim, int dir) {
+            this.dim = dim;
+            this.dir = dir;
+            if (dir == 0) throw new IllegalArgumentException("Direction must be nonzero.");
+        }
+
+        /** Get the dimension along which this vector goes. */
+        public String getDimension() { return dim; }
+        /** Get the direction along the dimension. */
+        public int getDirection() { return dir; }
+
+        /** Find a cell's successor along this vector.  The successor
+            of a cell is defined as the neighbour of that cell on the
+            vector's dimension and direction.
+
+            @param c A cell whose successor is wanted.
+
+            @return Cell which lies along the vector's dimension and
+            direction from the parameter cell*/
+        public ZZCell getCellSuccessor(ZZCell c) {
+            return c.s(dim, dir);
+        }
+
+        
+        /** Find a cell's predecessor along this vector.  The
+            predecessor of a cell is defined as the neighbour of that
+            cell on the vector's dimension and negated direction.  For
+            example, if the vector is "poswards along d.1", then a
+            cell's predecessor is its neighbour negwards along d.1.
+
+            @param c A cell whose predecessor is wanted.
+
+            @return Cell which lies along the vector's dimension and
+            negated direction from the parameter cell*/
+        public ZZCell getCellPredecessor(ZZCell c) {
+            return c.s(dim, -dir);
+        }
+    }
+
+    /** Decider of a cell's size on canvas.  */
+    private static final class CellSizeDecider {
+        /** A precomputed prototype size of a cell.  This dimension is
+            scaled to reach the size of a cell. */
+        Dimension proto;
+
+        /** Get a cell's size with an enlargement factor. */
+        public Dimension getCellSize(ZZCell c, double frac) {
+            Dimension rv = new Dimension (proto);
+            rv.width *= frac;
+            rv.height *= frac;
+            return rv;
+        }
+
+        /** Creates an instance from a RasterFlobFactory instance.
+            The decisions made by CellSizeDecider will be based on the
+            RasterFlobFactory's decisions. */
+        public CellSizeDecider(FlobFactory fact) {
+            proto = fact.getSize(null, 1);
+        }
+    }
+
+    public class PositionDecider {
+        private Hashtable cellpos = new Hashtable();
+        private Hashtable celldepth = new Hashtable();
+        private Hashtable cellsize = new Hashtable();
+        private Hashtable extracells = new Hashtable();
+        private Hashtable cellchildren = new Hashtable();
+
+        private int canvaswidth;
+
+        private ZZCell accursed;
+
+        /** The current breadth coordinate. */
+        private int currbcoord = 0;
+
+        private DimVector breadth;
+        private DimVector depth;
+
+        private Dimension[] gaps;
+        private Dimension[] csize;
+        private Dimension[] smcsize; // size of "small" cells
+
+        /** Depth coordinates for given depths. */
+        private int[] dcoord;
+
+        private final void py(String s) {
+            p("PositionDecider(" + currdepth + "): " + s);
+        }
+
+        private int currdepth = 0;
+
+        /** Place tree cells.
+
+            @return A vector containing the children of this root.
+         */
+        public Vector place_tree_cells(ZZCell root) {
+            if (currdepth + 1 >= maxdepth) return new Vector();
+
+            ++currdepth;
+
+            Vector rv = new Vector();
+
+            py("start");
+
+            if (root == null) {
+                py("root is null");
+            } else {
+                py("root is " + root.getID());
+            }
+
+            // position a cell not in the tree that lies left from the root
+            ZZCell cell = root == null ? null : breadth.getCellPredecessor(root);
+            if (cell != null && !cellpos.containsKey(cell)) {
+                Dimension s = smcsize[currdepth];
+                Dimension pos = new Dimension();
+                pos.width = currbcoord;
+                pos.height = dcoord[currdepth]
+                    + csize[currdepth].height / 2 - s.height / 2;
+                cellpos.put(cell, pos);
+                celldepth.put(cell, new Integer(maxdepth + 1));
+                cellsize.put(cell, s);
+                extracells.put(cell, cell);
+                currbcoord += s.width + gaps[currdepth].width;
+            }
+
+            if (root != null && cellpos.containsKey(root)) py("root is known");
+
+            int count = 0;
+            for (cell = root;
+                 cell != null && (!cellpos.containsKey(cell)
+                                  || extracells.containsKey(cell));
+                 cell = breadth.getCellSuccessor(cell)) {
+
+                if (extracells.containsKey(cell)) extracells.remove(cell);
+
+                py("cell " + cell.getID());
+                cellpos.put(cell, new Dimension());
+
+                rv.addElement(cell);
+
+                int startbcoord = currbcoord;
+                Vector children = place_tree_cells(depth.getCellSuccessor(cell));
+                int endbcoord = currbcoord;
+                
+                cellchildren.put(cell, children);
+
+                Dimension cs = csize[currdepth];
+
+                int dcorr = 0;
+                // contain too many siblings so that
+                // eg. d.cellcreation as breadth does not hang;
+                // however, we must go on until the accursed cell is
+                // with us.
+                if (count > canvaswidth / csize[currdepth].width
+                    && cellpos.containsKey(accursed) && cell != accursed) {
+                    cs = smcsize[currdepth];
+                    dcorr = csize[currdepth].height / 2 - cs.height / 2;
+                    extracells.put(cell, cell);
+                }
+                cellsize.put(cell, cs);
+
+                Dimension cpos = new Dimension((startbcoord + endbcoord - cs.width) / 2,
+                                               dcoord[currdepth] + dcorr);
+
+                if (cpos.width < startbcoord) cpos.width = startbcoord;
+                
+                py("positioning cell " + cell.getID() + " at (" + cpos.width + "," + cpos.height + ")");
+                cellpos.put(cell, cpos);
+                celldepth.put(cell, new Integer(currdepth));
+                if (currbcoord < cpos.width + cs.width + gaps[currdepth].width)
+                    currbcoord = cpos.width + cs.width + gaps[currdepth].width;
+
+                // position a cell not in the tree that lies up from the root
+                ZZCell up = depth.getCellPredecessor(cell);
+                if (up != null && !cellpos.containsKey(up)) {
+                    Dimension s = smcsize[currdepth];
+                    Dimension pos = new Dimension();
+                    pos.width = cpos.width + csize[currdepth].width / 2 - s.width / 2;
+                    pos.height = cpos.height - s.height - gaps[currdepth].width / 2;
+                    cellpos.put(up, pos);
+                    celldepth.put(up, new Integer(maxdepth + 1));
+                    cellsize.put(up, s);
+                    extracells.put(up, up);
+                }
+
+                if (extracells.containsKey(cell)) break;
+                count++;
+            }
+            py("finish");
+            --currdepth;
+            return rv;
+        }
+
+        public PositionDecider(DimVector breadth, DimVector depth,
+                               Dimension fs, FlobFactory fact,
+                               ZZCell accursed) {
+            this.breadth = breadth;
+            this.depth = depth;
+            this.canvaswidth = fs.width;
+
+            this.accursed = accursed;
+
+            py("created");
+            
+            gaps = new Dimension[maxdepth];
+            csize = new Dimension[maxdepth];
+            smcsize = new Dimension[maxdepth];
+            dcoord = new int[maxdepth];
+            
+            gaps[maxdepth/2] = new Dimension(gap[0], gap[1]);
+            csize[maxdepth/2] = new Dimension(fact.getSize(null, initmul));
+            if (depthhorizontal) {
+                int tmp = csize[maxdepth/2].width;
+                csize[maxdepth/2].width = csize[maxdepth/2].height;
+                csize[maxdepth/2].height = tmp;
+            }
+            dcoord[maxdepth/2] = (depthhorizontal ? fs.width : fs.height) / 2;
+            for (int i = maxdepth / 2 - 1; i >= 0; i--) {
+                gaps[i] = new Dimension((int)(gaps[i+1].width * shrink[0]),
+                                       (int)(gaps[i+1].height * shrink[1]));
+                csize[i] = new Dimension((int)(csize[i+1].width * shrink[0]),
+                                         (int)(csize[i+1].height * shrink[1]));
+                dcoord[i] = dcoord[i+1] - (csize[i+1].height + gaps[i+1].height);
+            }
+            for (int i = maxdepth / 2 + 1; i < maxdepth; i++) {
+                gaps[i] = gaps[maxdepth - 1 - i];
+                csize[i] = csize[maxdepth - 1 - i];
+                dcoord[i] = dcoord[i-1] + csize[i-1].height + gaps[i-1].height;
+            }
+            for (int i = 0; i < maxdepth; i++) {
+                smcsize[i] = new Dimension(csize[i].width / 4,
+                                           csize[i].height / 4);
+            }
+
+        }
+        public Enumeration getCells() { return cellpos.keys(); }
+        public Dimension getCellPosition(ZZCell c) {
+            return new Dimension((Dimension)cellpos.get(c));
+        }
+        public int getCellDepth(ZZCell c) {
+            return ((Integer) celldepth.get(c)).intValue();
+        }
+        public Dimension getCellSize(ZZCell c) {
+            return new Dimension((Dimension)cellsize.get(c));
+        }
+
+        public boolean existCell(ZZCell c) {
+            return cellpos.containsKey(c);
+        }
+
+        public Enumeration getCellChildren(ZZCell c) {
+            Object o = cellchildren.get(c);
+            Vector v;
+            if (o == null) v = new Vector(); else v = (Vector)o;
+            return v.elements();
+        }
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+                       ZZCell view, String[] dims, ZZCell accursed) {
+
+        DimVector breadth = new DimVector(dims[0], 1);
+        DimVector depth =  new DimVector(dims[1], 1);
+
+        if (depthhorizontal) {
+            DimVector tmp = breadth;
+            breadth = depth;
+            depth = tmp;
+        }
+
+        p("finding the root cell");
+        ZZCell root;
+        {
+            ZZCell cell = accursed;
+            int count = 0;
+            Hashtable seen = new Hashtable();
+            do {
+                root = cell;
+                seen.put(root, root);
+                cell = depth.getCellPredecessor(root);
+                boolean up = true;
+                if (cell == null) {
+                    cell = breadth.getCellPredecessor(root);
+                    up = false;
+                }
+                if (cell != null && seen.containsKey(cell)) cell = null;
+                if (cell != null && up) count++;
+            } while (cell != null && count < maxdepth / 2);
+            p("done finding the root cell");
+        }
+        
+        PositionDecider pd = new PositionDecider(breadth, depth,
+                                                 into.getSize(),
+                                                 fact, accursed);
+
+        pd.place_tree_cells(root);
+
+        Dimension acpos;
+        if (pd.existCell(accursed)) {
+            acpos = pd.getCellPosition(accursed);
+        } else {
+            pa("FIXME: accursed cell not in modeled tree");
+            acpos = into.getSize();
+            acpos.width /= 2;
+            acpos.height /= 2;
+        }
+
+        int bcorr = acpos.width - (depthhorizontal
+                                   ? into.getSize().height
+                                   : into.getSize().width) / 2;
+
+        for (Enumeration e = pd.getCells(); e.hasMoreElements();) {
+            ZZCell cell = (ZZCell) e.nextElement();
+
+            Dimension pos = pd.getCellPosition(cell);
+
+            pos.width -= bcorr;
+
+
+            if (depthhorizontal) {
+                int tmp = pos.width;
+                pos.width = pos.height;
+                pos.height = tmp;
+            }
+
+            Dimension cs = pd.getCellSize(cell);
+
+            if (depthhorizontal) {
+                int tmp = cs.width;
+                cs.width = cs.height;
+                cs.height = tmp;
+            }
+
+            int d = pd.getCellDepth(cell);
+
+            fact.makeFlob(into, cell, cell, 1, pos.width, pos.height,
+                          d, cs.width, cs.height);
+
+            // draw tree lines
+            if (treelines) {
+                for (Enumeration f = pd.getCellChildren(cell);
+                     f.hasMoreElements();) {
+                    ZZCell child = (ZZCell) f.nextElement();
+                    Dimension cpos = pd.getCellPosition(child);
+                    cpos.width -= bcorr;
+                    if (depthhorizontal) {
+                        int tmp = cpos.width;
+                        cpos.width = cpos.height;
+                        cpos.height = tmp;
+                    }
+                    Dimension chs = pd.getCellSize(child);
+                    if (depthhorizontal) {
+                        int tmp = chs.width;
+                        chs.width = chs.height;
+                        chs.height = tmp;
+                    }
+                    if (depthhorizontal) {
+                        into.add(new LineDecor(pos.width + cs.width,
+                                               pos.height + cs.height / 2,
+                                               cpos.width,
+                                               cpos.height + cs.height / 2,
+                                               Color.red,
+                                               (pd.getCellDepth(child) + d) / 2));
+                    } else {
+                        into.add(new LineDecor(pos.width + cs.width / 2,
+                                               pos.height + cs.height,
+                                               cpos.width + chs.width / 2,
+                                               cpos.height,
+                                               Color.red,
+                                               (pd.getCellDepth(child) + d) / 2));
+                    }
+                }
+            }
+        
+
+        }
+
+        // XXX This should be a structparam later on.
+        (new StdLinks()).decorate(into, "", view);
+
+        // Do the dimensions. XXX strings or cells?
+        if (true) {
+            Dimension s = fact.getSize(null, 1);
+
+            ZZCell bdim = ZZCursorReal.get(view.s("d.dims", 1));
+            ZZCell ddim = ZZCursorReal.get(view.s("d.dims", 1).s("d.dims", 1));
+
+            if (bdim == null || ddim == null) {
+                throw new ZZError("no dimensions");
+            }
+
+            Flob bfl = fact.makeFlob(into, bdim, bdim, 1, s.width, 0,
+                                     1, s.width, s.height);
+            Flob dfl = fact.makeFlob(into, ddim, ddim, 1, 0, s.height,
+                                     1, s.width, s.height);
+            bfl.flobPath = "dim";
+            dfl.flobPath = "dim";
+
+            int wh = s.width / 2;
+            int hh = s.height / 2;
+
+            into.add(new LineDecor(new int[] { wh, hh, wh, s.height,
+                                               wh, hh, s.width, hh },
+                                   8, Color.red, 1));
+        }
+    }
+}
+                                   
+// vim: set syntax=java :

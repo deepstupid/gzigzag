@@ -1,0 +1,207 @@
+/*   
+RasterFactory2.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka, multiline by Benjamin Fallenstein
+ */
+
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A simple cell factory that gives the cells as one-line strings.
+ * Variable length is possible.
+ * XXX This class is a bad copy of RasterCellFactory 1. 
+ * Inheritance should be rather used, but doesn't work yet with ZObs.
+ */
+ 
+public class CellFlobFactory2 implements FlobFactory, ZOb {
+public static final String rcsid = "$Id$";
+    public static boolean dbg = false;
+    private static final void p(String s) { if(dbg) System.out.println(s); }
+    private static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+      
+	/** The string to use to get the default cell width.  */
+	String widthstr
+	    = "0000000000";
+
+	/** The default background color. 
+	 * XXX Currently, because of color mixing, the foreground
+	 * comes from FlobSet. This should maybe change - check later.
+	 */
+	Color bg
+	    = Color.white;
+
+	/** The font for the default enlargement.  */
+	ScalableFont font
+	    = new ScalableFont("SansSerif", Font.PLAIN, 12);
+
+	/** Whether the font changes size with the enlargement.  */
+	boolean zoomfont
+	    = true;
+	
+	/** Whether the font can get bigger than the default font.
+	 * Ignored (or rather, doesn't have any effect) when zoomfont is false.
+	 */
+	boolean enlargefont
+	    = true;
+
+	/** The x and y margins
+	 */
+	int[] margins
+	    = new int[] {3, 2};
+	
+	ZOb ftextlayouter
+	    = new FTextLayouter();
+
+    }
+
+    protected Font fon(int scale) { return font.getFont(scale); }
+    protected FontMetrics fonmet(int scale) {
+	return font.getFontMetrics(scale);
+    }
+    protected int getScale(float fract) { return getScale(fract, false); }
+    protected int getScale(float fract, boolean real) {
+	if(!enlargefont && !real && fract>=1.0) return 1000;
+	return (int)(fract*1000);
+    }
+
+    public Dimension getSize(ZZCell c, float fract) {
+	String str = widthstr;
+	if(c != null) str = c.getText();
+	if(str == null) str = "";
+	FontMetrics fm = fonmet(getScale(fract, true));
+	return CellFlob1.getSize(fm, str, margins[0]*2, margins[1]*2);
+    }
+
+    public Flob makeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, int x, int y, int d, int w, int h) {
+	int scale = getScale(fract);
+	Font f = fon(scale);
+	FontMetrics fm = fonmet(scale);
+	CellBgFlob cf = new CellBgFlob(x, y, d, w, h, c);
+	Point p = cf.getPoint(1, 1);
+	p =  cf.getPoint(-1, -1);
+	cf.bg = bg;
+	int xm = margins[0], ym = margins[1];
+	addSolidColors(into, cf);
+
+	FText ftxt = new FText(new FText.Part[] {
+		new FText.CellPart(c, 0, -1, f, fm, null, null)
+	});
+	Rectangle rect = new Rectangle(x+xm, y+ym, w-xm-xm, h-ym-ym);
+
+// XXX -- make this work! (shall place cursor in middle if text too long)
+//	int offs = -1;
+//	for(Enumeration e=ZZCursorReal.getPointers(c); e.hasMoreElements();) {
+//	    int offs0 = ZZCursorReal.getOffs((ZZCell)e.nextElement());
+//	    if(offs0 != ZZCursorReal.NO_OFFSET) { offs = offs0; break; }
+//	}
+	
+	FTextLayouter ftl = (FTextLayouter)ftextlayouter;
+	ftl.firstCap = false;
+//	if(offs < 0)
+	    ftl.place(into, ftxt, rect, d, 1, rect.y+1, 0, true, cf);
+//	else
+//	    ftl.place(into, ftxt, rect, d, 0, 
+//		      rect.y+rect.height/2-fm.getHeight()/2, offs, true, cf);
+
+	into.add(cf);
+	return cf;
+    }
+    public Flob placeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		    float fract, 
+			int x, int y, int depth,
+			float xfract, float yfract) {
+		Dimension d = getSize(c, fract);
+		return makeFlob(into, c, handleCell, fract, 
+			(int)(x-xfract*d.width),
+			(int)(y-yfract*d.height),
+			depth, d.width, d.height);
+	
+    }
+
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign,
+		int depth, Dimension d) {
+	if(d == null) d = getSize(c, fract);
+	int x, y;
+	x = p.x - d.width/2; y = p.y - d.height/2;
+	if(xalign < 0) x = p.x - d.width;
+	if(xalign > 0) x = p.x;
+	if(yalign < 0) y = p.y - d.height;
+	if(yalign > 0) y = p.y;
+	return makeFlob(into, c, handleCell, fract, x, y, 
+			depth, d.width, d.height);
+    }
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign, int depth) {
+	return centerFlob(into, c, handleCell, fract, p, xalign, yalign,
+			  depth, null);
+    }
+
+    /** A routine to add solid background colors according to scheme 1.
+     * No better place to put it right now, but this routine can be
+     * called from anywhere to color the background of a cellbgflob
+     * as requested.
+     * Also adds line cursors, if any.
+     */
+    static public void addSolidColors(FlobSet into, CellBgFlob f) {
+	// Special case check: Is this a cursor or a cursor's clone?
+	ZZCell orig = f.c.h("d.clone", -1);
+	if(orig.h("d.cursor-list", -1).s("d.cursor", -1)
+	   != null) {
+	    f.addColor(ZZCursorReal.getColorOrWhite(orig));
+	    return; // XXX should draw line cursors!
+	}
+			
+	ZZCell cu = f.c.s("d.cursor", 1);
+
+	while(cu != null) {
+	    Color color = ZZCursorReal.getColor(cu);
+	    if(color != null) f.addColor(color);
+//	    String txt = cu.getText();
+//	    if(txt != null && !txt.equals("") && f instanceof CellBgFlob) {
+//		try {
+//		    int ind = Integer.parseInt(txt);
+//		    int x = ((CellBgFlob)f).getStrX(ind);
+//		    into.add(new LineDecor(x, f.y, x, f.y+f.h, 
+//			Color.black, f.d));
+//		} catch(NumberFormatException e) {
+//		}
+//	    }
+	    cu = cu.s("d.cursor-list", 1);
+	} 
+	// XXX Does not check whose mark it is - should!
+	if(f.c.s("d.mark-set", 1)!=null)
+	    f.addColor(Color.red);
+	
+	if(f.c.s("d.clone", -1) != null)
+	    f.addColor(Color.yellow);
+	else if(f.c.s("d.clone", 1) != null)
+	    f.addColor(new Color(255, 255, 192));
+
+    }
+
+}
+
+
+// vim: set syntax=java :

@@ -1,0 +1,79 @@
+/*   
+HeraclitusCommand.java
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Antti-Juhani Kaijanaho
+ */
+
+package org.gzigzag;
+import java.awt.*;
+
+/** ZZCommand interface to Heraclitus Clang. 
+ */
+class HeraclitusCommand extends ZZCommand implements ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) ZZLogger.log(s); }
+    static final void pa(String s) { ZZLogger.log(s); }
+    
+    STRUCTPARAMS {
+        /** Heraclitus operation cell. */
+        ZZCell op
+            = null;
+    }
+
+    INITIALIZE {
+	if(op == null)
+	    throw new ZZError("Must specify Heraclitus Clang operation!");
+    }
+
+    public void exec(ZZCell param) {
+        throw new ZZError("exec not implemented yet");
+    }
+
+
+    public void execCallback(
+		    ZZCell target,
+		    ZZView view, 
+		    ZZView cview,
+		    String key,
+		    Point pt, 
+		    ZZScene xi
+		     ) {
+        ZZCell curspar = op.N();
+        ZZCell curs1 = op.N();
+        ZZCell curs2 = curs1.N("d.1", 1);
+        ZZCursorReal.set(curs1, cview.getViewcell());
+        ZZCursorReal.set(curs2, view.getViewcell());
+        ZZCursorReal.set(curspar, curs1);
+        try {
+            p("Enter heraclitus: ");
+            org.gzigzag.heraclitus.HeraclitusClang.execute(op, curspar);
+            p("Exit heraclitus");
+        } finally {
+            ZZCursorReal.delete(curs1);
+            ZZCursorReal.delete(curs2);
+            ZZCursorReal.delete(curspar);
+            curs1.delete();
+            curs2.delete();
+            curspar.delete();
+        }
+
+    }
+    
+}
+
+// vim: set syntax=java :

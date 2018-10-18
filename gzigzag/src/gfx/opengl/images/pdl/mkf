@@ -1,0 +1,7 @@
+draw4: draw4.cxx
+	g++-3.0 -Wall -g -o draw4 -I/usr/include/freetype2 -I$(HOME)/gummiterm/libgummi draw4.cxx -lglut
+draw3: draw3.cxx
+	g++-3.0 -o draw3 -I/usr/include/freetype2 -I$(HOME)/gummiterm/libgummi draw3.cxx -lglut
+
+draw2: draw2.cxx
+	g++-3.0 -o draw2 draw2.cxx -lglut

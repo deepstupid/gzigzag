@@ -1,0 +1,34 @@
+Arvoisat perheportaalilaiset, pahoittelen etten itse voi olla läsnä tämän
+päivän kokouksessa Helsingissä olevien menojen vuoksi. Olen kuitenkin
+viime hetkeen asti hionut tätä demoa (joka sen vuoksi tietysti saattaa
+olla toimimatta alkuunkaan).
+
+Demon tarkoituksena on esitellä helppoa käyttöliittymää vapaaseen 
+rakenteelliseen dataan. Tässä näytettävä käyttöliittymä on erittäin
+yksinkertainen mutta silti sillä pystyy tekemään hyvin monia eri asioita,
+koska se antaa käyttäjän rakentaa hyperrakenteen vapaasti itse.
+
+Tästä demosta puuttuu muutamia siihen suunniteltuja asioita: yhden paperilapun
+taustakuvana pitäisi olla kalenteri päivineen, jolloin siihen voisi suoraan
+merkitä kalenterimenoja siten, että jos alkaa kirjoittaa "Vee", systeemi
+näyttää marginaalissa kaikki muut "Vee" -alkuiset kirjoitukset, jolloin
+esim. "Veera Miettisen" puhelinnumero voidaan suoraan kytkeä kalenteriin.
+
+Demo on kesken, koska lopullinen käyttöliittymäkuvaus kehitettiin vasta
+tiistaina; ajatuksia oli kehitelty pitkään ja lopulta ne kiteytyivät mutta
+jäljelle ennen tätä kokousta jäi valitettavan vähän aikaa työstää näytettävä
+esimerkki.
+
+Kaikenlaisia laajennusideoita on; esim. marginaaliin voidaan tuoda myös
+muita merkkijonoihin liittyviä tietoja -- esim. Zed Finder. Näin Soneran
+palvelut olisivat suoraan käytössä ilman, että käyttäjän tarvitsisi
+kahlata erilaisten sivujen ja käyttöliittymien läpi päästäkseen niihin.
+
+Toinen kehityskelpoinen idea silloin kun datan määrä kasvaa on pikkuhiljaa
+suurentaa niitten linkitettävien kohteitten kokoa, jotka useammin tulevat
+linkitetyiksi.
+
+Olen tällä hetkellä puhelimen tavoitettavissa, mikäli tarvitaan; Tuukalla
+on numero.
+
+    Tuomas

@@ -1,0 +1,19 @@
+Modules
+=======
+
+This directory contains various modules that depend on things
+we don't want the main Java code to depend so that compilation 
+remains reasonably simple. 
+
+So the rule is: the Java code in the main package MAY NOT REFER TO
+THESE CLASSES EXPLICITLY. Referrals are to happen through Class.forName()
+with the name obtained through the structure. All code in the main package
+should work without these modules.
+
+Currently, the modules are
+
+mbox/		-- convert an mbox into a String stream and ZZCell structure.
+applet/		-- zigzag within the browser ! Actually this isn't a module,
+		   in a sense that ZZApplet doesn't conform to ZZModule 
+	 	   interface. ZZApplet is located here because it requires
+		   XML module to work.

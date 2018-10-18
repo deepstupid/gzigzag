@@ -1,0 +1,51 @@
+ body { color: black; background: white; 
+ 	margin-left: 15%; margin-right: 5%;
+	margin-top: 0.5em; margin-bottom: 0.5em;
+	text-align: left; 
+	font-size: medium;
+	}
+ h1 { margin-left: -15%;}
+ h2 { margin-left: -15%; margin-top: 2.0em; margin-bottom: 0.5em; }
+ h3 { margin-left: -7%;  margin-top: 0.75em; margin-bottom: 0.5em; }
+ h4 { margin-left: -0%;  margin-top: 0.5em; }
+ h4 { margin-bottom: 0.25em; }
+ h5 { margin-bottom: -1em; }
+ h1, h2, h3, h4, h5, p, ul { font-family: sans-serif; }
+ h1, h2, h3, h4, h5 { font-weight: bold; }
+ h1, h2, h3, h4 { background: #b0e0e0; border-style: solid; border-color: black;
+		border-width: thin;
+		clear: both; }
+ h1 { font-size: 300%; }
+ h2 { font-size: 220%; }
+ h3 { font-size: 160%; }
+ h4 { font-size: 120%; }
+ h5 { font-size: 100%; }
+ dt { font-weight: bold; }
+ dfn { font-weight: bold; }
+ code { font-family: monospace; }
+/* .clearup { clear: both; } */
+ .figure { clear: both; float: right; padding: 1em; padding-bottom: 0em;
+ 		border: 1pt solid black; margin-left: 1.5em; 
+		margin-right: -5%;}
+ .figureimg { text-align: center; }
+ .wideimg { margin-left: -18%; margin-right: -6%; }
+ .abstract { width: 60%; text-align: center; }
+ .algorithm { font-family: serif; background: #00E0E0; margin-left: 1cm;}
+ span.red { color: red; background: white;}
+ span.green { color: green; background: white; }
+
+ .old { font-size: x-small; color: #a0a0a0; }
+
+ /* Voices */
+ .tjl { color: #006000; font-family: serif; font-size: medium; }
+ .rtr { color: #a00000; font-family: serif; font-size: medium; }
+ .benja { color: #6633FF; font-family: serif; font-size: medium; }
+ .jvk { color: #000080; font-family: serif; font-size: medium; }
+ .ajk { color: #EE00EE; font-family: serif; font-size: medium; }
+ .tuukka { color: #2ea597; font-family: serif; font-size: medium; }
+
+ .statement { background: #efa13b; }
+ .tjllogo { vertical-align: -50%; }
+
+ .csswarn { background: #e0f0f0; border-width: thin; border-style: solid;
+	    border-color: black; padding: 2em; font-size: small;}

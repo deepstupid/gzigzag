@@ -1,0 +1,154 @@
+/*   
+ZZSOM1.java
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+
+package org.gzigzag.map;
+import org.gzigzag.*;
+import java.util.*;
+
+public class ZZSOM1 extends ZZMap implements ZOb {
+
+    STRUCTPARAMS {
+        int w 
+            = 9;
+
+        int h 
+            = 9;
+
+        ZOb inputReader 
+            = new DefaultInputReader();
+    }
+
+    protected float[][] grid;
+    protected int[] weightToCenter;
+    protected SOM1.SquareLattice l;
+    protected SOM1 s;
+    protected boolean changed = true;
+    protected int[] input_positions = null;
+    
+
+    public void initGrid(int w, int h) {
+        for(int i=0; i<w; i++) {
+            for(int j=0; j<h; j++) {
+	        grid[l.getN(i, j)][0] = (float)(2*i+1)/(float)(w*2);
+	        grid[l.getN(i, j)][1] = (float)(2*j+1)/(float)(h*2);
+            }
+        }
+    }
+
+    // this is called by ZZMap's 'initialize'
+    protected void mapInit() {
+        l = new SOM1.SquareLattice(w,h);
+        grid = new float[l.getSize()][2];    
+        initGrid(w, h);
+        // no background iteration
+        //setIterationRate(-1);
+    }
+
+    // this is called by ZZMap's 'update'
+    protected void mapUpdate() {
+        if(s == null) {
+            s = new SOM1(inputSize(), l);
+        }
+        // change som only if dimension has changed 
+        if(s.getVec()[0].length != inputSize())
+            s = new SOM1(inputSize(), l);
+	weightToCenter = new int[nInputs()];
+        try {
+            weightToCenter[focusId()] = 10;
+        } catch(ZZMap.NoFocusException e) {} 
+    }
+
+    protected ZZMap.Particle makeParticle(int id, ZZCell c, int[] input_vec,	                                         boolean focus) {
+        return (ZZMap.Particle)(new SOMParticle(id, c, input_vec));
+    }
+
+    // if two inputs intersects, decide which one to show
+    protected ZZMap.Particle compareParticles(ZZMap.Particle p1, 
+                                              ZZMap.Particle p2) {
+        if(p1.priority() > p2.priority()) return p1;
+        if(p2.priority() > p1.priority()) return p2;
+        // if priorities are the same, test which one
+        // match better with the weights
+        if(weights[p1.id()] > weights[p2.id()]) return p1;
+        return p2;
+    }
+
+
+    synchronized public boolean iterate() {
+	if(inputs == null) return false;
+	//for(int i=0; i<weightToCenter.length; i++) weightToCenter[i] = 0;
+	((SOM1.SquareLattice)s.getGeom()).setWeightToCenter(weightToCenter);
+        s.teachBatch(inputs, null);
+        //s.teachOnline(inputs, weights);
+        /*
+        float[][] v = s.getVec();
+        for(int i=0; i<v.length; i++) {
+            System.out.println("neuron:"+i);
+            System.out.println("");
+            for(int j=0; j<v[i].length; j++) {
+                System.out.print(""+v[i][j]+", ");
+            }
+        }
+        */
+        int[] tmp_pos = s.findBest(inputs);
+        for(int i=0; i<tmp_pos.length; i++) 
+            if(input_positions == null || tmp_pos[i] != input_positions[i]) {
+                input_positions = tmp_pos;	
+                changed(true);
+                // decide which inputs to show...
+                ZZMap.Particle oldp, betterp;
+                Hashtable poshash = new Hashtable();
+                for(int j=0; j<input_positions.length; j++) {
+                    float[] posCoord = grid[input_positions[j]];
+                    Integer posInt = new Integer(input_positions[j]); 
+                    if(!poshash.containsKey(posInt)) {
+                        inputs[j].coord(posCoord);
+                        poshash.put(posInt, inputs[j]);
+                    }
+                    else {
+                        oldp = (ZZMap.Particle)poshash.get(posInt);
+                        betterp = compareParticles(oldp, inputs[j]);
+                        betterp.coord(posCoord);
+                        poshash.put(posInt, betterp);
+                    }
+                }
+                i=0;
+                // 'shown_inputs' has the indices of inputs to
+                // be shown
+                shown_inputs = new int[poshash.size()]; 
+                for(Enumeration e=poshash.elements(); e.hasMoreElements(); ) {
+                    shown_inputs[i] = ((ZZMap.Particle)e.nextElement()).id();
+                    i++;
+                }
+                break;
+            }
+        return changed;
+    }
+}
+
+
+
+
+
+
+

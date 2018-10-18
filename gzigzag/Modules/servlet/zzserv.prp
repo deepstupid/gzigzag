@@ -1,0 +1,42 @@
+*.CLASS                   : com.mortbay.HTTP.HttpServer
+*.LISTENER.*.CLASS        : com.mortbay.HTTP.HttpListener
+*.*.Log.CLASS             : com.mortbay.HTTP.Handler.LogHandler
+*.*.Auth.CLASS            : com.mortbay.HTTP.Handler.BasicAuthHandler
+*.*.Alias.CLASS           : com.mortbay.HTTP.Handler.TranslateHandler
+*.*.Filter.CLASS          : com.mortbay.HTTP.Handler.FilterHandler
+*.*.Html.CLASS            : com.mortbay.HTTP.Filter.HtmlFilter
+*.*.Param.CLASS           : com.mortbay.HTTP.Handler.ParamHandler
+*.*.Session.CLASS         : com.mortbay.HTTP.Handler.SessionHandler
+*.*.Servlet.CLASS         : com.mortbay.HTTP.Handler.ServletHandler
+*.*.File.CLASS            : com.mortbay.HTTP.Handler.FileHandler
+*.*.Forward.CLASS         : com.mortbay.HTTP.Handler.ForwardHandler
+*.*.NotFound.CLASS        : com.mortbay.HTTP.Handler.NotFoundHandler
+*.*.Proxy.CLASS           : com.mortbay.HTTP.Handler.ProxyHandler
+*.*.DefaultEx.CLASS       : com.mortbay.HTTP.Handler.DefaultExceptionHandler
+*.*.TerseEx.CLASS         : com.mortbay.HTTP.Handler.TerseExceptionHandler
+
+*.*.ZZServer.CLASS        : org.gzigzag.module.ZZServlet
+*.*.Servlet.PROPERTY.SERVLET.ZZServer.CLASS        : org.gzigzag.module.ZZServlet
+*.*.Servlet.PROPERTY.SERVLET.ZZServer.PROPERTY.space        : /home/tjl/tspc
+*.*.Servlet.PROPERTY.CLASSPATH                 : /home/tjl/gzigzag/Java/org/gzigzag:/home/tjl/gzigzag/Java/org/gzigzag/module:/home/tjl/gzigzag/Java/
+
+SERVERS			: main
+main.root.PATHS                           : /
+
+main.LISTENER.all.ADDRS                   : 0.0.0.0:8080;127.0.0.1:8888
+main.LISTENERS                            : all
+main.STACKS                               : root
+
+
+
+main.root.HANDLERS                        : Servlet;NotFound
+
+*.*.Servlet.PROPERTY.PATHS                     : /
+
+*.*.Servlet.PROPERTY.Loader                    : com.mortbay.HTTP.Handler.FileJarServletLoader
+*.*.Servlet.PROPERTY.AutoReloadDynamicServlets : True
+*.*.Servlet.PROPERTY.SERVLET.*.Initialize      : False
+*.*.Servlet.PROPERTY.SERVLET.Dump.Initialize   : True
+*.*.Filter.PROPERTY.Html.CLASS                 : com.mortbay.HTTP.Filter.HtmlFilter
+
+

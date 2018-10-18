@@ -1,0 +1,130 @@
+\documentclass[twocolumn]{article}
+\usepackage[boldsans]{concmath}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+
+\newcommand{\ra}{$\rightarrow$}
+\newcommand{\nakki}[1]{\marginpar{\textbf{\small Nakki: #1}}}
+
+\textwidth=13cm
+\columnsep=1cm
+
+\begin{document}
+\title{A focus+context view for threaded message forums using 
+        the GZigZag hyperstructure toolkit}
+\author{Hyperstructure group\\ (ketkä kaikki haluaa olla mukana? Who
+        want to be in on this?)}
+\maketitle
+
+\marginparwidth=3cm
+\oddsidemargin=1.3cm
+
+\begin{verbatim}
+$Revision: 1.8 $  
+$Date: 2001/02/28 10:34:50 $
+$Author: tjl $
+\end{verbatim}
+
+\section{Introduction}
+
+	\begin{itemize}
+		\item General discussion
+		\item References to focus+context
+		\item discussion of hyperstructure and zz.
+		\item Message forums - references
+		\item message forum / chat visualizations: Vesa said
+			he had something about chat f+c.
+		\item (or is this another paper:) references to
+			timing, frame rate, response times etc.
+			What feels responsive, what jammed.
+	\end{itemize}
+
+\section{The ZigZag structure}
+
+                \begin{itemize}
+		\item Cells and dimensions
+		\item Speciality: just about everything has an unique
+			identity in the same space (cells).
+		\item A new way of representing state of program - a new,
+			associative memory model
+                \end{itemize}
+
+\section{The GZigZag platform}
+
+	\begin{itemize}
+	\item An experimental prototype implementation of the structure
+	\item ALL program state stored in a persistent ZZ structure, including
+		cursors and view parameters
+	\end{itemize}
+
+	Viewing:
+
+                \begin{itemize}
+                \item Cell id \ra VOb id \ra automatic animation
+                \item separate cellviews and views
+                \item new views easy to write: just slap VObs on screen .
+			general animation code works and handles the rest.
+                \end{itemize}
+
+        \subsection{Persistence}
+		??
+
+        \subsection{Views}
+		??
+
+
+        \subsection{Support for focus+context}
+
+                \begin{itemize}
+		\item How easy it is to make f+c views in zz, 
+		\item code is given accursed cell, traverses neighbours
+			and slaps them on screen
+		\item animation autosupported, as well as clicking
+		\item however, random placement of things more difficult:
+			cursor is on cell. Some f+c paradigms require being
+			able to place nodes anywhere by dragging.
+		\item The planned metafont-like even simpler way
+                \end{itemize}
+
+\section{A focus+context view for message forums}
+	
+	\begin{itemize}
+	\item Move among message tree with text of each (short) message
+		seen.
+	\item Long messages \ra have to have focus somewhere inside the message.
+	\item authors --- more hyperstructure
+	\item bookmarks, own ranks, --- even more hyperstructure 
+	\item joystick control --- force feedback when focus moves
+		inside message and then is pushed over the edge to the next
+		message
+	\end{itemize}
+
+\section{A focus+context view for message forums}
+	
+	\begin{itemize}
+	\item Nature of slashdot, discussions
+	\item parsing data \ra how difficult?
+	\item moderation, shown as e.g. message size
+	\end{itemize}
+
+\section{Problems to be solved}
+
+	\begin{itemize}
+	\item Rotated text is slow
+	\end{itemize}
+
+
+\section{Conclusion}
+
+
+	\begin{itemize}
+	\item Combined with collaborative filtering a la grouplense, etc.
+	\item filtering by viewing - message size, prominence
+	\item interesting system presented
+	\item more refs to other work
+	\item Jos saadaan tämä sovellus slashdottiin ennen deadlinea, 
+		viittaus sinne keskusteluun.
+	\end{itemize}
+
+
+\end{document}

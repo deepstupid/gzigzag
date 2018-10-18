@@ -1,0 +1,282 @@
+/*   
+ManyToManyRaster.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka and Tuukka Hastrup
+ */
+ 
+
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+public class ManyToManyView implements FlobView, ZOb {
+public static final String rcsid = "$Id$";
+    public static final boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    // Following are the parameters out of which the constructor
+    // is created.
+
+    STRUCTPARAMS {
+
+    /** The factor to shrink the cells with when moving away from
+     * center.
+     */
+    float[] shrink // 2..2
+	= new float[] {(float)0.75, (float)0.95}; 
+
+    /** The factor the center cell is enlarged with from default.
+     */
+    float initmul
+	= (float)1.0;
+
+    /** The distance between neighbouring cells.
+     */
+    int[] gap // 2..2
+	= new int[] {0, 0};
+
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+
+	Dimension fs = into.getSize();
+	Dimension maxsz = fact.getSize(null, initmul);
+
+	// Calculate number of X and Y divisions.
+	// There are two of each cell size. Go on until that is
+	// too much.
+	
+	int nx = 0;
+	float curl = maxsz.width;
+	for(int xw = 0; xw <= fs.width - maxsz.width && curl>2; nx++) {
+	    xw += 2 * (int)curl;
+	    curl *= shrink[0];
+	}
+	
+	int ny = 0;
+	curl = maxsz.height;
+	for(int yw = 0; yw <= fs.height - maxsz.height && curl>2; ny++) {
+	    yw += 2 * (int)curl;
+	    curl *= shrink[1];
+	}
+
+	nx *= 2;
+	ny *= 2;
+	ZZCell[][] grid = new ZZCell[nx][ny];
+
+	int[] xsz = new int[nx+1];
+	int[] ysz = new int[ny+1];
+
+	xsz[0] = maxsz.width / 2;
+	xsz[1] = maxsz.width;
+	ysz[0] = 2*maxsz.height;
+	ysz[1] = maxsz.height;
+
+	curl = maxsz.width;
+	for(int i=0; i<nx/2; i++) {
+	    xsz[nx/2-i + 1] = xsz[nx/2+i + 1] = (int)curl;
+	    curl *= shrink[0];
+	}
+
+	curl = maxsz.height;
+	for(int i=0; i<ny/2; i++) {
+	    ysz[ny/2-i + 1] = ysz[ny/2+i + 1] = (int)curl;
+	    curl *= shrink[1];
+	}
+
+	int curi = 0;
+	for(int i=0; i<nx+1; i++) { curi += xsz[i]; xsz[i] = curi; }
+	curi =  0;
+	for(int i=0; i<ny+1; i++) { curi += ysz[i]; ysz[i] = curi; }
+
+	int cx = nx / 2;
+	int cy = ny / 2;
+
+	// Find which flobs to place where.
+	grid[cx][cy] = accursed;
+
+	// XXX x expanded / y expanded!!!
+
+	// Negwards. Take headcells first.
+
+	Hashtable heads = new Hashtable();
+	
+	ZZCell xhead = grid[0][cy] = accursed.h(dims[0], -1);
+	ZZCell yhead = grid[cx][0] = accursed.h(dims[1], -1);
+	heads.put(yhead, new Integer(cx));
+	heads.put(xhead, new Integer(0));
+
+	LoopDetector ld = new LoopDetector();
+	
+	ZZCell cur = accursed;
+	for(int x = cx-1; x > 0 && cur != null; x--) { ld.detect(cur);
+	    cur = cur.s(dims[0], -1); if(cur == xhead) break;
+	    grid[x][cy] = cur;
+	}
+
+	ld.reset();
+	cur = accursed;
+	for(int y = cy-1; y > 0 && cur != null; y--) { ld.detect(cur);
+	    cur = cur.s(dims[1], -1); if(cur == yhead) break;
+	    grid[cx][y] = cur;
+	}
+
+	// Poswards
+	ld.reset();
+	cur = accursed;
+	for(int x = cx+1; x < nx && cur != null; x++) { ld.detect(cur); 
+	    grid[x][cy] = cur = cur.s(dims[0], 1);
+	}
+	ld.reset();
+	cur = accursed;
+	for(int y = cy+1; y < ny && cur != null; y++) { ld.detect(cur);
+	    grid[cx][y] = cur = cur.s(dims[1], 1);
+	}
+
+
+	// Other headcells
+	for(int x = 1; x < nx; x ++) 
+	    if(grid[x][cy] != null) {
+		grid[x][0] = grid[x][cy].h(dims[1], -1);
+		if(grid[x][0]!=null)
+		    heads.put(grid[x][0], new Integer(x));
+	    }
+	for(int y = 1; y < ny; y ++) 
+	    if(grid[cx][y] != null) {
+		ZZCell c = grid[0][y] = grid[cx][y].h(dims[0], -1);
+		if(c!=null)
+		    heads.put(c, new Integer(0));
+		c = c.s(dims[0], 1);
+		ld.reset();
+		while(c!=null) { // Show other intersections
+		    ld.detect(c);
+		    Integer xpos = (Integer)heads.get(c.h(dims[1], -1));
+		    if(xpos!=null) 
+			grid[xpos.intValue()][y] = c;
+		    c = c.s(dims[0], 1);
+		}
+	    }
+
+
+	LineDecor.Builder bdline = new LineDecor.Builder(into, Color.red);
+	bdline.startl(400, 1);
+	
+	// Find out which cells are shown
+
+	Hashtable shown = new Hashtable();
+	
+	for(int x = 0; x < nx; x++) {
+	    for( int y = 0; y < ny; y++) {
+		if(grid[x][y]!=null)
+		    shown.put(grid[x][y], grid[x][y]);
+	    }
+	}
+	
+	// Render the flobs
+
+	for(int x = 0; x < nx; x ++) {
+	    for( int y = 0; y < ny; y ++) {
+		if(grid[x][y] == null) continue;
+		int xcoord = xsz[x];
+		int ycoord = ysz[y];
+		int width = xsz[x+1] - xcoord;
+		int height = ysz[y+1] - ycoord;
+
+		if(x != 0 && y != 0 && heads.get(grid[x][y])!=null)
+			continue;
+		
+		Flob fl = fact.makeFlob(into, grid[x][y], grid[x][y], 
+			initmul * height / (float)maxsz.height,
+			xcoord, ycoord, 1, width, height);
+	/*	if(x == 0 || y == 0)
+		    fl.flobPath="headcell";*/
+
+		// Place a red line if the neighbour isn't shown
+		ZZCell c = grid[x][y];
+		for(int dx=-1;dx<=1;dx+=2) {
+		    ZZCell n = c.s(dims[0], dx);
+		    if(n!=null && shown.get(n)==null
+		       && (y!=0 || (x+dx>0 && x+dx<nx && grid[x+dx][y]==null))){
+			int xc = xcoord + (width+dx*width)/2;
+			int y1c = ycoord;
+			int y2c = ycoord + height;
+		    
+			bdline.l(xc, y1c, xc, y2c);
+			bdline.l(xc+dx, y1c, xc+dx, y2c);
+		    }
+		}    
+		
+		for(int dy=-1;dy<=1;dy+=2) {
+		    ZZCell n = c.s(dims[1], dy);
+		    if(n!=null && shown.get(n)==null
+		       && (x!=0 || (y+dy>0 && y+dy<ny && grid[x][y+dy]==null))){
+			int x1c = xcoord;
+			int x2c = xcoord + width;
+			int yc = ycoord + (height+dy*height)/2;
+			bdline.l(x1c, yc, x2c, yc);
+			bdline.l(x1c, yc+dy, x2c, yc+dy);
+		    }
+		}
+
+		
+		// Place red lines where the structure was collapsed
+/*		if(x+1 < nx) {
+		    ZZCell c = grid[x][y];
+		    ZZCell cp = grid[x+1][y];
+		    if(cp != null && c.s(dims[0], 1)!=cp)
+			bdline.l(xcoord+width, ycoord, xcoord+width, ycoord+height);
+		}
+		if(y+1 < ny) {
+		    ZZCell c = grid[x][y];
+		    ZZCell cp = grid[x][y+1];
+		    if(cp != null && c.s(dims[1], 1)!=cp)
+			bdline.l(xcoord, ycoord+height, xcoord+width, ycoord+height);
+		}*/
+
+
+		
+		
+/*		// Show continuing ranks on edges
+		if(x == 0 && grid[x][y].s(dims[0], -1)!=null)
+		    bdline.l(xcoord,ycoord,xcoord,ycoord+height);
+		if(x+1 == nx && grid[x][y].s(dims[0], 1)!=null)
+		    bdline.l(xcoord+width,ycoord,xcoord+width,ycoord+height);
+
+		if(y == 0 && grid[x][y].s(dims[1], -1)!=null)
+		    bdline.l(xcoord,ycoord,xcoord+width,ycoord);
+		if(y+1 == ny && grid[x][y].s(dims[1], 1)!=null)
+		    bdline.l(xcoord,ycoord+height,xcoord+width,ycoord+height);*/
+
+	    }
+	}
+	bdline.endl();
+
+       // Do the dimensions. 
+        if(true) 
+	    ZZUtil.showFlobDims(into, fact, view, 2);
+    }
+
+}
+
+
+// vim: set syntax=java :

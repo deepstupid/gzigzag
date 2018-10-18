@@ -1,0 +1,703 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+	NOTE! This file uses WML 2.0.1
+
+	PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+	it's more important for you since your changes will be LOST FOREVER
+	if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>Semantics of ZigZag structures</title>
+#include '../wmlinc/article.wml'
+ </head>
+ <body>
+<substdims>
+<H1>Semantics of ZigZag structures</H1>
+<pre>$Id: sem.wml,v 1.10 2001/06/03 22:33:17 bfallenstein Exp $</pre>
+<grid layout=3x3 spacing=20>
+ <cell> <b>Benja Fallenstein</b> <br>
+ 	<code>b.fallenstein@gmx.de</code>
+ </cell>
+</grid>
+
+<toc>
+
+<!-- Use like <figure img="foo.png" width=...>caption</figure> -->
+
+<p>
+A document about the representation of a ZigZag structure's semantics.
+
+<warn>
+
+<h2>Introduction</h2>
+
+	<p> 
+	Only a naive ZigZag system may be completely ignorant of 
+	the <i>semantics</i>
+	of the structures stored in it. For e.g. merging and transformations
+	between different structures, at least a basic awareness of the
+	kind of relations represented by different connections is needed.
+	
+	<p>
+	This document discusses techiniques for specifying ZigZag semantics.
+
+
+<h2>Uses for semantic information</h2>
+
+	<p>
+	Semantic information as specified by an relationship dataflow can 
+	probably be used in many different ways. Here are some I anticipate.
+	
+    <h3>Queries of the structure</h3>
+
+	<p>
+	Extracting information from the ZZ structure can be a tedious and
+	error-prone process. Given the Semantics definition for a structure,
+	it should be easy to extract information from it. For example, if
+	we have the Semantics definition for the cursor system, we can
+	ask: "Which cell does this cursor cargo cell accurse?" This should
+	both make programming easier and allow for better encapsulation,
+	because only one specification needs to be changed and all queries
+	will work differently.
+	
+        <ajk>
+        Sounds like SQL for ZigZag ;-)
+
+	<p>
+	Query types are:
+	<ul>
+	<li>Given a number of parameters, does a given relationship (e.g.,
+	    "accurses") hold?
+	<li>Given a subset of a relationship's parameters, for which
+	    other parameters does the relationship hold (e.g., given A,
+	    for which B is "A accurses B" true)?
+	<li>Given a set of cells, for which combinations of them does the
+	    relationship hold (e.g., for which cells A, B in S is
+	    "A accurses B" true)?
+	</ul>
+	
+    <h3>Views</h3>
+
+	<p>
+	<b>Decorations.</b>
+	It should be possible to decorate a view using a given relationship,
+	e.g. show arrows between all cells A and B for which "A accurses B"
+	holds.
+	
+	<p>
+	<b>Constraint views.</b>
+	Many more complex views, like the tree view, the all clones view or
+	the cursor view, should be more easily specifyable when generated from
+	a Semantics relationship (like, "is a child of", "is a clone of", and
+	"accurses").
+	
+	<p>
+	Both of these uses should allow a high degree of flexibility in
+	plugging in different relationships, that is, the code used for the
+	cursor arrow decoration should be reusable to, say, draw arrows between
+	children and parents in a marriage tree structure.
+	
+    <h3>Merging</h3>
+
+	<p>
+	In merging, semantic information about the structure is needed to
+	decide which changes are important and whether changes are in
+	conflict with each other.
+	
+	<p>
+	By introducing the concept of <em>meaningful relationships</em>
+	which are represented by a dimension, i.e. by saying "this dimension
+	exists only to represent that relationship", we can see whether a
+	meaningful relationship has changed, as well as whether two versions
+	of a space change a meaningful relationship in different ways.
+	
+	<p>
+	For
+	example, changing the order of the cursors on d.cursor-list does not
+	change a meaningful relationship (namely, "A accurses B") and thus
+	two versions changing the order in different ways is not in conflict.
+	But if two versions change the same meaningful relationship in
+	different ways, i.e. if they set the same cursor to point to different
+	cells, then the two changes do conflict. (In the case of cursors,
+	such a change will often be resolved by the system, so it's not a
+	good example-- XXX.)
+	
+    <h3>Clang provability</h3>
+	
+	<p>
+	Consider the problem of proving a functional clang program. In order
+	to be proven with standard methods for functional programming, the
+	program must not change the space it operates on, i.e. it must not
+	have side effects. However, the execution of the program needs to
+	save state.
+	
+	<p>
+	To have state and still not change the space operated on, the program
+	must be executed in a separate slice. However, we want the references
+	to the space operated upon to be structural-- so the slice needs to
+	be attached to that space. Won't that change the connections of the
+	space, at least on the cursor dimensions, and thus introduce
+	side-effects?
+	
+        <ajk>
+        No actually, the program needs just be referentially
+        transparent.  We can change state, but we have to encapsulate
+        that into, for example, monads.  Essentially, the program
+        always operates on one the same immutable version of the space
+        and generates a new one as it goes.  It can then have a
+        "sequence point" (in C terminology) where the new space
+        becomes the current space, if necessary.  This can either be
+        done monadically so the program is still referentially
+        transparent, or by having explicit sequence points that are
+        "referentially discontinuous" points of the program where one
+        has to be extra careful.  
+
+	<benja>
+	I think there is miscommunication here. Conceptually, a function
+	gets one cell as its argument and returns one cell; both of these
+	cells can optionally refer to data structures like lists of arguments.
+	(This allows the structure in which arguments are passed to be as
+	flexible as ZigZag.) Now consider a function that gets a list of
+	cells and sorts them alphabetically. The list is of course a data
+	structure composed of ZigZag cells; the list returned by the function
+	is a different data structure also composed of cells. The cells
+	comprising the data structure refer to the cells we are actually
+	sorting; these latter cells are in the ZigZag space "operated upon."
+	They are refered to through the cursor mechanism. Thus, while
+	executing the sorting function, the space <em>must</em> be changed
+	to represent the data structures being created. If the functional
+	program is able to "see" these data structures, i.e. if it can react
+	differently based on the state of these structures, it is by
+	by definition referentially opaque (calling the same function
+	twice with the same parameters may give different results).
+
+        <ajk>Seems like you did not get my point.  Each change to the
+        space creates a new version; like in Haskell, we can encapsulate
+        that in a referentially transparent way in a monad.  Or, we can
+        define C-esque sequence points which are "discontinuities" for
+        the referential transparency.
+
+	<benja>
+	OK, then please explain more clearly. Simply saying "like in Haskell"
+	does not help because Haskell uses monads for a different purpose:
+	changing the "state" of an object in a function. If we were talking
+	about e.g. how to implement a "new cell" function in a functional
+	programming language, I would see why you are talking about monads
+	(the function would then take a version of the space and return a
+	new version in which the new cell has been created). But we
+	are talking about the problem that the evaluation of <em>any</em>
+	function changes the state of the space, that is, that
+	(getNeighbour c "d.cursor-list") == (getNeighbour c "d.cursor-list")
+	may evaluate to false (if implemented in a primitive way?), if c is
+	a cursor pointing to another cursor which accurses itself. Let's say
+	c is the negmost cell on d.cursor-list and the other cursor, let's
+	call it d, is one step poswards from c (remember that it's also the
+	cell accursed by c). Now, the first call returns d. In order to return
+	d, a new cell must be created on the cursor list for d; this cell
+	happens to be inserted poswards of c. So the second call obviously
+	returns that cell, not d. This is because the execution state of the
+	program is (as you suggested) maintained in the same space as the
+	program itself. I have not even begun to understand how monads can
+	solve that problem.
+
+	<ajk>
+        Note also that there are ways of
+        proving imperative programs correct (the Hoare triple and the
+        axiomatic method comes to mind).
+
+	<benja>
+	Note that my statement of problem was <em>proving functional clang
+	programs with the standard methods for functional programming</em>,
+	because AFAIK program proving is much <em>easier</em> if you know
+	that a program does not have side effects.
+
+        <ajk>Of course it is.  Note that my point was that it is not
+        necessary restrict oneself to FP techniques.  The saying goes,
+        "FP gives theorems for free", but that does not mean that
+        other mechanisms won't give theorems at all.
+        
+	<p>
+	We can avoid this if we establish that:
+	<ol>
+	<li>Bringing in the slice does not change any relationships declared
+	    to be meaningful.
+	<li>The clang program does not operate on any relationships not
+	    declared to be meaningful.
+	</ol>
+	
+	<p>
+	Bringing in the slice may <em>add</em> new relationships between the
+	slice and the space (e.g, "SLICE CELL accurses SPACE CELL"), but it
+	may not add, change, or delete any relationship between cells
+	all of which are members of the space operated upon.
+	
+    <h3>Easy-to-use observers</h3>
+
+	<p>
+	With the Semantics system, it should be easy to write observers
+	triggered when <em>and only when</em> a given relationship is
+	changed, e.g. when the cell accursed by a given cell changes.
+	
+	<p>
+	Currently, this requires more complex efforts, because after a change
+	to any connection the observer is attached to, the whole query
+	needs to be executed again to see if something actually changed or not.
+	and the observers are harder to make efficient because less 
+	is known about their purpose (i.e., what they observe).
+	
+    <h3>Changing the structure</h3>
+
+    <h3>Storing incomplete information</h3>
+	
+	If we only know that two people are cousins, but not through
+	which of their parents they are related, we can explicitly state
+	the relationship. The connection won't appear in the family tree,
+	but in a query structure as described above.
+
+    <h3>Query-based spacepart dimensions</h3>
+
+	<p>
+	Based on Semantic relationships, spacepart dimensions should be easily
+	constructable which work like database queries, i.e. show information
+	selected/compiled from other dimensions. For example, there could be
+	a structure showing cousinship, as inferred from a family tree
+	structure.
+	
+<h1>Old stuff...</h1>
+	
+	<p>
+	<ul>
+	<li>Query-like dimensions:<br>
+	    One use are dimensions which work like database queries, i.e. show
+	    information selected/compiled from other dimensions. For example,
+	    there could be a structure showing cousinship, as inferred from
+	    a family tree structure.
+<ajk>That's a SQL view, not a query...
+<benja>So what should we call it? "SQL view dimension" doesn't sound good.
+<ajk>I meant, the closer parallel is a SQL view, not a SQL query.
+	<li>Storing incomplete information:<br>
+	<li>Showing connections:<br>
+	    We could show connections between cousins. This would even work if
+	    the information about cousinship is not infered from the family
+	    tree, but stated as an axiom.
+	<li>Merge:<br>
+	    By explicitly stating that e.g. d.cursor and d.cursor-list are only
+	    there to represent an unordered 1:n relationship, and stating this
+	    relationship as a dataflow graph, it's possible to tell the
+	    computer easily how to merge these two dimensions.
+	</ul>
+	
+	<p>
+	Note that additional to the normal semantic information about what
+	kind of relation a dimension represents, for merging we need a
+	statement about which relationships are essential to maintain across
+	versions; i.e., which relationships need to be preserved and which
+	can be changed, as in the d.cursor/d.cursor-list example.
+	
+	<benja>
+	Hm, come to think of it, this is not only needed for merging, but much
+	more generally useful for converting axioms to actual structure. If I
+	state: "This cursor accurses that cell"/"this cursor <i>shall</i>
+	accurse that cell" as an axiom, then, given the above information
+	about d.cursor and d.cursor-list, the system will be able to change
+	the structure automatically so that the axiom is fulfilled. Need to
+	think a bit more about this & move to a more appropriate place than
+	this "example uses" section.
+
+
+<h2>A semantic formalism</h2>
+    <h3>Comparing ZigZag, semantics, and first-order predicate logic</h3>
+
+	<p>
+	One way to represent ZigZag relationships would of course be first-order
+	predicate logic. However, as usual, predicate logic is too powerful:
+	an efficient prover cannot be implemented.
+	That, after all, is why Prolog uses
+	Horn clauses, i.e. only a subset of the first-order predicate logic.
+
+	<p>
+	For ZigZag, a similar subset seems most useful to me, a subset which
+	leans towards ZZPath structures. Consider relationships like
+	<i>A is a cousin of B if A has a parent who is a sibling of B.</i>
+	This can, of course, be represented in predicate logic (where E
+	stands for the existential qualifier, i.e. "there is"):
+	
+	<p>
+	<code>
+	cousin(a, b) <=> E p,q: (parent(p, a) && parent(q, b) && sibling(p, q))
+	</code>
+	
+	<p>
+	But note that in the family tree applitude, the relationship maps
+	quite closely to a path to be taken in the structure: walk up to the
+	parent of a or b; walk poswards or negwards on d.children, so as to
+	find a sibling; walk down to a child of the sibling. Some kind of
+	"general theorem prover" for the first-order predicate logic would
+	need to look through all the relationships represented in the
+	structure; if the path information were retained somehow, though,
+	proving/disproving statements of cousinship (i.e., telling whether
+	two people are cousins, or who the cousins of a person are) would
+	become considerably easier.
+	
+	<benja>
+	Actually, I have found that Horn clauses fit this bill quite well.
+	
+	<p>
+	
+	
+	<benja>
+	Note that actually, the claim that we're talking about a subset of the
+	first order predicate logic here is wrong: we will probably need 
+	non-monotonical inference. This is because we need to be able to deal
+	with "contradictions" very often: for example, when we state
+	<code>cousin(a, b)</code>, but can prove that currently not
+	<code>E p, q: (parent(p, a) && parent(q, b) && sibling(p, q))</code>,
+	as in the example where we know the cousin of a person, but do not
+	know through which parents the two are related. Actually changing
+	the state of the system when the user makes an assertion (for example,
+	by deleting a cell or moving a cursor) is where things get
+	<i>really</i> hairy.
+	
+	<p>
+	The idea here is that the "prover" should allow for similar kinds
+	of lookups as Prolog: both "does this relationship hold," i.e.
+	"if I put in &lt;these cells&gt;, is the relationship fulfilled or
+	not?", and "for which cells does this hold, i.e. "if I put in
+	&lt;these cells&gt; and &lt;these variables&gt;, for which values of
+	the variables is the relationship fulfilled?" As a practical example,
+	we can both ask, "are Joanne and Mary cousins?", and, "who are the
+	cousins of Joanne?"
+	
+    <h3>Logical/relationship dataflow programming</h3>
+
+	<p>
+	First off, one important characteristic of the proposed system is that
+	it only describes <i>relationships between entities</i>, i.e. cells.
+	Generally, we assume a standard space without spaceparts, so that there
+	will be only a finite number of (connected) cells; for starters, this
+	means the language will not be fundamental in the sense of being able
+	to represent the natural number system.
+	
+	<p>
+	At first sight, it seems that it is impossible in such a system to use
+	a predicate like <i>x is a bird.</i> However, one can construct a
+	relationship <i>x is a y</i>, and from that, it's possible to
+	construct the <i>x is a bird</i> example. It's just necessary to have
+	a <i>bird</i> cell in the structure.
+
+	<figure img="pic1.gif" width="421px">
+	    Here, the meaning of the relationship "cousin" is defined through
+	    the relationships "child of" and "sibling." The example shows
+	    how a relationship is represented by a diagram of other
+	    relationships, closely matching the dataflow programming paradigm.
+	</figure>
+	
+	<p>
+	For an example of the the relationship description language I propose
+	to start with, see the diagram above. 
+	
+	<figure img="pic2.gif" width="284px">
+	    Definition of the <i>sibling</i> relationship. The "core family"
+	    is simply the family cell, i.e. the headcell on d.children.
+	    We do not use "child of [parent]", because we do not mean
+	    half-siblings in this case (i.e., we want siblings to share
+	    <i>both</i> parents here; of course, only if there <i>are</i> two
+	    (known/social) parents). Note the negated (and built-in) sameness
+	    relationship: people aren't their own siblings.
+	</figure>
+	
+    <h3>The inference system</h3>
+
+	<h4>Problems</h4>
+
+	<p>
+	Consider the problem of finding all cousins of a person. Obviously,
+	we must not only search the marriage tree, but also watch out
+	for axioms stating cousinship explicitly. But not only that: we even
+	need to watch out for axioms of parentship, if the user knew one but
+	not both parents of a person. It may even be stated explicitly that
+	someone is an aunt or uncle of someone else.
+	
+	<h4>A try at an algorithm</h4>
+	
+	<p>
+	Let's start with a naive system that knows nothing about <i>not</i>,
+	<i>and</i> and <i>or</i>, and that only knows binary relationships.
+	A relationship is defined as a chain of other relationships; as an
+	example, take the definition of cousinship ("A is a child of a sibling
+	of a parent of B"). Let's even assume that there will not be any
+	axioms stated explicitly. Relationships cannot be defined recursively
+	because we do not have <i>or</i>: for a recursive definition, there
+	must always be an alternative "base" definition, or the recursion will
+	be infinite.
+	
+	<p>
+	Now, finding the cousins of a person maps directly to a ZZPath in
+	the structure. We can describe the definition of a relationship as
+	a list of relationships, i.e. "is a cousin of" becomes
+	["is a child of", "is a sibling of", "is a parent of"]. XXX
+	
+    <h4>Reversability</h4>
+
+	<p>
+	One important characteristic of the relationship system is that each
+	and every relationship is reversible; if I can ask for the parents
+	of someone, then I can automatically ask for the children of someone,
+	too. In many ways (both practical and theoretical) this is an extension
+	of ZigZag's bi-directional link paradigm.
+
+<h2>Dimension types</h2>
+
+    <h3>Kinds of dimensions</h3>
+
+	<p>
+	Dimensions represent fundamental relationships in ZZ. There are,
+	amongst others,
+	<ol>
+	<li>1:1 dimensions, in which each connection represents an individual
+	    1:1 connection. A rank is not a unit of meaning in 1:1 dimensions.
+	    Examples are: d.cursor in the three-dimensional cursing system;
+	    the dimension connecting a node in a corner list structure to
+	    a list. Two characteristics of 1:1 dimensions are that loops do not
+	    have special meaning, and HOP operations are not useful.
+	<li>1:n dimensions, which relate an identity cell (the headcell of the
+	    rank) to a list of elements. 1:n dimensions come in different
+	    varieties:
+	    <ol>
+	    <li>unordered, where the ordering of the elements does not play
+		a semantic role (for ease of editing, it should only be changed
+		if necessary e.g. for merge, but if it is necessary to change,
+		that is no problem),
+	    <li>sorted, where the ordering is determined by the system, e.g.
+		if names are sorted alphabetically (if a name is changed,
+		the cell is moved to a different position on the rank), and
+	    <li>ordered, where the user-determined order of the elements
+		carries its own meaning.
+	    </ol>
+	<li>n:1 dimensions, where the identity cell is at the tail of a rank,
+	    not at the head; n dimensions, which do not have an identity cell
+	    but just describe a relationship between a number of cells. 1:n
+	    as well as n dimensions come in unordered, sorted, and ordered
+	    flavors.
+	<li>Ted's d.marriage dimension, which is partner - relationship -
+	    partner. (Of course there are many more relatively special-case
+	    dimension arrangements; this is meant as an example only.)
+	</ol>
+	
+	<p>
+	It would be good to have a system that can reason about these as
+	well as others in a unified way...
+	
+    <h3>A challenge</h3>
+
+	<p>
+	...not only because that's necessary for introducing new kinds of
+	special-case dimensions into the system easily, but also because
+	when looking at the system from a mathematical perspective, it
+	will probably be important to reduce it to mathematical objects with
+	a finite number of components. What the (element, rest of list) pairs
+	are for LISP and Prolog are the (cell, dim, cell) triplets for ZZ.
+	(To be sure: The connection triplets are used quite differently from
+	the element/restlist pairs, but they fulfill a similar role in
+	describing lists and ZZ ranks/spaces theoretically.)
+	
+	<p>
+	So let's start to define different other relationships based on
+	that basic one. (Note this difference from the list pairs: the
+	connection triplets are relationships, not objects. All objects in
+	ZigZag (ignoring contents) are cells.) Let's denote by
+	<code>conn(c1, dim, c2)</code> a connection between c1's posward and
+	c2's negward side on dim.
+	
+	<h4>Non-connections</h4>
+	
+	<p>
+	We also need some way to denote that a cell is <i>not</i> connected
+	in a specific direction. For the moment, let's introduce a special
+	0 (null) symbol, so that <code>conn(c, dim, 0)</code> means that
+	c is not connected poswards on dim, and <code>conn(0, dim, c)</code>
+	means that c is not connected negwards on dim.
+
+        <ajk>A projective ZigZag?  In projective geometry, there are
+        two points at infinity for every class of parallel lines (you
+        can visualize having these as the endpoints at infinity for
+        straight lines, and parallel lines meet at these two points at
+        infinity).  Or was it one point at infinity for each class of
+        parallel lines?  Not sure, need to check.  The parallel (no
+        pun intended) here would of course be having a special "cell
+        at infinity" (or two) for every dimension - the cell at
+        infinity is a member of all ranks of the dimension.
+	
+	<benja>
+	(At least it certainly isn't anything new: it works exactly like
+	the null pointer in Java code which is returned if there is no
+	connection like the one requested.)
+
+        <ajk>I am of course aware of the null pointer.  However, I
+        don't think I've seen anyone use projective geometry to
+        give an attractive theory for them.
+	
+	<p>
+	The question here is how that maps to more complex relations. What is
+	the meaning of <code>sibling(X, 0)</code>? Is this allowed, or is the
+	0 symbol only allowed in the <code>conn</code> relationship? If the
+	latter, it might be better to introduce two new, special relationships
+	stating that a cell has no poswards/negwards conn. But it may be as
+	well be handy to have the sibling example mean that X has no siblings.
+	
+	<h4>The invariants</h4>
+	
+	<p>
+	The invariants of a ZigZag space can be stated in predicate logic,
+	but (probably) not in the semantics language described in this 
+	document. The properties of dimensions, like 1:1 or 1:n, are
+	<i>built upon</i> the invariants, i.e. the invariants are axioms used
+	to prove the properties inside the semantics language.
+	
+	<p>
+	The ZigZag axiom can be stated as follows, for all c1, c1', dim, c2,
+	c2' in the set of cells of a ZigZag space:
+		
+	<p>
+	<pre>
+	conn(c1, dim, c2) && conn(c1', dim, c2) => c1 == c1'
+	conn(c1, dim, c2) && conn(c1, dim, c2') => c2 == c2'
+	</pre>
+	
+	<h4>Headcells</h4>
+	
+	<p>
+	The next level above simple connections is the headcell relation,
+	<code>head(h, dim, c)</code>, stating that h is the headcell of the 
+	dim-rank c is on. A first definition can be as follows:
+		
+	<p>
+	<pre>
+	head(h, dim, c) <= (h == c && conn(0, dim, c)) ||
+			   (conn(c', dim, c) && head(h, dim, c'))
+	</pre>
+	
+	<figure img="pic3-1.gif" width="412px">
+	The recursive part of the definition: a cell's headcell on a given
+	dimension is the same as a the headcell of its direct predecessor on
+	that dim.
+	</figure>
+	
+	<figure img="pic3-2.gif" width="372px">
+	The terminating part of the definition: a cell is its own headcell on
+	a given rank if it doesn't have a negwards connection on that rank.
+	</figure>
+	
+	<p>
+	Note, however, that this is not how headcells are really defined.
+	For non-looping ranks, it is, but for looping ranks the headcell is
+	user-defined. Now here we have a problem: so far, these definitions
+	aren't even in the structure! One could imagine a system storing
+	explicit "set headcell" instructions in the underlying file format...
+	
+	<p>
+	So, do we need another built-in relationship like conns, with its own
+	invariants and with additional invariants about interaction with conn?
+	This could get hairy. But there is a much simpler and cleaner way! Just
+	<i>state "this shall be the headcell of this looping rank"</i> as
+	a semantics axiom! That way, the above definition even holds. (The
+	problem is as always changing the structure, not representing a
+	static state...)
+	
+	<p>
+	Note that <code>head</code> is not a function, but a real relationship.
+	That is, not only can we determine which cell the headcell of c is,
+	but we can also lookup all cells which have the given headcell on the
+	given dimension. This already gives us the properties of 1:n
+	dimensions! The 1:n relationship is nothing else than 
+	<code>head(id, dim, element)</code> to relate a rank's ID cell
+	to its elements. Additionally, we can use head to lookup all dimensions
+	on which h is the headcell of c; that's not necessarily very efficient.
+	
+	<h4>Order</h4>
+	
+	<p>
+	Ordered dimensions, as indicated above, do not only represent the
+	ID cell-to-element relationship; they also represent a order
+	relationship which can be described as <code>less(a, dim, b)</code>.
+	Let's try to define it:
+		
+	<p>
+	<pre>
+	less(a, dim, b) <= conn(a, dim, b) || 
+			   (conn(c, dim, b) && less(a, dim, c))
+	</pre>
+	
+	<p>
+	Quite similar to the definition of <code>head</code>. Again, this
+	definition has problems with looping ranks: everything cell on a 
+	looping rank is "less" than every other one. We can resolve this by
+	stopping at the headcell (which is defined to exist always):
+		
+	<p>
+	<pre>
+	less(a, dim, b) <= NOT head(b, dim, b) && (
+					conn(a, dim, b) ||
+					(conn(c, dim, b) && less(a, dim, c)))
+	</pre>
+	
+	Note that we cannot define a <code>greater(a, dim, b)</code> 
+	relationship as <code>NOT less(a, dim, b) && NOT a == b</code>, because
+	a and b may simply not be on the same rank. But that is no real
+	problem:
+
+	<ajk> besides, that would not be Horny :-)
+
+	<benja>
+	But <code>less</code> isn't either, is it? The <code>head</code>
+	is negated, after all, which is not allowed in Horn clauses.
+
+        <ajk>
+        Neither are subclauses.  But that does not mean that
+        that thing cannot be rewritten into a Horn clause.
+	<p>
+	<pre>
+	greater(a, dim, b) <= less(b, dim, a)
+	lessOrEquals(a, dim, b) <= less(a, dim, b) || a == b
+	greaterOrEqual(a, dim, b) <= lessOrEqual(b, dim, a)
+	</pre>
+	
+	<p>
+	Again, these are relationships, not simple functions: we can lookup
+	all cells which are greater than a given cell, or we can lookup all
+	dimensions on which one given cell is less than another one.
+	
+	<benja>
+	Note that this, together with the <code>head</code> relationship,
+	enables us to specify the semantics of an 1:n ordered dimension. Now
+	we need a good format to specify that a given dimension <i>only</i>
+	represents these two relationships and all other relationships which
+	may be implicit can be changed when that's needed...
+	
+
+<h2>Implementation issues</h2>
+    
+    <h3>Efficiency</h3>
+	
+	<p>
+	Of course many operations like cursor lookups need to be quite
+	efficient. The general algorithm may often be too slow. However,
+	at some point relationship definitions should be converted
+	to Archimedes code internally, which can be optimized as usual.
+	<i>Algorithm = Logic + Control</i>, and Archimedes should support
+	strong tools for changing the Control component while preserving
+	the Logic (problem definition) component.
+	
+	<benja>
+	This isn't explained well, though it's actually quite an easy concept.
+	Improve.
+
+</substdims>
+</body>
+</html>
+<!--
+	vim: set syntax=html :
+-->

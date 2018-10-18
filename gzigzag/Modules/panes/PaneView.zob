@@ -1,0 +1,76 @@
+/*   
+PaneView.zob
+ *    
+ *    Copyright (c) 2001, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A view that shows different other views on different panes.
+ * Like the SplitNileView, but more generally useful. Currently, exactly two
+ * panes are shown.
+ */
+
+public class PaneView implements FlobView, ZOb {
+public static final String rcsid = "$Id: PaneView.zob,v 1.1 2001/01/20 08:52:40 bfallenstein Exp $";
+
+    public static final boolean dbg = true;
+    private static final void p(String s) { if(dbg) System.out.println(s); }
+    private static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	/** The space to leave between the two panes. */
+	int space
+	    = 20;
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+                       ZZCell win, String[] dims, ZZCell accursed) {
+	ZZCell lpane = win.s("d.panes", 1);
+	ZZCell rpane = win.s("d.panes", 2);
+	if(rpane == null)
+	    throw new ZZError("No panes found for PaneView");
+	
+	ZZCell leftacc = ZZCursorReal.get(lpane);
+	ZZCell rightacc = ZZCursorReal.get(rpane);
+	
+	ZZCell lapp = lpane.h("d.pane-app");
+	ZZCell rapp = rpane.h("d.pane-app");
+	ZZCell linkapp = win.h("d.pane-link-app");
+		
+	Dimension size = new Dimension(into.getSize());
+	size.width = (size.width - space) / 2;
+	FlobSet left = into.create(size), right = into.create(size);
+	
+	FlobView view = ApplitudeMgr.getView(lapp);
+	view.raster(left, fact, lpane, dims, leftacc);
+	
+	view = ApplitudeMgr.getView(rapp);
+	view.raster(right, fact, rpane, dims, rightacc);
+	
+	into.fetch(left, 0, 0, 0);
+	into.fetch(right, size.width + space, 0, 0);
+	
+	view = ApplitudeMgr.getView(linkapp);
+	view.raster(into, fact, win, dims, accursed);
+    }
+
+}

@@ -1,0 +1,177 @@
+/*   
+EnumVanishingView.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein, based on VanishingView by Tuomas Lukka
+ */
+ 
+
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+/** A reimplementation of the vanishing raster.
+ * Much simpler than the original one since this one does not try
+ * to do the hard rasters as well.
+ */
+
+public class EnumVanishingView implements FlobView, ZOb {
+public static final String rcsid = "$Id: EnumVanishingView.zob,v 1.1 2000/11/16 20:28:53 bfallenstein Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    // Following are the parameters out of which the constructor
+    // is created.
+
+    STRUCTPARAMS {
+
+	/** The factor to shrink the cells with when moving away from
+	 * center.
+	 */
+	float[] shrink // 2..2
+	    = new float[] {(float)0.9, (float)0.9}; 
+
+	/** The factor the center cell is enlarged with from default.
+	 */
+	float[] initmul // 2..2
+	    = new float[] {(float)1.6, (float)1.6};
+
+	/** The factor to enlarge the center cell on top of initmul.
+	 * This only has an effect on the center cell whereas initmul
+	 * affects all cells.
+	 */
+	float[] centermul // 2..2
+	    = new float[] {(float)1.0, (float)1.0};
+
+	/** The distance between neighbouring cells.
+	 */
+	int gap
+	    = 5;
+
+	/** The depth to raster to.
+	 */
+	int depth 
+	    = 5;
+
+	/** The precedence order of dimensions.
+	 */
+	int[] pref // 2..5
+	    = new int[] {0, 1, 2};
+
+	/** Whether to allow cell sizes to vary.
+	 */
+	boolean varsize
+	    = false;
+
+    }
+
+    // XXX This should be a structparam later on.
+    FlobDecorator linker = new StdLinks();
+
+    public void raster(FlobSet into, FlobFactory fact,
+		ZZCell view, String[] dims, ZZCell accursed) {
+
+	Dimension fs = into.getSize();
+	
+	// Precalculate sizes and gaps.
+	int[] gaps = new int[depth];
+	Dimension[] size = new Dimension[depth+1];
+	float[] sizfact = new float[depth+1];
+
+	float xf = initmul[0], xf0 = xf;
+	float yf = initmul[1], yf0 = yf;
+	sizfact[0] = yf;
+	Dimension d0 = fact.getSize(null, yf);
+	Dimension d = (varsize ? fact.getSize(accursed, yf) : d0);
+
+	for(int i=0; i<depth; i++) {
+	    xf *= shrink[0];
+	    yf *= shrink[1];
+	    if(!varsize) {
+		Dimension dc = new Dimension();
+		size[i+1] = dc;
+		dc.width = (int)(d.width * xf/xf0);
+		dc.height = (int)(d.height * yf/yf0);
+	    }
+	    sizfact[i+1] = yf;
+	    gaps[i] = (int)(gap * xf);
+	}
+
+	d.width *= centermul[0];
+	d.height *= centermul[1];
+
+	// flob depth multiplier and offset.
+	// flob depth = d1 + dm*level
+	int d1 = 1;
+	int dm = 10;
+	int maxd = d1 + dm * depth;
+
+	Iter.Alter alter = new Iter.Alter();
+	alter.included = false;
+
+	DimRecursor dim = new DimRecursor(dims, alter, true, depth);
+	
+	Iter.Limited limit = new Iter.Limited();
+	limit.iter = dim;
+	limit.n = depth;
+	
+	Iter.Once once = new Iter.Once();
+	once.iter = limit;
+
+	once.start(new Iter.Step(accursed));
+
+	Point ctr = new Point(fs.width/2, fs.height/2);
+	Flob flob0 = fact.centerFlob(into, accursed, accursed, sizfact[0],
+			             ctr, 0, 0, d1, d);
+	once.here.info = flob0;
+	p("Start recursing really");
+	
+	for(ZZCell c = once.next(); c != null; c = once.next()) {
+	    Flob f = (Flob)once.here.from.info;
+	    p("Flob: "+f+" from: "+once.here.from);
+	    if(f == null) throw new ZZError("XXX no flob found");
+
+	    int dir = alter.ind>0 ? 1 : -1;
+	    int dpt = once.here.nth;
+	
+	    // Alignments
+	    int fxa, fya, txa, tya;
+	    if(dim.dim == 0) { fxa=dir; txa=-dir; fya=0; tya=0; }
+	    else if(dim.dim == 1) { fxa=0; txa=0; fya=dir; tya=-dir; }
+	    else { fxa=dir; fya=dir; txa=-dir; tya=-dir; }
+	
+	    Point p = f.getPoint(fxa, fya);
+	    Point q = ZZUtil.movePoint(p, fxa, fya, gaps[dpt]);
+	
+	    Flob g = fact.centerFlob(into, c, c, sizfact[dpt], q, txa, tya,
+			             d1+dpt*dm, size[dpt]);
+	    once.here.info = g;
+	    p("To "+once.here+" assign "+g);
+	}
+
+	linker.decorate(into, "", view);
+
+       // Do the dimensions. 
+        if(true)
+	    ZZUtil.showFlobDims(into, fact, view, 3);
+    }
+
+}

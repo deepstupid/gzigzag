@@ -1,0 +1,174 @@
+/*   
+DayTimeDemo.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+import java.io.*;
+ 
+/** A simple raster showing times of day along a circle.
+ * The structure is described along three dimensions: 
+ * hierarchy, sibling and cross-reference (d.1, d.2 and d.3 by default).
+ * On these, the hierarchy is arranged as a corner list with an empty
+ * corner cell, and the cross-references are simply siblings 
+ * connected.
+ * <p>
+ * The structure is specified as a rank on d.2 of d.1 lists:
+ * start, end, type, text. Type's root clone will have the color
+ * of the type on d.1.
+ * <p>
+ * The whole rank on d.2 is read.
+ */
+
+public class DayTimeDemo implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    static public ZZModule module = new ZZModule() {
+	public ZOb newZOb(String id) {
+	    if(id.equals("R"))
+		return new DayTimeDemo();
+	    if(id.equals("C"))
+		return new ClockCellView();
+	    return null;
+	}
+    };
+
+    STRUCTPARAMS {
+	Font txtfont 
+	    = new Font("Serif", Font.BOLD, 14);
+
+	Font clkfont 
+	    = new Font("SansSerif", Font.PLAIN, 11);
+    }
+
+    FontMetrics txtfm, clkfm;
+
+    INITIALIZE {
+	txtfm = FONTMETRICS(txtfont);
+	clkfm = FONTMETRICS(clkfont);
+    }
+	
+    static final String next = "d.2";
+    static final String hier = "d.1";
+    static final String cross = "d.3";
+
+    static final int time2deg(String time) {
+	int i = time.indexOf(":");
+	if(i < 0) return 0;
+	String t1 = time.substring(0,i);
+	String t2 = time.substring(i+1);
+	int h = -1;
+	int m = -1;
+	try {
+	    h = Integer.parseInt(t1);
+	    m = Integer.parseInt(t2);
+	} catch(NumberFormatException e) {
+	    System.out.println("Exc: "+e);
+	}
+	return -(int)(360 * (h*60.0 + m) / (24*60)) - 90;
+    }
+
+    static final Point deg2pt(int deg, int w, int h) {
+	return new Point((int)(w/2*Math.cos(deg * Math.PI / 180)),
+			-(int)(h/2*Math.sin(deg * Math.PI / 180)));
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+	ZZCell view, String[] dims, ZZCell accursed) {
+
+	Dimension s = into.getSize();
+
+	final int x = s.width / 10;
+	final int y = s.height / 10;
+	final int w = s.width - 2 * x;
+	final int h = s.height - 2 * y;
+
+    // Clock face.
+	into.add(new Renderable() {
+	    { d = 50; }
+	public void render(Graphics g) {
+	    Color old = g.getColor();
+	    g.setColor(Color.black);
+	    g.setFont(clkfont);
+	    for(int i=0; i<24; i++) {
+		int and = time2deg(i+":00");
+		// g.fillArc(x, y, w, h, and, 1);
+		Point p = deg2pt(and, w, h);
+		p.x *= 1.05;
+		p.y *= 1.05;
+		p.translate(x+w/2, y+h/2);
+		g.drawLine(x+w/2, y+h/2, p.x, p.y);
+		if(i % 2 == 0) {
+		    String str = i+":00";
+		    g.drawString(str, p.x - clkfm.stringWidth(str)/2 , p.y);
+		}
+	    }
+	    g.setColor(old);
+	}
+	});
+
+	for(
+	ZZCell cur = accursed.h("d.1", -1).h("d.2", -1);
+	cur != null;
+	cur = cur.s("d.2", 1)) {
+	    ZZCell c = cur;
+	    String start = c.getText(); c = c.s("d.1", 1);
+	    String end = c.getText(); c = c.s("d.1", 1);
+	    ZZCell meet = c.h("d.clone", -1).s("d.1", 1);
+	    String col = "0xffffff";
+	    if(meet != null) col  = meet.getText();
+	    c = c.s("d.1", 1);
+
+	    final String text = c.getText();
+	    final int sang = time2deg(start);
+	    final int eang = time2deg(end);
+	    final Color color = Color.decode(col);
+	
+	    // now, render it.
+	    into.add(new Renderable() {
+	    { d = 50; }
+	    public void render(Graphics g) {
+		g.setColor(color);
+		g.fillArc(x, y, w, h, sang, eang-sang);
+	    }});
+	    into.add(new Renderable() {
+	    { d = 45; }
+	    public void render(Graphics g) {
+		g.setFont(txtfont);
+		Point p = deg2pt((sang+eang)/2, w, h);
+		p.x *= 0.8;
+		p.y *= 0.8;
+		p.translate(x+w/2, y+h/2);
+		g.setColor(Color.black);
+		g.drawString(text, p.x, p.y);
+		g.fillOval(p.x-8, p.y-8, 8, 8);
+	    }});
+
+
+	}
+	
+    }
+}
+// vim: set syntax=java :

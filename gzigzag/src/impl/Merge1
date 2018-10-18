@@ -1,0 +1,929 @@
+/*   
+Merge1.java
+ *    
+ *    Copyright (c) 2000-2001, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.impl;
+import org.gzigzag.*;
+import org.gzigzag.mediaserver.*;
+import java.util.*;
+
+/** A first try at a merge system.
+ * Efficiency is not important.
+ */
+
+public class Merge1 {
+    public static boolean dbg = false;
+    private static void p(String s) { if(dbg) System.out.println(s); }
+    private static void pa(String s) { System.out.println(s); }
+    
+    static public Set getSet(Map m, Object key) {
+	Set s = (Set)m.get(key);
+	if(s == null) {
+	    s = new HashSet();
+	    m.put(key, s);
+	}
+	return s;
+    }
+
+    private static Cell c(Dim d, String c) {
+	if(c == null) return null;
+	return d.getSpace().getCell(c);
+    }
+
+    private static String id(Cell c) {
+	if(c == null) return null;
+	return c.id;
+    }
+
+    static public String s(Dim dim, String cell, int steps) {
+	return id(dim.s(dim.getSpace().getCell(cell), steps));
+    }
+
+    /** True if the two sets contain at least one shared element.
+     */
+    static public boolean overlaps(Set h1, Set h2) {
+	for Object o through h1 { if(h2.contains(o)) return true; }
+	return false;
+    }
+
+    /** Add, and assert that there is no previous entry
+     */
+    static public void ao(Set s, Object o) {
+	if(s.contains(o)) 
+	    throw new Error("Highlander error. There can be only one!!!");
+	s.add(o);
+    }
+
+    /** Return the text of the cell, or "null" if a null reference
+     * was given.
+     */
+    static public String t(Cell c) { return (c==null) ? "null" : c.t(); }
+    static public String t(String s) { return s; }
+    static public String t(String s, Space space) { 
+	if(s == null) return null;
+	Cell c;
+	try {
+	    c = space.getCell(s);
+	} catch(ZZImpossibleCellException exc) {
+	    return "(nonexistent)"+s;
+	}
+	return t(c); 
+    }
+
+    /** Step from a cell, avoiding impossibleCellException.
+     */
+    static public String safeStep(Dim d, String c, int steps) {
+	if(c == null) throw new NullPointerException("Null safestep!?");
+	if(!d.getSpace().exists(c)) return null;
+	return s(d, c, steps);
+    }
+
+    /** Filter out the cell id strings that exist in the given space.
+     */
+    static public Set existingCells(Space s, Set c) {
+	Set res = new HashSet();
+	for String cell through c {
+	    if(s.exists(cell)) res.add(cell);
+	}
+	return res;
+    }
+
+    /** Filter out all cells from included slices.
+     */
+    static public Set baseCells(Set c) {
+	Set res = new HashSet();
+	for String cell through c {
+	    if(cell.indexOf(":") < 0) res.add(cell);
+	}
+	return res;
+    }
+
+    /** Return a cell corresponding to given cell in the new space.
+     */
+    static public String getCellIn(Space s, Space sfrom, String cell) {
+	if(cell == null) return null;
+	if(s.exists(cell)) return cell;
+	String ret = ((PermanentSpace)s).getCorrespondingCell(sfrom, cell);
+	if(!s.exists(ret)) throw new Error("getCorresponding ret wrong: "+ret);
+	p("getCellIn: "+cell+" \n Got: "+ret);
+	return ret;
+    }
+
+    /** Returns true if the cells are equal.
+     * Shorthand for testing this without first testing if
+     * one of the cells is null.
+     */
+    private static final boolean eq(Cell c1, Cell c2) {
+	if(c1 == c2) return true;
+	if(c1 == null || c2 == null) return false;
+	return c1.equals(c2);
+    }
+
+    private static final boolean eq(String c1, String c2) {
+	if(c1 == c2) return true;
+	if(c1 == null || c2 == null) return false;
+	return c1.equals(c2);
+    }
+
+    public static Dim getDim(Space s, Object o) {
+	if(o instanceof String) {
+	    return s.getDim((String)o);
+	} else {
+	    throw new Error("Don't know how to make a dim out of "+o);
+	}
+    }
+
+    public static Space appliedSpace(Mediaserver ms,
+					Mediaserver.Id orig, Set changeCells, Space to, Change ch) {
+	Set s = new HashSet(); s.add(ch);
+	return appliedSpace(ms, orig, changeCells, to, s);
+    }
+
+    static class CannotApplyError extends Error {
+	CannotApplyError(String s) { super(s); }
+    }
+    public static Space appliedSpace(Mediaserver ms,
+					Mediaserver.Id orig, Set changeCells, Space to, Set changes) {
+	Space s;
+	try {
+	p("\t\tLoading...");
+	s = new PermanentSpace(ms, orig);
+	if(changeCells != null) {
+	    p("\t\tmakeExist");
+	    GZZ1Ugliness ug = new GZZ1Ugliness((PermanentSpace)to, (PermanentSpace)s);
+	    for String id through changeCells {
+		ug.makeExist(id);
+	    }
+	}
+	if(changes == null) return s;
+	p("\t\tApplying");
+	for Change change through changes {
+	    if(!change.isConsistent(s)) {
+		p("QUARK CONSISTENCES:");
+		for Quark q through change.quarks {
+		    p(q.toStringConsistence(s));
+		}
+		throw new Error("Change wouldn't be consistent! "+change);
+	    }
+	    change.apply(s);
+	}
+	} catch(Throwable e) {
+	    e.printStackTrace();
+	    throw new CannotApplyError("Couldn't create applied space: "+e);
+	}
+	return s;
+    }
+
+    /** A single new connection status.
+     * A quark contains 4 components, called neg, prevneg, prevpos and pos.
+     * Together, these give the status of a connection at two different
+     * moments in time.
+     * <p>
+     * Fundamentally, the quark means that at the 
+     * current time, the cells neg and pos are connected (one of them
+     * may be null).
+     * However, to obtain reversibility, the prevpos and prevneg
+     * fields tell about the past state of the connections of neg and pos.
+     */
+    static public class Quark {
+	/** The dimension this quark is on.
+	 */
+	public final Object dim;
+	/** The negative end of the connection at the current time.
+	 */
+	public final String neg; 
+	/** The cell that neg used to be connected poswards to at past time.
+	 */
+	public final String prevpos;
+	/** The cell that pos used to be connected negwards to at past time.
+	 */
+	public final String prevneg;
+	/** The positive end of the connection at the current time.
+	 */
+	public final String pos;
+
+	Quark(Object dim, String neg, String prevpos, String prevneg, String pos) {
+	    this.dim = dim;
+	    this.neg = neg;
+	    this.prevneg = prevneg;
+	    this.pos = pos;
+	    this.prevpos = prevpos;
+	}
+
+	public String toString() {
+	    return "["+dim+"["+t(neg)+" "+t(prevpos)+" --- "
+		+t(prevneg)+" "+t(pos)+"]]";
+	}
+
+	public String toString(Space s) {
+	    return "["+t((String) dim, s)+
+			"["+t(neg, s)+" "+t(prevpos, s)+" --- "
+		+t(prevneg, s)+" "+t(pos, s)+"]]";
+	}
+
+	public String toStringConsistence(Space s) {
+	    Dim d = getDim(s, dim);
+	    return "\nNeg: "+neg+"\n\t-Q:\t"+prevpos+
+		    "\n\t-S:\t"+(neg == null ? "" : safeStep(d, neg, 1)+"")+
+		    "\n-Pos: "+pos+
+		    "\n\tQ-:\t"+prevneg+
+		    "\n\tS-:\t"+(pos == null ? "" : safeStep(d, pos, -1)+"")+"\n";
+	}
+
+	/** Returns true if the non-null members of q 
+	 * match the members of this quark.
+	 */
+	public boolean matches(Quark q) {
+	    if(q.dim != null && !q.dim.equals(dim))
+		return false;
+	    if((q.neg == null || q.neg.equals(neg)) &&
+	       (q.pos == null || q.pos.equals(pos)) &&
+	       (q.prevneg == null || q.prevneg.equals(prevneg)) &&
+	       (q.prevpos == null || q.prevpos.equals(prevpos)) )
+		return true;
+	    return false;
+	}
+
+	/** Check that the given dimension Map is consistent with
+	 * this quark.
+	 */
+	public boolean isConsistent(Space s) {
+	    Dim d = getDim(s, dim);
+	    return 
+	      !((neg != null && !eq(safeStep(d, neg, 1), prevpos)) ||
+	       (pos != null && !eq(safeStep(d, pos, -1), prevneg)) ||
+	       (prevpos != null && !eq(safeStep(d, prevpos, -1), neg)) ||
+	       (prevneg != null && !eq(safeStep(d, prevneg, 1), pos)) );
+	    
+	}
+
+	/** Apply this quark into the given space.
+	 */
+	public void apply(Space s) throws ZZAlreadyConnectedException {
+	    Dim d = getDim(s, dim);
+	    Cell cpos = s.getCell(pos);
+	    Cell cneg = s.getCell(neg);
+	    if(neg == null)
+		d.disconnect(cpos, -1);
+	    else if(pos == null)
+		d.disconnect(cneg, 1);
+	    else {
+		d.disconnect(cneg, 1);
+		d.disconnect(cpos, -1);
+		d.connect(cneg, cpos);
+	    }
+	}
+
+	/** Undo the effect of this quark in the given space.
+	 */
+	public void undo(Space s) throws ZZAlreadyConnectedException {
+	    Dim d = getDim(s, dim);
+	    Cell cpos = s.getCell(pos);
+	    Cell cneg = s.getCell(neg);
+	    Cell cprevpos = s.getCell(prevpos);
+	    Cell cprevneg = s.getCell(prevneg);
+	    if(neg != null)
+		d.disconnect(cneg, 1);
+	    if(neg != null && cprevpos != null) {
+		d.disconnect(cprevpos, -1);
+		d.connect(cneg, cprevpos);
+	    }
+	    if(cprevneg != null && cpos != null) {
+		d.disconnect(cprevneg, 1);
+		d.connect(cprevneg, cpos);
+	    }
+	    if(!isConsistent(s))
+		throw new Error("Tried to undo but got inconsistent!!!! HELP!!!");
+	}
+
+	public Quark makeNewCells(Space s, Space sfrom) {
+	    return new Quark(
+		dim, getCellIn(s, sfrom, neg),
+		     getCellIn(s, sfrom, prevpos),
+		     getCellIn(s, sfrom, prevneg),
+		     getCellIn(s, sfrom, pos));
+	}
+
+	public Set cells() {
+	    Set s = new HashSet();
+	    if(neg != null) s.add(neg);
+	    if(pos != null) s.add(pos);
+	    if(prevneg != null) s.add(prevneg);
+	    if(prevpos != null) s.add(prevpos);
+	    return s;
+	}
+    }
+
+    /** A single change unit.
+     * At all levels of the hierarchy 
+     * this is what we really have.
+     * Changes are immutable objects.
+     * <p>
+     * This is simply a set of quarks.
+     * <p>
+     * Note that some Changes are on a single dimension and some are
+     * not - they must be used appropriately.
+     */
+    static public class Change {
+	
+	/** The content of this vector is final after
+	 * construction.
+	 */
+	private Set quarks = new HashSet();
+
+	/** Set of all negative engs, either prev or current
+	 */
+	private Set negs;
+	private Set poss;
+	private Set allends;
+
+	/** Create the sets negs and poss.
+	 */
+	private void makeNegsPoss() {
+	    negs = new HashSet(); poss = new HashSet();
+	    for Quark c through quarks {
+		if(c.neg != null) negs.add(c.neg);
+		if(c.prevneg != null) negs.add(c.prevneg);
+		if(c.pos != null) poss.add(c.pos);
+		if(c.prevpos != null) poss.add(c.prevpos);
+	    }
+	    allends = new HashSet(negs); allends.addAll(poss);
+	}
+
+	private Change() { }
+	Change(Quark q) { 
+	    quarks.add(q);
+	    makeNegsPoss();
+	}
+
+	public boolean isConsistent(Space s) {
+	    for Quark q through quarks {
+		if(!q.isConsistent(s)) return false;
+	    }
+	    return true;
+	}
+
+	public void apply(Space s) throws ZZAlreadyConnectedException {
+	    // p("Applying change "+this);
+	    for Quark q through quarks {
+		// p("Applying quark "+q.toString(s));
+		q.apply(s);
+	    }
+	}
+
+	public void undo(Space s) throws ZZAlreadyConnectedException {
+	    // p("Applying change "+this);
+	    for Quark q through quarks {
+		// p("Applying quark "+q.toString(s));
+		q.undo(s);
+	    }
+	}
+
+	public Set getQuarks() { return Collections.unmodifiableSet(quarks); }
+
+	public Set getDims() {
+	    Set dims = new HashSet();
+	    for Quark q through quarks {
+		dims.add(q.dim);
+	    }
+	    return dims;
+	}
+
+	// XXX Should we return a set?
+	public Quark matchQuark(Quark q) {
+	    for Quark myq through quarks {
+		if(myq.matches(q))
+		    return myq;
+	    }
+	    return null;
+	}
+
+	public Change combine(Change with) {
+	    Change c = new Change();
+	    c.quarks = (Set)((HashSet)quarks).clone();
+	    c.quarks.addAll(with.quarks);
+	    c.makeNegsPoss();
+	    return c;
+	}
+
+	// Reasonable only with 1-D Changes
+	public boolean overlapsAtomically(Change with) {
+	    boolean ret =
+		overlaps(negs,with.negs) || overlaps(poss,with.poss);
+	    //p("Overlapsatomic:\n"+this+"WITH\n"+with+"RESULT: "+ret+"\n");
+	    return ret;
+	}
+
+	public String toString() {
+	    String res = "Change: \n";
+	    for Quark q through quarks {
+		res += "\t" + q + "\n";
+	    }
+	    return res;
+	}
+
+	public String toString(Space s) {
+	    String res = "Change: \n";
+	    for Quark q through quarks {
+		res += "\t" + q.toString(s) + "\n";
+	    }
+	    return res;
+	}
+
+	/** Do some sanity checking; throw an error if problems.
+	 * <b>Reasonable only w/ 1-D Changes.</b>
+	 */
+	public void checkUniques() {
+	    HashSet byNeg = new HashSet(), byPos = new HashSet(),
+		    byPrevNeg = new HashSet(), byPrevPos = new HashSet();
+	    for Quark q through quarks {
+		ao(byNeg, q.neg);
+		ao(byPos, q.pos);
+		ao(byPrevNeg, q.prevneg);
+		ao(byPrevPos, q.prevpos);
+	    }
+	}
+
+	public Change makeNewCells(Space s, Space sfrom) {
+	    Change c = new Change();
+	    for Quark q through quarks {
+		c.quarks.add(q.makeNewCells(s, sfrom));
+	    }
+	    c.makeNegsPoss();
+	    return c;
+	}
+
+    }
+
+    public static Quark findQuark(Quark pat, Set changes) {
+	for Change c through changes {
+	    Quark q = c.matchQuark(pat);
+	    if(q != null) return q;
+	}
+	return null;
+    }
+
+    /** Returns a map of String to Set of changes.
+     * Each change is allowed to have only one dim.
+     */
+    public static Map changesToDims(Set changes) {
+	Map dimChg = new HashMap();
+	for Change c through changes {
+	    Set dims = c.getDims();
+	    if(dims.size() > 1)
+		throw new Error("Can't make atoms of multidim chgs");
+	    for Object d through c.getDims() {
+		getSet(dimChg, d).add(c);
+	    }
+	}
+	return dimChg;
+    }
+
+    public static Set getCells(Set changes) {
+	Set ret = new HashSet();
+	for Change c through changes {
+	    ret.addAll(c.allends);
+	}
+	return ret;
+    }
+
+    public static Change getChange(Set changes, String cell, int dir) {
+	for Change c through changes {
+	    if((dir > 0 ? c.negs : c.poss).contains(cell)) return c;
+	}
+	return null;
+    }
+
+    public static Set atoms(Set changes) {
+	Set fin = new HashSet();
+	Map dimChg = changesToDims(changes);
+	for Set s through dimChg.values() {
+	    Set ns = new HashSet();
+	    while(!s.isEmpty()) {
+		Change cur = (Change)s.iterator().next();
+		s.remove(cur);
+		boolean chg = true;
+		OUTER: while(chg) {
+		    chg = false;
+		    for Change c through s {
+			if(cur.overlapsAtomically(c)) {
+			    s.remove(c);
+			    cur = cur.combine(c);
+			    chg = true;
+			    continue OUTER;
+			}
+		    }
+		}
+		fin.add(cur);
+	    }
+	}
+	return fin;
+    }
+
+    /** Collect the necessary set of changes to 
+     * avoid the given violation.
+     * This is a greedy algorithm and I'm not sure whether it
+     * is optimal, but at least it should solve the basic 
+     * problems.
+     * <img src="../../../../doc-images/merge-molecularize-1.jpg"/>
+     */
+    public static Set collectViolation(String dim,
+				PartialOrder.Pair p, 
+				Change change, 
+				Set changes,
+				Mediaserver ms,
+				Mediaserver.Id start,
+				Set changeCells, 
+				Space end) {
+	Set thisDimChanges = (Set)changesToDims(changes).get(dim);
+	// First, collect the interval between the two members of p
+	// into a list.
+	// can't use RankList for ringranks
+	Dim endd = end.getDim(dim);
+	List endList = new ArrayList();
+	String c = p.neg;
+	endList.add(c);
+	c = s(endd, c,1);
+	for(; c != null && 
+		    !c.equals(p.pos) && !c.equals(p.neg);
+		    c = s(endd, c, 1)) {
+	    endList.add(c);
+	}
+	if(c == null) throw new Error("Couldn't get range");
+	if(c.equals(p.neg)) throw new Error("Ringrank, pos not found!");
+	endList.add(c); // p.pos
+
+	// Gather the indices to the list.
+	Map indices = new HashMap();
+	for(int i=0; i<endList.size(); i++) 
+	    indices.put(endList.get(i), new Integer(i));
+	Set curChanges = new HashSet(); curChanges.add(change);
+
+	// Now, we're ready.
+	while(true) {
+	    Space s = appliedSpace(ms, start, changeCells, end, curChanges);
+
+	    Dim curDim = s.getDim(dim);
+
+	    // Now, we start from negend poswards and see how
+	    // far up we get.
+	    c = p.neg;
+	    int max = 0; // the initial element
+	    c = s(curDim, c, 1);
+	    for(; c != null && 
+			!c.equals(p.pos) && !c.equals(p.neg);
+			c = s(curDim, c, 1)) {
+		Integer cur = (Integer)indices.get(c);
+		if(cur != null) {
+		    int curi = cur.intValue();
+		    if(curi > max) max = curi;
+		}
+	    }
+	    if(c == null || c.equals(p.neg)) {
+		// Now, we have the maximum correct index in 
+		// max. We want to include the change after it.
+		String it = (String)endList.get(max);
+		Change ch = null;
+		for Change curch through thisDimChanges {
+		    if(curch.negs.contains(it)) {
+			ch = curch; break;
+		    }
+		}
+		if(ch == null) throw new Error("Couldn't find change!");
+		if(curChanges.contains(ch))
+		    throw new Error("Already had the change!");
+		curChanges.add(ch);
+		continue;
+	    } else {
+		// c.equals(p.pos)
+		return curChanges;
+	    }
+	}
+    }
+
+    /** Combine the changes to make molecules based on 
+     * before-after relations.
+     * <img src="../../../../doc-images/merge-molecularize-1.jpg"/>
+     * The changes are combined so that after each molecule,
+     * all before-after relations that are preserved by the 
+     * overall change are preserved by the molecule.
+     */
+    public static Set makeMoleculesSucc(Set changes, Space from, 
+				    Mediaserver ms,
+				    Mediaserver.Id fromId, Set changeCells,
+						    Space to) {
+	Map dimChg = changesToDims(changes);
+	Set cells = getCells(changes);
+
+	changes = new HashSet(changes); // We'll be modifying it.
+	
+	// Get an unchanged space.
+	Space s = appliedSpace(ms, fromId, changeCells, to, (Set)null);
+
+	DIMLOOP: for String dim through dimChg.keySet() {
+	    p("\tMolecules: "+dim);
+	    Dim sdfrom = from.getDim(dim);
+	    Dim sdto = to.getDim(dim);
+
+	    PartialOrder p0 = new PartialOrder(cells, sdfrom);
+	    PartialOrder p1 = new PartialOrder(cells, sdto);
+	    // Here we get the ones that remain
+	    PartialOrder p = p0.intersection(p1);
+
+	    p("\tMolecules find conflicts: "+changes.size());
+
+	    // Find first conflicting change.
+	    OUTER: while(true) {
+		p("Molecules ch loop " + changes.size());
+		for Change ch through changes {
+		    // p("Create applied space...");
+		    // Space s = appliedSpace(ms, fromId, changeCells, to, ch);
+		    ch.apply(s);
+
+		    Dim applDim = s.getDim(dim);
+
+		    p("ShortViolation");
+		    PartialOrder.Pair pair = p.shortViolation(applDim, sdfrom);
+
+		    if(pair != null) {
+			p("collectViolation");
+			// Fix this violation, then break in order to restart
+			Set viol = collectViolation(
+			    dim, pair, ch, changes, 
+			    ms, fromId, changeCells, to);
+			changes.removeAll(viol);
+			viol.remove(ch);
+			if(viol.isEmpty()) throw new Error("No new additions found");
+			for Change ach through viol {
+    //			p("Combine: "+ch+" "+ach);
+			    ch = ch.combine(ach);
+			}
+			changes.add(ch);
+
+			ch.undo(s);
+			continue OUTER;
+		    }
+		    ch.undo(s);
+		}
+		continue DIMLOOP;
+	    }
+	    
+	}
+	return changes;
+    }
+
+    public static Set makeChanges(SimpleTransientSpace from, 
+		    		SimpleTransientSpace to) {
+	Set res = new HashSet();
+	Set cells = new HashSet();
+	for Cell c through from.cells.values() { cells.add(c.id); }
+	for Cell c through to.cells.values() { cells.add(c.id); }
+
+	Map mfrom = from.getRealDims();
+	Map mto = to.getRealDims();
+
+	Set dims = new HashSet(mfrom.keySet());
+	dims.addAll(mto.keySet());
+
+	for String d through dims {
+//	    p("Dim: "+d);
+	    Dim fromd = null;
+	    try {
+		fromd = from.getDim(d);
+	    } catch(ZZImpossibleCellException e) {
+		FullSpace fs = new FullSpace();
+		fromd = fs.getDim(d); // No connections
+	    }
+	    Dim tod = to.getDim(d);
+	    res.addAll(makeSingleDimChanges(d, fromd, tod, cells));
+	}
+	return res;
+    }
+
+    /** Create a set of quarks that occurred on one dimension.
+     * @param qkey The dimension String to put on the quark's Dim param
+     * @param fromd,tod The dimensions to diff between
+     * @param cells The set of all cells next to which to look for changes.
+     */
+    public static Set makeSingleDimChanges(String qkey,
+			    Dim fromd, Dim tod, Set cells) {
+	Set res = new HashSet();
+	for String c through cells {
+	    if(!eq(safeStep(fromd, c, 1), s(tod, c, 1))) {
+		String neg = c;
+		String pos = s(tod, c, 1);
+		String prevpos = safeStep(fromd, neg, 1);
+		String prevneg = pos != null ? safeStep(fromd, pos, -1) : null;
+		res.add(new Change(
+		    new Quark(qkey, neg, prevpos, prevneg, pos)));
+		if(prevpos != null && s(tod, prevpos,-1) == null)
+		    res.add(new Change(
+			new Quark(qkey, null, null, neg, prevpos)));
+	    }
+	}
+	return res;
+    }
+
+
+    public static Set groupChanges(Set allChanges) {
+	Set ret = new HashSet();
+	while(!allChanges.isEmpty()) {
+	    Change c = (Change)(allChanges.iterator().next());
+	    allChanges.remove(c);
+	    Set cells = new HashSet(c.allends);
+	    boolean added = true;
+	    while(added) {
+		added = false;
+		for Change c2 through allChanges {
+		    if(overlaps(cells, c2.allends)) {
+			cells.addAll(c2.allends);
+			c = c.combine(c2);
+			allChanges.remove(c2);
+			added = true;
+			break;
+		    }
+		}
+	    }
+	    ret.add(c);
+	}
+	return ret;
+    }
+
+    public static String chgString(Set changes, Space space) {
+	StringBuffer buf = new StringBuffer();
+	for Change ch through changes {
+	    buf.append("\n"+ch.toString(space));
+	}
+	buf.append("\n");
+	return buf.toString();
+    }
+
+    /** Merge.
+     * The changes that do not conflict with anything will be directly
+     * applied to the currentOfficial space.
+     * <p>
+     * This routine is quite limited in scope:
+     * <br> <img src="../../../../doc-images/merge-limitations-1.jpg">
+     * <p>
+     * @param currentOfficial The current official space
+     * @param proposedChanges The space that was branched from an earlier
+     *				version of the current official space
+     * @param commonAncestor  The space that both currentOfficial and
+     *				proposedChanges are derived from.
+     * @param applyTo		An instance of currentOfficial, to which
+     *				the non-conflicting changes are to be applied.
+     * @return The result.
+     */
+    static public Result merge(
+		    Mediaserver ms,
+		    Mediaserver.Id currentOfficial,
+		    Mediaserver.Id proposedChanges,
+		    Mediaserver.Id commonAncestor
+		    ) {
+	try {
+
+	p("Loading current official version:\n"+ currentOfficial);
+	PermanentSpace sof = new PermanentSpace(ms, currentOfficial);
+	p("Loading common ancestor:\n"+ commonAncestor);
+	PermanentSpace sco = new PermanentSpace(ms, commonAncestor);
+	p("Loading new proposed changes:\n"+ proposedChanges);
+	PermanentSpace spr = new PermanentSpace(ms, proposedChanges);
+	p("All spaces loaded");
+
+// First time around.
+	Set changes = makeChanges(sco, spr);
+
+	Set allCells = getCells(changes);
+	Set cells = baseCells(allCells);
+	Set sliceCells = new HashSet(allCells);
+	sliceCells.removeAll(cells);
+
+	for (iter1) Change ch through changes {
+	    if(overlaps(sliceCells, ch.allends)) {
+		p("REMOVING CHANGE "+ch);
+		iter1.remove();
+	    }
+	}
+
+	// First, make the cells exist...
+	GZZ1Ugliness ugof = new GZZ1Ugliness(spr, sof);
+	GZZ1Ugliness ugco = new GZZ1Ugliness(spr, sco);
+
+	for String s through cells {
+	    ugof.makeExist(s);
+	    ugco.makeExist(s);
+	}
+
+// Second time, now that the cells have been created in the other spaces...
+	changes = makeChanges(sco, spr);
+
+	allCells = getCells(changes);
+	cells = baseCells(allCells);
+	sliceCells.removeAll(cells);
+
+	for (iter1) Change ch through changes {
+	    if(overlaps(sliceCells, ch.allends)) {
+		p("REMOVING CHANGE "+ch);
+		iter1.remove();
+	    }
+	}
+
+	// currentOfficial = sof.save(ms);
+	// sof = new PermanentSpace(ms, currentOfficial);
+
+	Set dims = new HashSet(changesToDims(changes).keySet());
+
+    p("Make atoms");
+	changes = atoms(changes);
+    p("Make molecules");
+	changes = makeMoleculesSucc(changes, sco, ms, commonAncestor, cells, spr);
+    p("Make group changes");
+	changes = groupChanges(changes);
+
+	Set conflicts = new HashSet();
+	for String dim through dims {
+
+	    p("Dim "+dim);
+
+	    PartialOrder pof = new PartialOrder(cells, sof.getDim(dim));
+	    PartialOrder pco = new PartialOrder(cells, sco.getDim(dim));
+	    PartialOrder ppr = new PartialOrder(cells, spr.getDim(dim));
+
+	    PartialOrder p = pof.intersection(pco.intersection(ppr));
+
+	    for (chIter) Change ch through changes {
+		p("change "+ch);
+		Space s;
+		boolean hasConflict = false;
+		try {
+		    s = appliedSpace(ms, currentOfficial, cells, spr, ch);
+		    PartialOrder.Pair pair = p.shortViolation(s.getDim(dim), 
+						    sco.getDim(dim));
+		    if(pair != null)  {
+			hasConflict = true;
+			p("Violation: "+pair.toString(sof)+
+					"\nFor change "+ch.toString(sof));
+		    }
+		} catch(CannotApplyError e) {
+		    hasConflict = true;
+		}
+		if(hasConflict) {
+		    chIter.remove();
+		    conflicts.add(ch);
+		}
+	    }
+
+	}
+
+	p("NON-CONFLICTS: "+changes);
+	p("CONFLICTS: "+conflicts);
+
+	
+	PermanentSpace applyTo = new PermanentSpace(ms, currentOfficial);
+	ugof = new GZZ1Ugliness(spr, applyTo);
+	for String s through cells {
+	    ugof.makeExist(s);
+	}
+
+	p("APPLY");
+	for Change ch through changes {
+	    ch.apply(applyTo);
+	}
+
+	Result res = new Result();
+	res.conflicts = conflicts;
+	res.newSpace = applyTo;
+	return res;
+
+	} catch(Exception e) {
+	    e.printStackTrace();
+	    throw new Error("Unexpected exception while merging: "+e);
+	}
+    }
+
+    static public class Result {
+	public Set conflicts;
+	public PermanentSpace newSpace;
+    }
+
+}
+
+// vim: set syntax=java :

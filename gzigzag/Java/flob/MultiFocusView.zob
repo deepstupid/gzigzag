@@ -1,0 +1,124 @@
+/*   
+MultiFocusView.zob
+ *    
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+ 
+package org.gzigzag; 
+import java.util.*;
+import java.awt.*;
+
+public class MultiFocusView implements FlobView, ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) pa(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {}
+
+    public static String d_app_layout = "d.app_layout";
+ 
+    // Layouts are originated from homecell along dim 'd.app_layouts'.
+    // Each applitude has its own size and position in a layout (all
+    // this information is in percents of the whole view!). Also,
+    // applitude can be given an accursed cell of its own.
+    public static void registerAppLayout(ZZCell c, ZZCell[] apps, 
+                                         ZZCell accursed, int[][] lo) {
+	ZZCell app_lo, na;
+	int i;
+	c = c.getSpace().getHomeCell();
+	app_lo = apps[lo[0][0]].zzclone();    
+	if(c.s(d_app_layout) != null) {
+            na=ZZDefaultSpace.findInheritableParam(c.s(d_app_layout), 
+                                                     app_lo.t());
+            if(na==null) na=c.s(d_app_layout).h("d.2",1).N("d.2");
+	} else 
+	    na = c.N(d_app_layout);
+        ZZCursorReal.set(na, accursed);
+        na.setText(app_lo.t());
+        na.connect("d.1", 1, app_lo);
+        na = na.s("d.1");
+	i = 0;
+	while(true) {
+	    for(int j=1; j<5; j++) {
+		app_lo = app_lo.N("d.1");
+		app_lo.setText(""+lo[i][j]);
+	    }
+	    i++;
+	    if(i == apps.length) break;
+	    na.connect("d.2", 1, apps[lo[i][0]].zzclone());
+	    na = na.s("d.2");
+	    app_lo = na;
+	}
+    }
+
+
+    public static ZZCell[][] rasterAreas(ZZCell root, ZZCell pref) {
+        ZZCell c = null, ras = null, rc;
+	String pref_txt;
+	Hashtable rh = new Hashtable();
+	if(pref!=null)
+            pref_txt = pref.t();
+	else pref_txt = "";
+        for(rc=root.s(d_app_layout); rc!=null; rc=rc.s("d.2")) {
+            rh.put(new String(rc.t()), rc);
+            if(rc.t().equals(pref_txt)) ras = rc.s("d.1");
+        }
+        if(ras == null) ras = root.s(d_app_layout).s("d.1");
+        int n = rh.size();
+        ZZCell rasret[][] = new ZZCell[2][n];
+        for(int i=0; i<n; i++) {
+            rasret[0][i] = ras;
+            rasret[1][i] = (ZZCell)rh.get(ras.t());
+            ras = ras.s("d.2");
+        }
+	return rasret;
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+                       ZZCell win, String[] dims, ZZCell accursed) {
+	ZZCell pref = ApplitudeMgr.getWindowApp(win);
+	ZZCell home = win.getSpace().getHomeCell();
+	ZZCell[][] rasterAreas = rasterAreas(home, pref);
+
+	Dimension s = into.getSize();
+
+	int n = rasterAreas.length;
+	
+	double xp, yp, wp, hp;
+	int x, y, w, h;
+	for(int i=0; i<n; i++) {
+            ZZCell app, app_accursed, c_app_accursed;
+            app = rasterAreas[0][i].h("d.clone");
+            c_app_accursed = rasterAreas[1][i];
+            app_accursed = ZZCursorReal.get(c_app_accursed);
+            if(app_accursed == null) app_accursed = accursed;
+            xp = new Integer(rasterAreas[0][i].s("d.1",1).t()).doubleValue();
+            yp = new Integer(rasterAreas[0][i].s("d.1",2).t()).doubleValue();
+            wp = new Integer(rasterAreas[0][i].s("d.1",3).t()).doubleValue();
+            hp = new Integer(rasterAreas[0][i].s("d.1",4).t()).doubleValue();
+            x = (int)(xp/100.0 * s.width);
+            y = (int)(yp/100.0 * s.height);
+            w = (int)(wp/100.0 * s.width);
+            h = (int)(hp/100.0 * s.height);
+	    FlobSet set = into.create(new Dimension(w, h));
+	    FlobView view = ApplitudeMgr.getView(app);
+	    view.raster(set, fact, win, dims, app_accursed);
+	    into.fetch(set, x, y, 0, app);
+	}
+    }
+}

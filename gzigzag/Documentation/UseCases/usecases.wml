@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd"> 
+<!--
+        NOTE! This file uses WML 2.0.1
+
+        PLEASE PLEASE PLEASE don't edit .HTML. Edit .WML!!!! Actually,
+        it's more important for you since your changes will be LOST FOREVER
+        if you edit the .HTML files.
+ -->
+
+<html>
+ <head>
+  <title>ZigZag use cases</title>
+
+#include '../wmlinc/article.wml'
+#use wml::fmt::xtable
+
+ </head>
+ <body>
+
+<!-- 
+        Make d.foo into <code>d.foo</code> so we don't have to explicitly
+        do it whenever we talk about dimensions.
+-->
+<substdims>
+
+<h1>ZigZag Use Cases</h1>
+<pre>$Id: usecases.wml,v 1.11 2001/07/30 16:26:43 tuukkah Exp $</pre>
+
+Written by <br>
+<b>Tuukka Hastrup</b> <br>
+<b>Tuomas J. Lukka</b> <br>
+(add your name here if you do any significant modification)
+
+<toc>
+
+<warn>
+
+<h2>Introduction</h2>
+
+<p>
+The following should become an extensive list of ZigZag use cases. From a 
+list like this, one can find out which other features are needed for a specific
+feature. Also, many times there are various sensible definitions for some
+feature, in which case one can consult this list for relevant viewpoints.
+
+<p>
+Whenever several implementation possibilities are given, it easily happens that
+they are assessed solely based on the latest considerations. I hope that this
+list will be of help in remembering the earlier considerations too. 
+
+<p>
+The list begins with some needs the user has, and as new system parts
+are introduced, we try to see their cases too.
+
+<p>
+In the end of cases, there is possibly some entries marked with an 
+asterisk (*), each providing a suggestion for implementation of the features.
+
+<p>
+Please comment on anything you don't agree with and insert new viewpoints you
+consider meaningful. As the comments are agreed on, the results shall be
+reflected in the case. In case of a non-trivial feature, the comment should
+probably induce a new, corresponding case.
+
+<h2>Cases</h2>
+
+<h3>to use ZigZag</h3>
+<ul>
+<li>users can use ZigZag wherever they want (through a <em>client</em>)
+
+<li>they can give some ZigZag to people using other systems
+
+<li>themselves they don't need to use anything else
+
+<li>* Scalable multiplatform implementation: an OS, an application, an applet
+</ul>
+
+<h3>client starts</h3>
+<ul>
+<li>client needs to know screen settings
+
+<li>client gets the newest version of the settings the user had last time
+
+<li>for this, client needs to know the user
+
+<li>client displays the <a href="#workspace">work space</a> on the screen
+
+<li>* a client space with some slices?
+<tjl> I don't think slices have anything to do with this, really...
+    Also, why can't I just switch between settings easily and start where
+    I previously left off? Why would the client fix me into some set of 
+    settings?
+    We don't want to go down the X road of reading user preferences at
+    startup and then remaining with them. Everything has to move fluidly
+    at all times.
+
+</ul>
+<h3 id="workspace">work space</h3>
+<ul>
+<li>user can create data sets and export and import them to the work spaces
+
+<li>within work space, user can edit and view several of these data sets
+
+<li>* a compound space of slices?
+
+</ul>
+<h3>data set</h3>
+<ul>
+<li>user handles created data in sets, closely related data in one set
+
+<li>a set can be exported from a work space in which it was created
+and imported into other work spaces
+
+<li>what is considered to be related can change according to viewpoint. The
+user can thus operate data between sets: include in several sets, move from
+one set to another
+
+<li> when the users operate on the data, the system should manage data set 
+borders accordingly
+
+<li>* a slice?
+<tjl>It has to be easy to make new small overlapping sets of cells, send those
+and compare and integrate changes made to them elsewhere.
+The division <b>must not be forced to be hierarchical</b>.
+Having a piece of data in only one set or one hierarchical set path
+is way too constraining.
+</ul>
+<h3>screen settings</h3>
+<ul>
+<li>a data set that tells everything the client needs to know about
+user's preferences
+<ul>
+<li>windows
+<li>configuration parameters (fonts etc.)
+<li>bindings
+<li>cursors
+<li>positions
+<li>work space
+</ul>
+<li>some of these the user will want to share between several screen settings
+
+<li>users can switch from screen settings to another ones whenever they want to
+
+<li>* a set of nested slices?
+    <tjl> I don't see this having that much to do with slices; sharing
+	settings can be done simply in the structure.
+
+    <tuukka>I see the initial slice mainly as a way to select which settings
+	to use. This way, we don't have to take them as command line 
+	parameter(s) or ask the user while the client's loading.
+    <tjl> What "command line"? What "loading"?
+	It's going to be a full OS. It has to be easy to switch between these.
+	How would you specify the "initial slice"?
+    <benja> It would be nice if it weren't a full OS only, rather, everything
+	from an applet to a browser plugin to a standalone "application" to
+	a booting OS. I do want to run it as an OS, but I also want to write
+	interactive media with it distributable to Windows PCs (not that I
+	wouldn't like people to use ZZ rather than Windows, but I don't want
+	to wait for it). I think gZZ can really be made scalable and running
+	on many platforms.
+    <tjl> That has been my intention all the time (Tuukka: this 
+	probably qualifies as a use case ;).
+	I just meant that assuming that there is something around zigzag
+	where you can give parameters on how to "boot" it
+	is a bit too restrictive.
+    <ajk>Another possible phrasing: "It's going to be embedded.  Embedded systems
+        start at the Big Bang and run forever.  There is no startup-time command line."
+        (I happen to agree with RMS: I want to use GZZ in addition to,
+        not instead of my current systems.)
+</ul>
+
+
+<h3>export and import</h3>
+<ul>
+<li> data sets exported from a work space can be imported potentially into 
+any other work space    
+
+<li> user has a chance to limit access and types of access to specific 
+users or groups of users
+
+<li> during export, possible dependencies to data outside the set are 
+considered: user has chance to hide (remove) references, incorporate more
+of the data to the set, or let the dependencies stay marked 
+
+<li> such external data include
+<ul>
+<li> primitives, dimensions, libraries
+<li> references related to specific data types
+<li> personal notes
+</ul>
+
+<li> during import, dependency problems are solved: user can leave dependencies
+unsatisfied, bring more data as an other set or suggest alternative resources
+to satisfy the dependencies
+</ul>
+
+<tjl> what about mediaserver, when I 
+    publish a part of previously completely private block. Does it need
+    to be physically copied (YUCK).
+
+<h3>management of data set borders</h3>
+<benja>One of the hardest problems here is that a set must grow "naturally"
+when its contents are edited: if I have some text in "Chapter 7" and
+"unfinished scenes," and I enter some more text there, both sets must grow 
+to include that text. But a new connection to something may either be an
+extension of what's already there, or an annotation or link that doesn't belong
+to it-- my note on the scene above is part of my work on "unfinished scenes,"
+and I want to see it when I look at that set, but it is not part of Chapter 7,
+and I do not want it to be included when I publish Chapter 7 on my website.
+<ul>
+<li> when user edits data, the data set borders are changed accordingly
+
+<li> when a new cell is created, all related sets grow to include it
+
+<li> a new connection may bring parts of several sets together, and user
+is consulted in what to include in respective sets
+</ul>
+
+<h3> 
+
+<h2> Priorities of computer use. </h2>
+    <tuukka> I don't know if we should concentrate on <em>computers</em>.
+            Instead, would it change your meaning if it was changed to
+            use of ZigZag? Or use of information technology? We're going to
+            see ZigZag in PDA's and such, and I consider these extremely
+            important. (Tell me about "information appliances", huh :-S
+
+    <tjl> This section currently lists the things I want to do with
+	    my computer, in approximate priority order.
+	    Please add your ideas or different prioritizations.
+
+    <p>
+    First, for solo applitudes used by one person (of course, 
+    using these collaboratively must be possible as well)
+    <ul>
+    <li> Text editing
+    <li> Scanned images
+    <li> Figures
+    <li> Programming (Clang, Java, ...)
+    <li> Reading PDF, PS
+    <li> Math formulas, graphs
+    <li> Hifi audio playing
+    <li> Presentations - animation, graphics
+    <li> WWW
+    <li> Database-like stuff -- contacts
+    <li> 3D graphics
+    <li> Searching large amounts of text
+    <li> crypto
+    <li> composing music
+    <li> games 
+	 <benja> Starting with a ZigZag-based Sokoban :)
+    <li> desktop publishing (YUCK)
+    <li> cute animations / screensavers ...
+    <li> calendar
+    <li> video
+    </ul>
+
+    <p>
+    Then, communication.
+    <ul>
+    <li> email
+    <li> irc
+    <li> cvs (both real cvs and cvs-like functionality)
+    <li> common space / cooperation
+    <li> GO
+    <li> usenet news
+    <li> video meeting
+    </ul>
+
+    <benja> OK, what I really want to do are interactive media. Not these
+	I'm-interactive-because-you-click-me-and-I-jump-up gizmos, but 
+	media actually <em>interacting</em> with the user. I want really
+	really powerful high-level scripting supporting multiparadigm 
+	programming including logical programming and other arcane things, and
+	first and foremostly the possibility to interface everything in the
+	easiest way, not one that follows the system's conventions, because
+	current systems don't lend themselves towards expressing human 
+	thought-- and programming systems are no exception. Besides, sometime
+	I would really like to have Flash-like vector animation because it
+	makes things look so much better, but unlike Flash it must be fully
+	programmable (otherwise I'm better of without it). And I want to
+	deliver it all as a browser plugin as long as that's popular. :)
+
+    <benja> Summarizing:
+    <ul>	
+    <li> text viewing and editing (simple, but supporting transclusion)
+    <li> programming (Clang, lots of different strange ones)
+    <li> browser plugin or similar way to get users of locked-in systems
+    <li> (sometime) Flash-like animation.
+    </ul>
+
+    <tuukka> I'd like to see <i>reasonable computing</i>:
+             <ul>
+             <li> user interfaces that don't lock the user data into a 
+                  predefined form
+             <li> preservation of human entered data whatever the situation 
+                  or "crash" 
+             <li> possibility to automate everything one would like to do 
+             (small problems with small solutions, big problems with bigger 
+             ones). 
+             </ul>
+
+    <tuukka> ZigZag promises pretty much on this area. As means to get to these
+             results, I'm interested in:
+             <ul>
+             <li> identity: All data has an identity in form of the cell, which
+                  can be used to represent complex relations (where is the 
+                  borderline: d.clone - d.implements - d.cursor?)
+             <li> spreadsheet paradigm: spreadsheet programs are popular for
+                  various unrelated tasks (not to mention a notebook and 
+                  a pencil), and similar characteristic of ZigZag
+                  suggests this could be taken advantage of
+             </ul>
+
+    <tuukka> Actual application areas I think would be good for ZigZag at 
+             first:
+             <ul>
+             <li> messenging: email/news, instant messenging (Jabber client?)
+             <li> a super spreadsheet
+             <li> program authoring tools
+             </ul>
+</substdims>
+ </body>
+</html>
+
+<!--
+        vim: set syntax=html :
+-->

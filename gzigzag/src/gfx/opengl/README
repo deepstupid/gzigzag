@@ -1,0 +1,5 @@
+Some tests, working towards an OpenGL GZigZag. The point: modern
+3D accelerators are FAST, far faster than any of the other Java 
+graphics APIs.
+
+The a010013l.pfb font file is from the debian gsfonts package.

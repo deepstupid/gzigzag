@@ -1,0 +1,129 @@
+/*   
+ClockCellView.zob
+ *    
+ *    Copyright (c) 2000-2001, Ted Nelson and Tuomas Lukka
+ *    Copyright (c) 2001, Benja Fallenstein
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benja Fallenstein
+ */
+
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A cell view that shows the contents of a window.
+ *  Use this ZOb as the headcell on d.cellview from the window's cursor cell,
+ *  and that cell will appear as the window's contents.
+ */
+ 
+public class WindowCellView implements FlobFactory, ZOb {
+public static final String rcsid = "$Id: WindowCellView.zob,v 1.3 2001/03/18 17:50:16 bfallenstein Exp $";
+    public static boolean dbg = false;
+    private static void p(String s) { if(dbg) ZZLogger.log(s); }
+    private static void pa(String s) { ZZLogger.log(s); }
+
+    STRUCTPARAMS {
+    }
+
+    public Dimension getSize(ZZCell c, float fract) {
+	// XXX use the bounds as specified in the structure
+	return new Dimension((int)(500*fract), (int)(300*fract));
+    }
+
+    public Flob makeFlob(FlobSet into, ZZCell c0, ZZCell handleCell,
+		float fract, 
+		int x, int y, int d, int w, int h) {
+
+	FlobSet sc = into.create(new Dimension(w, h));
+	SceneFlob sf = new SimpleSceneFlob(x, y, d, w, h, c0, sc);
+	CellFlobFactory1.addSolidColors(into, sf, sf);
+	into.add(sf);
+	
+	if(w+h < 100) return sf;
+	ZZCell view = c0.getRootclone();
+
+	    ZZCell c = ZZDefaultSpace.findInheritableParam(view, "View");
+	    ZZCell rastname = ZZCursorReal.get(c);
+
+	    ZOb frz = ZZDefaultSpace.readZOb(rastname);
+	    FlobView fr = null;
+	    if(frz != null && frz instanceof FlobView) {
+		fr = (FlobView)frz ;
+	    } else {
+		System.out.println("getScene: invalid type: "+frz);
+		fr = new NullView();
+	    }
+	    // XXX Signal error
+
+	    c = ZZDefaultSpace.findInheritableParam(view, "CellView");
+
+	    FlobFactory rff = null;
+	    if(c != null) {
+		ZZCell cfact = ZZCursorReal.get(c);
+
+		ZOb ffzob = ZZDefaultSpace.readZOb(cfact);
+		rff = (FlobFactory) ffzob;
+	    }
+
+	    p("WindowCellView: prepare view");
+	    fr.raster(sc, rff, view, ZZDefaultSpace.getDimList(view), 
+		      ZZCursorReal.get(view));
+	    p("WindowCellView: view prepared");
+
+	    if(rff != null) {
+		Flob rn = rff.placeFlob(sc, rastname, rastname, (float)1.5, w, 0, 1, 1, 0);
+		rn.flobPath="rastname";
+	    }
+	
+	return sf;
+    }
+
+    public Flob placeFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		    float fract, 
+			int x, int y, int depth,
+			float xfract, float yfract) {
+		Dimension d = getSize(c, fract);
+		return makeFlob(into, c, handleCell, fract, 
+			(int)(x-xfract*d.width),
+			(int)(y-yfract*d.height),
+			depth, d.width, d.height);
+    }
+
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign,
+		int depth, Dimension d) {
+	if(d == null) d = getSize(c, fract);
+	int x, y;
+	x = p.x - d.width/2; y = p.y - d.height/2;
+	
+	if(xalign < 0) x = p.x;
+	if(xalign > 0) x = p.x - d.width;
+	if(yalign < 0) y = p.y;
+	if(yalign > 0) y = p.y - d.height;
+	p("centerFlob "+p+" "+d+" at "+x+" "+y+" align "+xalign+" "+yalign);
+	return makeFlob(into, c, handleCell, fract, x, y, 
+			depth, d.width, d.height);
+    }
+    public Flob centerFlob(FlobSet into, ZZCell c, ZZCell handleCell,
+		float fract, Point p, int xalign, int yalign, int depth) {
+	return centerFlob(into, c, handleCell, fract, p, xalign, yalign,
+			  depth, null);
+    }
+}
+
+// vim: set syntax=java :

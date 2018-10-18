@@ -1,0 +1,138 @@
+/*   
+ParallelTextView.zob
+ *    
+ *    Copyright (c) 2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+package org.gzigzag;
+import java.util.*;
+import java.awt.*;
+
+/** A text cloud.
+ */
+
+public class ParallelTextView implements FlobView, ZOb {
+public static final String rcsid = "$Id: ParallelTextView.zob,v 1.6 2000/12/11 09:03:03 raulir Exp $";
+    public static boolean dbg = false;
+    static void p(String s) { if(dbg) System.out.println(s); }
+    static void pa(String s) { System.out.println(s); }
+
+    static RankTextView vr;
+
+    STRUCTPARAMS {
+    }
+
+    public void raster(FlobSet into, FlobFactory fact,
+	    ZZCell view, final String[] dims, ZZCell accursed) {
+
+	Dimension d = into.getSize();
+	int cy = d.height / 2;
+	int width = d.width / 4;
+	int xspace = width / 2;
+
+	if(vr == null) {
+	    vr = new RankTextView();
+	    vr.readParams(null);
+	}
+	vr.dim = dims[1];
+	vr.width = width;
+	
+	ZZCell[] streams = new ZZCell[] {
+	    accursed.s(dims[0], -1),
+	    accursed,
+	    accursed.s(dims[0], 1),
+	};
+
+	int offs = ZZCursorReal.getOffs(view);
+	if(offs == ZZCursorReal.NO_OFFSET) offs = 0;
+	
+	for(int i=0; i < 3; i++) {
+	    if(streams[i] == null) continue;
+	    int x = i * (width + xspace);
+	    vr.raster(into, streams[i], i==1 ? offs : 0, false, x, cy);
+	}
+	
+	// Now, the links
+	
+	final FlobSet f = (FlobSet)into; // XXX
+	final LineDecor.Builder ldb = new LineDecor.Builder(f, Color.red);
+	final Hashtable flobtable = new Hashtable();
+	
+	f.iterDepth(new FlobSet.DepthIter() {
+	    public void act(Flob[] flobs, int start, int n) {
+		for(int i=start; i<start+n; i++) {
+		    Flob flb = flobs[i];
+		    if(flb.c == null) continue;
+		    // if(((SpanFlob)flb).getPrev() != null) continue;
+		    Vector fs = (Vector) flobtable.get(flb.c);
+		    if(fs == null) {
+			fs = new Vector();
+			flobtable.put(flb.c, fs);
+		    }
+		    fs.addElement(flb);
+		}
+	    }
+	}, true);
+		    
+	f.iterDepth(new FlobSet.DepthIter() {
+	    public void act(Flob[] flobs, int start, int n) {
+
+		ldb.startl(2*n, flobs[start].d + 1);
+
+		for(int i=start; i<start+n; i++) {
+		    Flob cur = flobs[i];
+		    ZZCell c = cur.c;
+		    p(" cell: "+c+" "+(c!=null?c.getText():""));
+		    if(!(cur instanceof SpanFlob)) continue;
+		    p("   is span flob");
+		    if(c == null) continue;
+		    SpanFlob spanf = (SpanFlob)cur;
+		    // if(spanf.getPrev() != null) continue;
+		    p("   doesn't have prev");
+		    { // XXX dedent
+			ZZCell neigh = c.s(dims[0], 1);
+			p(" Neigh: "+neigh+" "+
+				(neigh!=null?neigh.getText():""));
+			if(neigh == null) continue;
+			Vector nflbs = (Vector) flobtable.get(neigh);
+			if(nflbs == null) continue;
+                        // XXX show connections to non-shown cells!
+			for(Enumeration e = nflbs.elements();
+			    e.hasMoreElements();) {
+			    Flob nf = (Flob) e.nextElement();
+			    SpanFlob nsf = (SpanFlob) nf;
+			    Flob from=cur, to=nf;
+			    ldb.l(
+				from.x + from.w,
+				from.y + from.h / 2,
+				to.x,
+				to.y + to.h / 2
+			    );
+                        }
+		    }
+		}
+
+		ldb.endl();
+	    }
+	}, true);
+    }
+}
+
+
+// vim: set syntax=java :

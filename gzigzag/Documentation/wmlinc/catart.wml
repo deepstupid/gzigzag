@@ -1,0 +1,56 @@
+#include "common.wml"
+
+<define-tag doctitle endtag=required>
+  {#TITLE#: %body :##} <H1>%body</H1>
+</define-tag>
+<:
+  @sectcounter = (0,0,0,0,0);
+  sub sectcounter_reset {
+    my $level = $_[0];
+    while ($level <= $#sectcounter) {
+      $sectcounter[$level++] = 0;    
+    }
+  }
+  sub sectnum {
+    my $level = $_[0];
+    my $rv = "";
+    while ($level >= 0) {
+      $rv = "$sectcounter[$level--]." . $rv;
+    }
+    return $rv;
+  }  
+:>
+<define-tag section  endtag=required>
+  <: $sectcounter[%0]++; sectcounter_reset(%0+1); 
+     $num = sectnum(%0); :>
+  {#MYTOC#: <a href="#SEC<:= $num :>"><:= $num :> %body</a><br> :##}
+  <h<:= %0 + 2 :>><a name="SEC<:= $num :>"><:= $num :> %body</a></h<:= %0 + 1 :>>
+  <if <string-neq "%1" ""> <group
+    {#REF%1#:<a href="#SEC<:= $num :>"><perl>print $num;</perl></a>:##} 
+  /> />
+</define-tag>
+<define-tag ref>{#REF%0#}</define-tag>
+<define-tag s1 endtag=required>
+  <section 0 %0>%body</section>
+</define-tag>
+<define-tag s2 endtag=required>
+  <section 1 %0>%body</section>
+</define-tag>
+<define-tag s3 endtag=required>
+  <section 2 %0>%body</section>
+</define-tag>
+<define-tag s4 endtag=required>
+  <section 3 %0>%body</section>
+</define-tag>
+<define-tag s5 endtag=required>
+  <section 4 %0>%body</section>
+</define-tag>
+
+<html>
+<head>
+<title>{#TITLE#}</title>
+<style type="text/css">
+#include "art.css"
+</style>
+</head>
+

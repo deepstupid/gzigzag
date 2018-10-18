@@ -1,0 +1,603 @@
+/*   
+ExternalEditor.java
+ *    
+ *    Copyright (c) 2000-2001, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Tuomas Lukka
+ */
+package org.gzigzag.impl;
+import org.gzigzag.*;
+import org.gzigzag.util.*;
+import org.gzigzag.mediaserver.*;
+import java.util.*;
+import java.io.*;
+
+/** Export and reimport vstreams.
+ */
+
+public class ExternalEditor {
+
+    public static boolean dbg = false;
+    static void p(String s) { if(dbg) System.out.println(s); }
+    static void pa(String s) { System.out.println(s); }
+
+    /** Add a list's sublist to another -- WORK AROUND A BUG IN KAFFE 1.0.6.
+     */
+    static public void addListToList(List from, int start, int end, 
+				    List to) {
+	for(int i=start; i<end; i++)
+	    to.add(from.get(i));
+    }
+
+
+    /** A special cell embedded in the character stream.
+     */
+    public static class Special {
+	public Special(String id) { this.id = id; }
+	String id;
+	public boolean equals(Object o) {
+	    return id.equals(((Special)o).id);
+	}
+	public int hashCode() {
+	    return id.hashCode();
+	}
+    }
+
+    /** The representation of the character stream to be externalized.
+     * This representation contains Character, Special and Match objects
+     * inside.
+     */
+    public static class ExtRep {
+	public ExtRep() {
+	}
+
+	/** For testing: create an ExtRep with one Character object
+	 * for each character in the string.
+	 */
+	public ExtRep(String s) {
+	    for(int i=0; i<s.length(); i++) 
+		objects.add(new Character(s.charAt(i)));
+	}
+
+	/** Import an edited version, parsing the Specials out of the strings.
+	 */
+	public ExtRep(byte[] bytes, String encoding) 
+		throws UnsupportedEncodingException {
+	    String s = new String(bytes, encoding);
+	    int cur = 0;
+	    while(cur < s.length()) {
+		int n = s.indexOf("{[[",cur);
+		if(n < 0) n = s.length();
+		for(int i=cur; i<n; i++) 
+		    objects.add(new Character(s.charAt(i)));
+		if(n < s.length()) {
+		    n += 3;
+		    int end = s.indexOf("]]}", n);
+		    if(end < 0) throw new Error("Didn't find counterpart");
+		    objects.add(new Special(s.substring(n, end)));
+		    n = end + 3;
+		}
+		cur = n;
+	    }
+	}
+
+	/** Export this extrep into bytes.
+	 * Special object ids are surrounded by '{[[' and ']]}'.
+	 */
+	public byte[] getBytes(String encoding) 
+		    throws UnsupportedEncodingException{
+	    // XXX How not to lose info?
+	    StringBuffer buf = new StringBuffer();
+	    for Object o through objects {
+		if(o instanceof Match) throw new Error("WHAT!");
+		if(o instanceof Special) {
+		    buf.append("{[[");
+		    buf.append(((Special)o).id);
+		    buf.append("]]}");
+		} else buf.append(((Character)o).charValue());
+	    }
+	    byte[] ret = buf.toString().getBytes(encoding);
+	    return ret;
+	}
+
+
+	/** The objects in this.
+	 */
+	ArrayList objects = new ArrayList(); // either Character or special.
+
+	/** Shorthand for objects.size(). 
+	 */
+	public int length() { return objects.size(); }
+
+	public String toString() {
+	    return objects.toString();
+	}
+
+	public Object clone() {
+	    ExtRep r = new ExtRep();
+	    r.objects = (ArrayList)objects.clone();
+	    return r;
+	}
+
+	/** Returns true if the two ExtReps represent the
+	 * same string with the same specials at the same places.
+	 * Useful for checking that an ExtRep remains the same 
+	 * even when matches are inserted and combined.
+	 * <b>Assumes that r does not have any Match objects</b>
+	 */
+	public boolean equivalent(ExtRep r) {
+	    int rind = 0;
+	    for Object o through objects {
+		if(o instanceof Match) {
+		    for Object o2 through ((Match)o).objects {
+			if(!r.objects.get(rind).equals(o2))
+			    return false;
+			rind++;
+		    }
+		} else {
+		    if(!r.objects.get(rind).equals(o))
+			return false;
+		    rind++;
+		}
+	    }
+	    return true;
+	}
+
+	/** Set the start and endcells of matches.
+	 * @param from An arraylist containing Strings for the ids 
+	 *		of all the cells.
+	 */
+	public void setMatchCells(ArrayList from) {
+	    int fromind = 0;
+	    for Object o through objects {
+		if(o instanceof Match) {
+		    Match m = (Match)o;
+		    m.startCell = (String)from.get(fromind);
+		    fromind += m.objects.size();
+		    m.endCell = (String)from.get(fromind-1);
+		} else {
+		    fromind ++;
+		}
+	    }
+	}
+
+	/** Create the new rank behind the maincell.
+	 * This requires that the matchCells have already been set
+	 * through another instance of ExtRep which shares the same
+	 * Match objects.
+	 */
+	public void createRank(String main, SimpleSpanSpace space,
+				    VStreamDim vdim) {
+	    Dim dim = (Dim)vdim;
+	    String prev = main;
+	    for Object o through objects {
+		String first;
+		String last;
+		if(o instanceof Match) {
+		    Match m = (Match)o;
+		    first = m.startCell;
+		    last = m.endCell;
+		} else if(o instanceof Special) {
+		    first = last = ((Special)o).id;
+		} else {
+		    Character c = (Character)o;
+		    last = first = space.makeSpanRank(c.toString(), space.getCell(main)).id;
+		}
+		dim.disconnect(dim.getSpace().getCell(prev), 1);
+		dim.disconnect(dim.getSpace().getCell(first), -1);
+		if(dim.s(dim.getCell(prev), 1) != null) {
+		    pa("DISCONNECT BUT DIDN'T WORK!");
+		    vdim.dumpVStreamInfo(space.getCell(prev));
+		    vdim.dumpVStreamInfo((dim.s(dim.getSpace().getCell(prev), 1)));
+		    dim.disconnect(dim.getSpace().getCell(prev), 1);
+		    if(dim.s(dim.getCell(prev), 1) != null) {
+			vdim.dumpVStreamInfo(space.getCell(prev));
+			vdim.dumpVStreamInfo(dim.s(dim.getSpace().getCell(prev), 1));
+			throw new Error("It's happening again! \n"+prev+"\n");
+		    } else {
+			pa("SECOND DISCONNECT WORKED!!!!! Continuing, but beware...");
+		    }
+		}
+		dim.connect(dim.getCell(prev), dim.getCell(first));
+		prev = last;
+	    }
+	    dim.disconnect(dim.getCell(prev), 1);
+	}
+
+	/** See if this ExtRep is a valid modification target
+	 * from the given ExtRep. 
+	 * Useful for consistency checking.
+	 * Sees that the same Matches and Specials are contained in both.
+	 * It might be that later the demand on having all the specials
+	 * will be loosened to allow the user to delete them too.
+	 */
+	public boolean validTarget(ExtRep r) {
+	    Set mat = getMatches();
+	    Set spe = getSpecials();
+	    Set rmat = r.getMatches();
+	    Set rspe = r.getSpecials();
+	    return mat.equals(rmat) && spe.equals(rspe);
+	}
+
+	private Set getMatches() {
+	    Set s = new HashSet();
+	    for Object o through objects {
+		if(o instanceof Match) {
+		    if(s.contains(o))
+			throw new Error("Match already contained!");
+		    s.add(o);
+		}
+	    }
+	    return s;
+	}
+
+	private Set getSpecials() {
+	    Set s = new HashSet();
+	    for Object o through objects {
+		if(o instanceof Special) {
+		    if(s.contains(o))
+			throw new Error("Match already contained!");
+		    s.add(o);
+		}
+	    }
+	    return s;
+	}
+
+	/** Returns a map of Match to next Match which 
+	 * is adjacent to it in the stream.
+	 */
+	private Map nextMatches() {
+	    Map nextMatch = new HashMap();
+	    Match prev = null;
+	    for Object o through objects {
+		if(o instanceof Match) {
+		    if(prev != null)
+			nextMatch.put(prev, o);
+		    prev = (Match)o;
+		} else prev = null;
+	    }
+	    return nextMatch;
+	}
+
+	/** Replace the short matches by the longer matches
+	 * in the map.
+	 * @param m First match to replace to Match object whose
+	 *		repln field tells how many to replace.
+	 */
+	private void replaceMatches(Map m) {
+	    for(int i=0; i<objects.size(); i++) {
+		Match newMatch = (Match)m.get(objects.get(i));
+		if(newMatch != null) {
+		    // Really stupid way...
+		    // but subList doesn't work on kaffe
+		    for(int j=0; j<newMatch.repln; j++)
+			objects.remove(i);
+		    objects.add(i, newMatch);
+		}
+	    }
+	}
+
+	/** Combine one-character adjacent matches into
+	 * as long matches as possible.
+	 */
+	public void combineMatches(ExtRep r2) {
+	    Map m1 = nextMatches();
+	    Map m2 = r2.nextMatches();
+	    // hold only those that are in both.
+	    m1.entrySet().retainAll(m2.entrySet());
+	    if(m1.entrySet().size() == 0) return;
+	    // make a map of first Match -> new composite Match 
+	    boolean changed = true;
+	    while(changed) {
+		p("M1: "+m1);
+		changed = false;
+		for Match start through m1.keySet() {
+		    Match dest = (Match)m1.get(start);
+		    if(dest.repln != 0) continue;
+		    Match newMatch = new Match();
+		    for(Match cur = start; cur != null; ) {
+			if(cur.repln != 0) {
+			    newMatch.repln += cur.repln - 2;
+			    cur.objects.remove(0);
+			}
+			newMatch.objects.addAll(cur.objects);
+			newMatch.repln ++;
+			Match prev = cur;
+			cur = (Match)m1.get(cur);
+			m1.remove(prev);
+		    }
+		    m1.put(start, newMatch);
+		    changed = true;
+		    break;
+		}
+	    }
+	    replaceMatches(m1);
+	    r2.replaceMatches(m1);
+	}
+
+    }
+
+    /** This class represents a match between
+     * the exported and imported versions.
+     * It is shared between two ExtRep objects
+     * and used to transfer the information about cell
+     * ids via startCell and endCell.
+     */
+    public static class Match extends ExtRep {
+	public String startCell, endCell;
+	int repln = 0;
+	public String toString() {
+	    return "("+super.toString()+": "+repln+")";
+	}
+    }
+
+    /** A class for a very simple and slow  longest common sequence / 
+     * edit distance dynamic program.
+     */
+    public static class DynEdit {
+
+	int deleteCost(Object o) {
+	    if(o instanceof Character) return 1;
+	    if(o instanceof Match) return 1;
+	    if(o instanceof Special) return 10000000;
+	    throw new Error("Invalid ovject");
+	}
+	int insertCost(Object o) {
+	    return deleteCost(o);
+	}
+
+	private int editCost(ExtRep from, int cfrom, ExtRep to, int cto, 
+			    int[] matrix) {
+	    int cost = 0;
+	    if(cfrom == from.length()) {
+		for(int i=cto; i<to.length(); i++)
+		    cost += deleteCost(to.objects.get(i));
+		return cost;
+	    } else if(cto == to.length())  {
+		for(int i=cfrom; i<from.length(); i++)
+		    cost += insertCost(from.objects.get(i));
+		return cost;
+	    }
+
+	    int cur = matrix[cfrom + from.length() * cto];
+	    if(cur > 0) return cur;
+
+	    cur = editCost(from, cfrom+1, to, cto, matrix) + 
+		    deleteCost(from.objects.get(cfrom));
+
+	    int alt = editCost(from, cfrom, to, cto+1, matrix) + 
+		    insertCost(to.objects.get(cto));
+	    if(alt < cur) cur = alt;
+
+	    if(! (from.objects.get(cfrom) instanceof Match) 
+	      && from.objects.get(cfrom).equals(to.objects.get(cto))) {
+		alt = editCost(from, cfrom+1, to, cto+1, matrix);
+		if(alt < cur) cur = alt;
+	    }
+
+	    matrix[cfrom + from.length() * cto] = cur;
+	    return cur;
+	}
+
+	private void perform(ExtRep from, int cfrom, ExtRep to, int cto, 
+			    int[] matrix, ExtRep nfrom, ExtRep nto) {
+	    if(cfrom == from.length()) {
+		addListToList(to.objects, cto, to.length(), nto.objects);
+		return;
+	    }
+	    else if(cto == to.length()) {
+		addListToList(from.objects, cfrom, from.length(), nfrom.objects);
+		return;
+	    }
+
+	    int real = editCost(from, cfrom, to, cto, matrix);
+
+	    int del = editCost(from, cfrom+1, to, cto, matrix) + 
+		    deleteCost(from.objects.get(cfrom));
+	    int ins = editCost(from, cfrom, to, cto+1, matrix) + 
+		    insertCost(to.objects.get(cto));
+
+	    if(real == del) {
+		nfrom.objects.add(from.objects.get(cfrom));
+		perform(from, cfrom+1, to, cto, matrix, nfrom, nto);
+	    }  else if(real == ins) {
+		nto.objects.add(to.objects.get(cto));
+		perform(from, cfrom, to, cto+1, matrix, nfrom, nto);
+	    } else {
+		// Must be match...
+		Match m = new Match();
+		m.objects.add(from.objects.get(cfrom));
+		nfrom.objects.add(m);
+		nto.objects.add(m);
+		perform(from, cfrom+1, to, cto+1, matrix, nfrom, nto);
+	    }
+	}
+
+	/** Find a good way to edit from to to.
+	 * Note that this functio may be iterated to find e.g. 
+	 * block moves.
+	 * @param from The original version
+	 * @param to The modified version
+	 * @param nfrom An empty ExtRep for output with Matches
+	 * @param nto An empty ExtRep for output with Matches
+	 */
+	void edit(ExtRep from, ExtRep to, ExtRep nfrom, ExtRep nto) {
+	    int[] matrix = new int[from.length() * to.length()];
+	    editCost(from, 0, to, 0, matrix);
+	    perform(from, 0, to, 0, matrix, nfrom, nto);
+	}
+
+    }
+
+    /** Execute the external editor with the given input and return the 
+     * output.
+     * @param editor The name of the editor. The filename is appended 
+     *		to this after a space, so the editor can be something like
+     * <pre>
+     * 		perl -pi -es/bcd/foo/g
+     * </pre>
+     *		The important point is that it has to put its output in the 
+     * 		same file as it got its input from.
+     * @param from The ExtRep of the rank to be edited
+     * @param encoding The encoding to use when writing the characters
+     *			to the disk.
+     *			Currently recommended: ISO8859_1, but others
+     *			may well work.
+     */
+    static public ExtRep execEditor(String editor, ExtRep from, String encoding) {
+	File tmp = null;
+
+	try {
+	    tmp = TestingUtil.tmpFile(new File(System.getProperty("user.dir")));
+
+	    byte[] out = from.getBytes(encoding);
+	    FileOutputStream fout = new FileOutputStream(tmp);
+	    fout.write(out);
+	    fout.close();
+
+	    Process p = Runtime.getRuntime()
+			    .exec(editor+" "+tmp.getAbsolutePath());
+	    p.waitFor();
+
+	    int l = (int)tmp.length();
+	    FileInputStream fin = new FileInputStream(tmp);
+	    byte[] in = new byte[l];
+	    if(fin.read(in) != in.length)
+		throw new Error("Couldn't read fully");
+	    fin.close();
+	    
+	    ExtRep to = new ExtRep(in, encoding);
+
+	    return to;
+
+	} catch(Exception e) {
+	    e.printStackTrace();
+	    throw new Error("Execing editor "+e);
+	} finally {
+	    p("deleting "+tmp+" now");
+	    if(tmp != null) tmp.delete();
+	}
+    }
+    
+
+
+    private static String id(Cell c) {
+	if(c == null) return null;
+	return c.id;
+    }
+
+
+    /** The wrapper class that deals with the external editing.
+     */
+    public static class Matching {
+	
+	String main;
+	SimpleSpanSpace space;
+	VStreamDim vdim;
+
+	String encoding;
+
+	ArrayList fromCells = new ArrayList();
+	ExtRep fromOrig;
+	ExtRep from = new ExtRep();
+
+	ExtRep toOrig;
+	ExtRep to;
+
+	public Matching(Cell main, String encoding) {
+	    this.main = main.id;
+	    this.encoding = encoding;
+
+	    space = (SimpleSpanSpace)main.space;
+	    vdim = space.getVStreamDim();
+	    Dim dim = (Dim)vdim;
+
+	    p("matching main "+main.id+", space "+space+" "+ ", vdim "+vdim);
+
+	    // A little unnecessary, but this copies the previous
+	    // function. Optimize & clean up later with consideration
+	    // of the cell content.
+	    for(String c = id(dim.s(dim.getCell(main.id))); c != null; 
+		    c = id(dim.s(dim.getCell(c)))) {
+		fromCells.add(c);
+		if(c.indexOf('$') >= 0) {
+		    // XXX!!!
+		    TextSpan s = (TextSpan)space.getSpan(space.getCell(c), null);
+		    String str = s.getText();
+		    if(str.length() != 1) 
+			throw new Error("Invalid string");
+		    from.objects.add(new Character(str.charAt(0)));
+		} else {
+		    // Special
+		    from.objects.add(new Special(c));
+		}
+	    }
+	    fromOrig = (ExtRep)from.clone();
+	}
+
+	public void edit(String editor) {
+	    to = execEditor(editor, from, encoding);
+	    toOrig = (ExtRep)to.clone();
+	}
+
+	public void matchDynEdit() {
+	    DynEdit d = new DynEdit();
+	    for(int i=0; i<10; i++) {
+		matchDynEdit_pass(d);
+		from.combineMatches(to);
+	    }
+	}
+
+	private void matchDynEdit_pass(DynEdit d) {
+	    ExtRep nfrom = new ExtRep(), nto = new ExtRep();
+	    d.edit(from, to, nfrom, nto);
+	    from = nfrom;
+	    to = nto;
+	}
+
+	public void commit() {
+	    if(!to.validTarget(from)) 
+		throw new Error("Can't update - not valid target");
+	    if(!from.equivalent(fromOrig))
+		throw new Error("Can't update - froms didn't stay equiv");
+	    if(!to.equivalent(toOrig))
+		throw new Error("Can't update - tos didn't stay equiv: "
+			+ to+"\n   Orig: "+toOrig);
+
+	    from.setMatchCells(fromCells);
+	    to.createRank(main, space, vdim);
+	}
+
+
+
+    }
+
+    static public void edit(Cell c) {
+	Matching m = new Matching(c, "ISO8859_1");
+        String editor = System.getProperty("user.editor", "/usr/bin/gvim");
+	m.edit(editor);
+	p("Got: "+m.to);
+	m.matchDynEdit();
+	p("GotMatch: "+m.to);
+	m.commit();
+	p("Committed");
+    }
+
+}
+
+// vim: set syntax=java :

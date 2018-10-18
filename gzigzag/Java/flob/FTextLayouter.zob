@@ -1,0 +1,255 @@
+/*   
+FTextLayouter.java
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Benjamin Fallenstein
+ */
+ 
+package org.gzigzag;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+/** A layouter for flowing formatted text in a fixed-width rectangle.
+ * @see FText
+ */
+
+public class FTextLayouter implements ZOb {
+public static final String rcsid = "$Id: FTextLayouter.zob,v 1.11 2001/04/30 08:38:34 tjl Exp $";
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    public FTextLayouter() {}
+    public FTextLayouter(boolean firstCap) { this.firstCap = firstCap; }
+
+    STRUCTPARAMS {
+	/** Capitalize any letter after two spaces.
+	 * This allows simple rearrangement of text without having
+	 * to think about capitalization at all times by ending
+	 * each sentence with the period/question/... and two spaces.
+	 * XXX Maybe this shouldn't be here after all - maybe
+	 * separate FText.Part firstcap completely from rendering
+	 * to a separate call??
+	 */
+	boolean firstCap
+	    = true;
+
+    }
+
+    /** (Internal convenience) Place a number of lines from an array,
+     * given first and last line.
+     */
+    void placeLines(FlobSet into,
+		    FText.Part[][] lines, 
+		    int[] heights,
+		    Rectangle rect,
+		    int first, 
+		    int last, 
+		    int depth,
+		    boolean cursors,
+		    Flob fparent) {
+	int y = rect.y, maxx = rect.x + rect.width;
+	p("FTextLayouter placeLines first "+first+" last "+last+" length "+lines.length);
+
+	Renderable prev = null;
+	for(int linenr=first; linenr<=last; linenr++) {
+	    FText.Part[] line = lines[linenr];
+	    int x = rect.x;
+	    y += heights[linenr];
+
+	    for(int partnr = 0; partnr<line.length; partnr++) {
+		FText.Part part = line[partnr];
+		int h = part.height(), w = part.width();
+		
+		prev = part.rend(x, y-h, depth, prev);
+		if(prev instanceof SplitCellFlob1) {
+		    SplitCellFlob1 cur = (SplitCellFlob1)prev;
+		    if(cursors) addCurs(into, cur);
+		    cur.fg = part.fg; // makes them depth-aware if part.fg is null
+		}
+		if(into!=null) {
+		    if(prev instanceof Flob) {
+			Flob f = (Flob)prev;
+			if(fparent != null) f.setParent(fparent);
+			if(f.x + f.w > rect.x + rect.width) {
+			    p("FTL clip: "+f.x+" "+f.w+" in "+rect.x+" "+rect.width+" at "+f.c);
+			    f.w = rect.x + rect.width - f.x;
+			    // DO NOT CLIP HERE. 
+			    // VERY VERY SLOW IN ROTATED TEXT
+			    // if(f instanceof SplitCellFlob1)
+			    //	((SplitCellFlob1)f).doClip = true;
+			}
+			if(f.w < 0) f.w = 0;
+		    }
+		    into.add(prev);
+		}
+
+		x += w;
+		if(x > maxx) break;
+	    }
+	}
+    }
+
+    /** (Internal convenience) Find the correct span of lines to layout.
+     *  Returns an array with two ints: the last line number and the height.
+     */
+    int[] layout(FText.Part[][] lines, 
+		 int[] heights,
+		 int start, 
+		 int dir,
+		 int maxh) {
+	int height = 0, i = start;
+	for(; i>=0 && i<lines.length; i+=dir) {
+	    int lineh = FText.Part.height(lines[i]);
+	    heights[i] = lineh;
+	    if(height + lineh > maxh) return new int[] { i-dir, height };
+	    height += lineh;
+	}
+	return new int[] { i-dir, height };
+    }
+	
+
+    public Rectangle place(FlobSet into, FText txt, Rectangle rect,
+			    int direction, int initY,
+			     int middleoffs, 
+			     boolean cursors) {
+	return place(into, txt, rect, 100, 
+			direction, initY, middleoffs, cursors, (Flob)null);
+    }
+
+    /** To be deprecated -- DON'T USE! */
+    public Rectangle place(FlobSet into, FText txt, Rectangle rect,
+			    int direction, int initY,
+			     int middleoffs, 
+			     boolean cursors,
+			     boolean[] beginningSentence) {
+	return place(into, txt, rect, 100, 
+			direction, initY, middleoffs, cursors, (Flob)null);
+    }
+
+    /** To be deprecated -- DON'T USE! */
+    public Rectangle place(FlobSet into, FText txt, Rectangle rect,
+			     int depth,
+			    int direction, int initY,
+			     int middleoffs, 
+			     boolean cursors,
+			     boolean[] beginningSentence) {
+	return place(into, txt, rect, depth, 
+			direction, initY, middleoffs, cursors, (Flob)null);
+    }
+
+    public Rectangle place(FlobSet into, FText txt, Rectangle rect,
+			     int depth,
+			    int direction, int initY,
+			     int middleoffs, 
+			     boolean cursors) {
+	return place(into, txt, rect, depth,
+			direction, initY, middleoffs, cursors, (Flob)null);
+    }
+
+    /** Place a piece of formatted text into a fixed-width rectangle.
+     * @param into The flobset to place the text into.
+     * @param txt The formatted text object
+     * @param rect The rectangle to fit things into. This is used for
+     *		  both stopping rendering at the upper and lower edges
+     *		  and for the margin widths.
+     *		  (XXX How to i18nize this for other directions?!?!)
+     * @param depth	The depth at which to place the flobs.
+     * @param direction The direction we're moving.
+     *			0 = starting from the middle of a paragraph,
+     *			1 = down, -1 = up
+     * @param initY	The y coordinate to place the middle/first/last line
+     *			of text at, depending on direction.
+     * @param middleoffs If direction==0, the offset that should be at initY.
+     * @param cursors	Whether to draw cursors.
+     * @param fparent   The flob parent.
+     */
+    public Rectangle place(FlobSet into, FText txt, Rectangle rect,
+			     int depth,
+			    int direction, int initY,
+			     int middleoffs, 
+			     boolean cursors,
+			     Flob fparent) {
+	if(firstCap) txt.capitalize();
+	FText.Part[][] lines = txt.getLines(rect.width);
+	if(lines.length == 0) 
+	    return new Rectangle(rect.x, initY, rect.width, 0);
+	
+	/** The height of each line. */
+	int[] heights = new int[lines.length];
+	
+	/** The first and last lines to place. */
+	int first, last;
+	
+	Rectangle res;
+	
+	if(direction < 0) {
+	    last = lines.length-1;
+	    int[] lay = layout(lines, heights, last, -1,
+			       initY-rect.y);
+
+
+	    first = lay[0]; last = lines.length-1;
+	    res = new Rectangle(rect.x, initY-lay[1], rect.width, lay[1]);
+	} else if(direction > 0) {
+	    first = 0;
+	    int[] lay = layout(lines, heights, first, 1, 
+			       rect.y + rect.height - initY);
+	    last = lay[0];
+	    res = new Rectangle(rect.x, initY, rect.width, lay[1]);
+	} else {
+	    int middle = FText.findLine(lines, middleoffs);
+	    // Make it the middle of the middle line.
+	    initY -= FText.Part.height(lines[middle])/2;
+	
+	    int[] lay1 = layout(lines, heights, middle-1, -1,
+				rect.y + rect.height - initY);
+	    int[] lay2 = layout(lines, heights, middle, 1, initY-rect.y);
+	
+	    first = lay1[0]; last = lay2[0];
+	    res = new Rectangle(rect.x, initY-lay1[1], rect.width,
+				lay1[1]+lay2[1]);
+	}
+	
+	placeLines(into, lines, heights, res, first, last, depth, 
+		   cursors, fparent);
+	return res;
+    }
+
+    // XXX make more efficient: do cursor search only for parent sf
+    public static void addCurs(FlobSet into, SplitCellFlob1 sf) {
+
+	Enumeration e = ZZCursorReal.getPointers(sf.getCell());
+	while(e.hasMoreElements()) {
+	    ZZCell c = (ZZCell)e.nextElement();
+
+	    int ind = ZZCursorReal.getOffs(c);
+	    if(ind == ZZCursorReal.NO_OFFSET) continue;
+	    if(!(ind >= sf.start && ind <= sf.start + sf.n))
+		continue;
+	    int x = sf.getStrX(ind);
+	    if(x >= 0 && into != null)
+		into.add(new LineDecor(x, sf.y, x, sf.y+sf.h, 
+			 Color.black, sf.d));
+	} 
+    }
+}
+
+// vim: set syntax=java :

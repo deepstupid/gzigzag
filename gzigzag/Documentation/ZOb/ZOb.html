@@ -1,0 +1,67 @@
+<html>
+<head>
+<title>ZOb system documentation in the "src" implementation</title>
+</head>
+
+<center>
+<h2>ZOb system documentation in the "src" implementation</h2>
+<i>$Id: ZOb.html,v 1.2 2002/02/04 15:13:28 deetsay Exp $</i>
+</center>
+
+<h3>Gentle introduction</h3>
+
+<p>The ZOb system is a way to have data structures in the ZigZag-space, like
+objects in an object oriented language. The data structures are made up of
+members and values associated with them.</p>
+
+<img src="testzob.png" border=2><br clear="all">
+
+<p>This is a picture of a ZOb. It shows two members and their values. In this
+ZOb, the data members are connected to each other on <tt>d.user-2</tt> and to
+the ZOb on <tt>d.user-1</tt>.</p>
+
+<img src="zobtype.png" border=2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<img src="javazob.png" border=2><br clear="all">
+
+<p>On <tt>d.zob-type</tt>, the ZOb's masterclone is connected to a Clasm function
+that takes two parameters: <tt>instance</tt> and <tt>member</tt>. The function
+returns values for members from the given instance. This specific kind of ZOb that
+uses <tt>d.user-1</tt> and <tt>d.user-2</tt> is called a JavaZOb.</p>
+
+<img src="printzob.png" border=2><br clear="all">
+
+<p>Using JavaZObs from Java code is simple. First you have to make a
+Clasm function such as the one in the picture above. This calls the
+function <tt>print zob</tt> with a clone of your zob as the parameter.
+When the function is executed, the source code of a Java class will be printed
+out on the console. You have to copy the output into a file with the correct filename
+(in this case it would be <tt>testPrintZOb.java</tt>) in the
+<tt>src/gzigzag/src/impl/zob/</tt> folder.</p>
+This class has members with the same names as the members in the ZOb.
+The constructor takes one parameter, which is the cell of the ZOb instance.
+
+<h3>Design problems:</h3>
+
+<ul>
+<li>Inheriting ZObs - perhaps the headcell on <tt>d.zob-type</tt> could be a clone of
+another ZOb (an (empty) instance perhaps).</li><br>
+
+<li><code>
+On Thu, 10 Jan 2002 14:44:34 Tuomas wrote:<br>
+Actually, it might be reasonable to associate a type with ZOb members<br>
+in the structure, both for documentation and this. I'd like to know<br>
+that some parameter is a font, and another an int.<br>
+</code><br>
+How to accomplish that - must look into how to associate java objects
+with Cells or something.</li><br>
+</ul>
+
+<h3>To do:</h3>
+
+<ul>
+<li>Use <tt>d.javaname</tt> to give a ZOb's members names that Java can use, in
+case somebody wants to use "non-Java-usable" or duplicate membernames on the
+GZigZag side. This goes in the Clasm-function that prints out ZObs.</li><br>
+</ul>
+
+</html>

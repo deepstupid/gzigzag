@@ -1,0 +1,16 @@
+GZigZag Benchmarking module
+
+This module contains various pieces of code that test relative speeds
+of various operations. The point is
+
+1) provide a good basic intuition of what is fast and slow in Java,
+    for purpose of choosing implementation methods
+
+2) provide a test for different JVM's efficiency on different tasks
+    (there are surprising diffrences here)
+
+3) provide a testbed for zigzag algorithms and possible extensions,
+    such as the constraint model where the feasibility from a speed
+    perspective can be studied without building the whole system.
+
+

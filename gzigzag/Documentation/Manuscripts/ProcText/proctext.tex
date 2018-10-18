@@ -1,0 +1,457 @@
+\newif\ifdraft
+\ifx\dontdraft\relax
+\message{IFX TRUE}
+\draftfalse
+\else
+\message{IFX FALSE}
+\drafttrue
+\fi
+
+\def\fig#1{Fig.~\ref{#1}}
+
+\draftfalse
+% Final version: use times!
+% \documentstyle[times,graphicx,ht01e]{article}
+\documentclass[twocolumn]{IV02}
+\usepackage{graphicx}
+\usepackage{times}
+% \draftfalse
+
+\ifdraft
+\renewcommand{\baselinestretch}{0.9}
+\def\margincomment#1{
+\marginpar{
+\vbox{
+\scriptsize #1
+}
+}}
+\def\nakki#1{\marginpar{\bf Nakki: #1}}
+\pagestyle{plain}
+\else
+\def\margincomment#1{}
+\def\nakki#1{}
+
+% Make the times fonts defaults again if not draft.
+% \renewcommand{\sfdefault}{phv}
+% \renewcommand{\rmdefault}{ptm}
+% \renewcommand{\ttdefault}{pcr}
+
+\fi
+
+
+% Define a macro for your own margin notes here
+% If it is ABSOLUTELY clear that something is a typo, go ahead
+% and fix it. But don't make any major changes to the text itself
+% yet. Also, only propose rearrangements in the margin: CVS doesn't
+% work too well with rearrangements and edits done by several
+% people. I will be the editor until wed or thu.
+\def\tjl#1{\margincomment{Tjl: #1}}
+\def\vp#1{\margincomment{vp: #1}}
+\def\rr#1{\margincomment{rr: #1}}
+\def\cat#1{\margincomment{cat: #1}}
+\def\ajk#1{\margincomment{ajk: #1}}
+\def\jvk#1{\margincomment{jvk: #1}}
+\def\benja#1{\margincomment{benja: #1}}
+
+
+
+% \documentstyle[times,graphicx,uist,isolatin1]{article}
+\begin{document}
+
+\newcommand{\url}[1]{{\fontsize{9pt}{8pt}\fontfamily{phv}\fontseries{c}\selectfont{#1}}}
+\newcommand{\hyp}{\discretionary{}{}{}}
+
+
+\bibliographystyle{plain}
+\title{
+Node Shaders: Visualizing Identity using Procedural Textures
+}
+
+\author{
+\parbox[t]{8.9cm}{\centering
+             {Tuomas J. Lukka\ \ \ and\ \ \ Janne Veli Kujala}\\
+  Hyperstructure Group\\
+  Dept.~of Mathematical Information Technology\\
+  University of Jyv\"askyl\"a, PO.~Box~35\\
+  FIN-40351~Jyv\"askyl\"a\\
+  Finland\\
+  {\tt lukka@iki.fi},\ \ {\tt jvk@iki.fi}}
+  }
+
+\maketitle
+
+\ifdraft
+\textwidth 6.6cm
+\columnwidth 8.6cm
+\onecolumn
+% \textwidth 8.5cm
+\marginparwidth 8.5cm
+\fi
+
+% \textwidth 3.5in
+% \columnwidth 3.5in
+\def\gzz{GZZ}
+
+\begin{abstract}
+Maintaining user orientation in 
+in Focus+Context views of complicated graph-like structures
+is challenging.  
+As the fraction of nodes that invisible at each focus grows,
+getting lost in the structure becomes easier.
+In multi-linked (non-tree) graphs,
+recognizing a previously seen location is vital.
+
+We use procedural textures to give the user visual cues about
+the {\em identity} of the nodes by 
+making the nodes look different from each other randomly.
+We discuss differences between node shaders
+and conventional e.g.~Renderman shaders: a greater variability
+is desirable, there is a need for a new type of 
+noise function which is quite rarely nonzero etc.
+
+We discuss an efficient implementation using batch rendering of the
+cells and the unextended OpenGL 1.2 API, as well as an implementation
+using a texture shader extension to OpenGL.
+
+There are reasons why this technique is especially well suited for \gzz,
+but it is generally applicable as well.
+
+(manuscript for \url{http://www.graphicslink.demon.co.uk/IV02/})
+\end{abstract}
+
+
+% \tolerance=400 
+\tolerance=500 
+  % makes some lines with lots of white space, but      
+  % tends to prevent words from sticking out in the margin
+
+\def\vob{{\tt Vob}}
+\def\vobscene{{\tt VobScene}}
+\def\view{{\tt View}}
+\def\key{{\tt key}}
+\def\diff{{\tt diff}}
+
+\def\unfin{\tiny}
+\def\fin{\normalsize}
+
+
+\section{Introduction}
+
+Viewpoints:
+\begin{itemize}
+\item Identity in physical world; 
+    for computer, two objects different even with same name, but
+    visually {\em pixel-for-pixel} same.
+    Also, the text is the only difference
+\item Focus+Context / other Navigation: recognizing where I am
+\item Imbuing different objects with a "feel" --- hard to quantify
+\item Applying procedural textures used in motion pictures to visualization
+\item Visualizing scalar discrete unordered data.
+\item Visualization: providing visual cues --- here, we provide a LOT
+\end{itemize}
+
+Recognizing different people or animals or houses in real life
+is possible since
+the human eye can detect the minute variations in texture and shape
+and use these cues to assign {\em identity} to different
+objects of the same kind ("Janie has a white spot on her left front paw").
+
+In this article, we apply procedural textures to artificially
+create such differences in visualizations. 
+The differences are used to give users 
+cues when navigating
+Focus+Context views where only a part of the information
+is seen clearly at a time.
+
+% During the last years, 
+% Focus+Context views\cite{XXX} have been steadily gaining
+% popularity.
+% 
+% 
+% Focus+Context views often first embed the structure
+% to be visualized onto either Euclidean or hyperbolic space and then
+% display that space, selectively magnifying region around the current 
+% focus\cite{fc-taxonomy}.
+% 
+% 
+% In this article, we are concerned with Focus+Context views of
+% graph-like data where the graph is {\em not} first embedded into
+% any other space, be it Euclidean or hyperbolic.
+% 
+% These views focus on one (or more) nodes and generally display those nodes
+% more prominently, and also display several layers of neighbouring nodes.
+%
+%When navigating such a view, it is vital to be able to orient
+%oneself quickly when one returns to a location that has been seen
+%before.
+%The view should somehow allow the user to quickly perceive the {\em identity}
+%of the nodes the user is looking at.
+%
+%
+%On WWW, different sites have different looks, consisting of
+%images, colors, fonts and layout. 
+%
+%It is not desirable to have to graphically design each node separately.
+%
+%Specifically, our primary research interest is the \gzz prototype
+%which implements the ZigZag (ZZ) hyperstructure.
+%
+%The ZZ structure does not share some of the problems of general graphs
+%that are attacked through embedding...
+
+% -- confrontational :(
+%While this type of view has been called {\em ad hoc} by some of the
+%researchers in
+%
+
+
+
+%The use of the pre-attentive processes of human vision
+%for visualization purposes has been the subject of much
+%research recently. XXX in XXX...
+%
+%
+%jhhjjjjjjhjhjjjuji[]
+%]\
+%
+%
+%,,,.mh t n jk .9       o                                              sssssssssssssssssss
+%
+%IDENTITY
+%
+%In this article, 
+
+\section{Procedural textures}
+
+% Early computer-generated images had an artificial, plastic feeling to them.
+% This was because the surfaces in the images did not have any 
+% of the imperfections that real surfaces do.
+
+Procedural textures 
+\cite{texturing-and-modeling,renderman-spec,advanced-renderman}
+have been long used for photorealistic computer 
+graphics. 
+The \emph{Perlin noise function} 
+% was introduced
+% in the seminal work article\cite{perlin-noise-intro}.
+is a repeatable band-limited random function that is fast to calculate.
+
+Using noise functions,
+it is simple to generate different instances of similar objects.
+For example, consider drawing an apple tree. If one apple is created by
+modeling it with a polygonal modeler and painting a texture on it, 
+then either every apple will have to be done separately (too much
+work) or all the apples will look exactly the same (unacceptable).
+If the first apple is created as a procedural texture in an intelligent
+way, then new, different yet similar apples may be generated simply
+by using the same procedural texture with different 
+set of random numbers.
+
+
+\section{Node shaders}
+
+Texturing is important\cite{haeberli93texture}.
+
+In early prototypes of GZigZag, all cells looked exactly the same,
+except for text. Since text is not pre-attentively processed,
+all cells basically looked the same, which could be disorienting when moving
+around a paradoxically connected hyperstructure.
+
+The human eye is not used to having separate objects look exactly the same; 
+natural objects always have slightly different shapes, scratches, different
+colors or other minor distinguishing features.
+
+Adding permanent imperfections and differences to graphical representations
+of the cells can reduce the disorientation, since recognizing
+cells at a glance (pre-attentively) would be easier.
+
+Procedural textures may be used to make different cells look somewhat
+different (but not too different, to avoid making the view a confusing jumble)
+from each other.
+
+One difference between the  photorealistic computer graphics 
+
+In photorealistic computer graphics, when shading a surface, some control
+over its appearance is usually desired. 
+
+We tolerate outliers much more...
+
+ALIASING NOT SO MUCH OF A PROBLEM
+
+One possibility, as discussed by XXX in \cite{texturing-and-modeling}
+is to use the usual Perlin noise and simply map the noise values so that
+the desired ...
+
+However, this becomes difficult when the ratio of spots...
+
+WORLEY NOISE -> rare, different spots
+
+Can have effects that only materialize in only every 100th node.
+\cite{more-is-different}
+
+
+\begin{figure*}
+\centering
+\includegraphics[width=\textwidth]{rects.eps}
+\caption{
+\label{fig-proctext}
+Using procedural textures to add distinguishing imperfections to 
+rectangles. 
+All the rectangles shown were generated by a single procedural
+texture. 
+}
+\end{figure*}
+
+\section{A meta-noise function}
+
+-- Which parameters can be tuned: tuning frequency of noise is difficult:
+  the magnitude of the location parameter gets mixed in...
+$$
+    { \partial f(\lambda x) \over \partial \lambda } 
+	= x f'(\lambda x)
+$$
+$$
+    { \partial \over \partial \lambda }
+\biggl(	\lambda f(\alpha x) + (1-\lambda) f(\beta x) \biggr)
+	= f(\alpha x) + f(\beta x)
+$$
+
+
+\section{Technical details}
+
+\label{sec-basicimpl}
+
+Implementing the previous ideas at interactive speeds is not
+as difficult as it might seem
+
+When combining edgeless connections and procedural textures, the 
+transition from one cell to another smooth. This can be achieved by 
+blending the noise function at the shader position (which varies between
+different cells) with the noise function at the object position 
+(which is constant between different cells).
+
+When designing such node shaders, an important choice is at what level
+to perform the blending. For example, if the basic procedural texture
+for the node is three combined functions,
+$$
+f(g(h(x))) \rightarrow \left\{
+\begin{array}{l}
+f(g(m(h(x), h(y), \alpha))) \\
+f(m(g(h(x)), g(h(y)), \alpha)) \\
+m(f(g(h(x))), f(g(h(y))), \alpha) 
+\end{array}
+\right.
+$$
+This choice depends on the nature of the functions in question
+and is beyond the scope of this article.
+
+XXX: 3D-TEXTURES
+
+\begin{figure*}
+\fbox{\vbox{\vskip 4in}}
+\caption{
+\label{fig-proctext-argh}
+Interactive rendering of node shaders. 
+Rendered with an NVIDIA GeForce3 Ti200 at XXX fps using 
+the OpenGL NV\_texture\_shaders extension.
+A Focus+Context view of a ZigZag structure using Gzz 
+shaded with node shaders. The same structure is shown from two different
+Foci.
+}
+\end{figure*}
+
+\begin{figure*}
+\centering
+\includegraphics[scale=0.5]{proctext-nvshading.eps}
+\caption{
+}
+\label{fig-proctext-nvshading}
+\end{figure*}
+
+Rubberiness, stretching...
+
+
+For a static diagram, it might make sense to 
+
+A NURBS surface is used for stretching the edgeless connection if
+it is not properly aligned.
+
+Bump mapping!
+
+New consumer-level 
+graphics cards such as the ATI Radeon and NVIDIA GeForce3 and GeForce4
+support procedural vertex and texture manipulation to various levels. 
+\cite{proudfoot01realtime}
+The preliminary drafts of the OpenGL 2.0 specification (ref) are also
+a great leap in this direction.
+It seems only a matter of time until both techniques described
+here can be implemented directly on the graphics accelerators using
+vertex and pixel shaders and the optimizations of Section~\ref{sec-basicimpl}
+will no longer be necessary.
+
+\section{Rationale}
+
+Instead of providing few cues consciously, such as fog or depth-of-field,
+we provide a huge number of different cues randomly from which the user
+can unconsciously select the best ones.
+
+As discussed in \cite{hopfield01olfaction}, having several sensory inputs
+makes it simple to tell apart different smells; we hope to use the same effect
+on a slightly higher level in the visual cortex.
+
+\section{Obtaining the software}
+
+GZigZag is Free Software, distributed under the LGPL license of the
+Free Software Foundation,
+and can be obtained at 
+\url{http://gzigzag.org}
+and \url{http://gzigzag.sourceforge.net}. 
+The features described here will be included in release 0.8.0 and can
+be accessed in the public CVS repository before that.
+
+
+\section{Conclusion and further work}
+
+In this article, we have introduced a new (to the author's 
+knowledge) technique for
+visualizing data with a discrete hyperstructure: 
+node-based procedural textures. 
+
+
+Unsolved issues:
+\begin{itemize}
+\item How to use procedural textures consistently when the size and aspect
+ratio of a node changes over time? In GZigZag, the user can add text to a node,
+but it would be good if the node remained recognizable.
+   \benja{
+      Use tiles and show more of them as the cell grows. (You should be
+      able to compute the different tiles by slightly modifying the
+      random number seed when moving one tile to the left/right/top/bottom?)
+      This handles aspect ratio changes that grow thecell, too. Changes
+      that shrink the cell canbe handled by simply showing less of what's
+      already there.
+   }
+\item How to make smoothly scalable procedural textures for use as OpenGL
+textures? Building the final result from pieces would be good but what types
+of pieces?
+\end{itemize}
+
+
+
+The graphical aspect of designing suitable procedural textures for use
+as node backgrounds is beyond the scope of this article; the backgrounds
+should be clearly distinct from each other but not draw attention
+away from the text or make reading the text difficult.
+
+The node-based procedural textures would be immediately applicable
+e.g.~to file managers, where usually all files of the same type look
+exactly the same, except for the names. 
+
+We have not yet been able to research the quantitative benefits of
+the techniques introduced here; we hope to be able to present this
+at a later date.
+
+% \bibliographystyle{abbrv}
+\bibliography{gzigzag}
+
+\end{document}

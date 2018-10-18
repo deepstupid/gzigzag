@@ -1,0 +1,80 @@
+/*   
+AwtLink.zob
+ *    
+ *    Copyright (c) 1999-2000, Ted Nelson and Tuomas Lukka
+ *
+ *    You may use and distribute under the terms of either the GNU Lesser
+ *    General Public License, either version 2 of the license or,
+ *    at your choice, any later version. Alternatively, you may use and
+ *    distribute under the terms of the XPL.
+ *
+ *    See the LICENSE.lgpl and LICENSE.xpl files for the specific terms of 
+ *    the licenses.
+ *
+ *    This software is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the README
+ *    file for more details.
+ *
+ */
+/*
+ * Written by Kimmo Wideroos
+ */
+ 
+package org.gzigzag.module;
+import org.gzigzag.*;
+import java.awt.*;
+import java.util.*;
+
+
+public class AwtLink extends ZObCellRepr implements ZOb {
+    public static boolean dbg = false;
+    static final void p(String s) { if(dbg) System.out.println(s); }
+    static final void pa(String s) { System.out.println(s); }
+
+    STRUCTPARAMS {
+	double x
+	    = 0.0;
+
+        double y
+            = 0.0;
+
+        boolean fixed
+            = false;
+    }
+
+    public boolean isFixed() { return fixed; }
+
+    public void setX(double x) { this.x = x; }
+    public void setY(double y) { this.y = y; }
+
+    public double getX() { return x; }
+    public double getY() { return y; }
+
+    public ZZCell toHeadCell() {
+        return getCell().h(AwtUtil.d_from, 1).h(AwtUtil.d_clone); 
+    }
+
+    public ZZCell fromHeadCell() { 
+        return getCell().h(AwtUtil.d_to).h(AwtUtil.d_clone); 
+    }
+
+    public String getZObName() { 
+        return "Link";
+    }
+
+    public String cellRepr(ZZCell start, boolean clone) 
+    {
+        ZZCell c = start.getOrNewCell("d.1");
+        c.setText(getZObClassName());
+        c = c.getOrNewCell("d.1");
+        c.setText("x"); 
+        c.getOrNewCell("d.1").setText(""+getX());
+        c = c.getOrNewCell("d.2");
+        c.setText("y");
+        c.getOrNewCell("d.1").setText(""+getY());
+        return "";
+    }
+}
+
+// vim: set syntax=java :

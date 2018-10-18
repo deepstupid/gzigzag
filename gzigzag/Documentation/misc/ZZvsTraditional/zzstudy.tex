@@ -1,0 +1,1325 @@
+\documentclass[12pt,a4paper,english]{article}
+\usepackage{babel}
+\usepackage{t1enc}
+\usepackage{latexsym}
+
+\usepackage{graphicx}  
+\usepackage{subfigure}  
+
+\usepackage{url}
+
+\usepackage{bbm}
+
+%\usepackage{viksu}
+
+\newtheorem{teor}{Theorem}[section]
+\newtheorem{defn}[teor]{Definition}
+
+\setlength{\textwidth}{15cm}
+\setlength{\textheight}{23cm}
+\setlength{\topmargin}{0cm}
+\setlength{\headheight}{0.5cm}
+\setlength{\headsep}{0.5cm}
+\setlength{\oddsidemargin}{1cm}
+\setlength{\evensidemargin}{1cm}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+\pagestyle{empty}
+%\markright{}
+\pagenumbering{arabic}
+
+\begin{document}
+
+%\title{Vaihtoehdot tietotekniikassa -- tarkastelussa ZigZag}
+\title{Defining ZigZag and comparison to other models\footnote{Translated by 
+the author from the original Finnish version ``ZigZag-järjestelmän määrittely 
+ja vertailu muihin malleihin''}}
+\author{Tuukka Hastrup}
+\date{24.11.2000\\Translated 2001-06-11}
+%\kirjoitelmalaji{Teoreettisen tietojenkäsittelytieteen tutkielma}
+
+\maketitle
+
+
+%\setcounter{page}{1}
+
+%       kirjasinkoko
+% väli 10pt 11pt 12pt
+% 1.5  1.25 1.21 1.24
+% 2.0  1.67 1.62 1.66
+%
+% Siirrytään saman tien 2.0-riviväliin.
+
+\renewcommand{\baselinestretch}{1.24}
+\large
+\normalsize
+
+%\sivumaara{\pageref{loppu} sivua}
+
+\begin{abstract}
+\addtocontents{toc}{\protect\contentsline {section}{\protect\numberline {}Abstract}{}}
+
+%Tutkimuksessa selvitettiin, kuinka Ted Nelsonin visioimaa ZigZag-konseptia
+%voidaan käsitellä tietojenkäsittelytieteen perinteisin keinoin: mikä
+%konseptissa on oleellista, kuinka se määritellään, mihin sitä voidaan verrata.
+%Aiheesta ei ole juurikaan aiempia julkaisuja, joten Nelsonin kuvausten lisäksi
+%tärkeä lähde oli Jyväskylän yliopiston tutkimusryhmän kehityksessä oleva 
+%ZigZag-järjestelmän toteutus.
+
+The study was carried out to find out how ZigZag concept created by Ted Nelson
+can be approached with traditional methods of computer science: what is 
+essential of the concept, how it is defined, what it can be compared with. 
+There is not many previous writings on the topic, so in addition to Nelson's 
+descriptions also an important source was an realisation of ZigZag system 
+under development by a research group at University of Jyväskylä. 
+
+%Diskreettiin ja moniulotteiseen ZigZag-avaruuteen
+%pohjautuvassa kokonaisvaltaisessa järjestelmässä yhdistyy ominaisuuksia mm.
+%moniulotteisista tietokannoista, tietokantapohjaisista 
+%käyttöliittymistä, olio"-ohjelmoinnista sekä 
+%Model-View-Controller"-paradigmasta.  Poikkeuksellista 
+%on mm. moniulotteisuuden tuominen käyttöliittymään, hierarkioiden välttäminen
+%sekä taulukkolaskennasta tuttu lähestymistapa, jossa käyttäjä esittää
+%tiedon haluamassaan muodossa ja antaa ohjelmalle vain välttämättömät ohjeet 
+%rakenteen jatkokäsittelyä varten. Matemaattisten ominaisuuksien 
+%tutkimiseksi avaruus määriteltiin myös joukko-opin keinoin. 
+
+The comprehensive system based on the discrete and multidimensional ZigZag 
+space has features from, among others, multidimensional databases, databases as
+user interfaces, object-oriented programming and Model-View-Controller 
+paradigm. Exceptional is showing multidimensionality in user interface, 
+avoiding hierarchies and the approach known from spreadsheet software, where
+the users have the information in the form they want, and they give the 
+software only the necessary guidance for processing the data. To study the
+mathematical properties, the space was defined using set theory.
+
+%ZigZag-avaruuden periaatteellinen yksinkertaisuus samanaikaisesti järjestelmän
+%kokonaisvaltaisuuden kanssa mahdollistaa toteutuksen ''ohuuden'': alla olevaa
+%mallia on tarvinnut piilottaa mahdollisimman vähän erilaisten rajapintojen alle.
+%Tämän vuoksi järjestelmä on laskennallisista vaatimuksistaan huolimatta 
+%mielenkiintoinen tutkimuskohde tulevaisuuden tietojärjestelmäksi sekä erilaisten
+%uusien lähestymistapojen kokeilualustaksi. Tutkimuksen kuluessa selvisi myös
+%mahdollisia jatkotutkimuksen alueita, joista eräillä tulokset selvittäisivät 
+%ZigZag-järjestelmän periaatteiden hyödyllisyyttä ja mahdollisia 
+%sovelluskohteita. 
+
+The conceptual simplicity of ZigZag space combined with the comprehensiveness 
+of the system makes possible the ``flatness'' of the implementation: there has
+been little need to hide the underlying model under various interfaces. 
+Therefore the system is interesting as a research subject for future 
+computing systems, and as a platform for testing new approaches. During the 
+study, possible fields for further study were also found. On some of them, 
+results would further clarify usefulness and applications of the principles 
+in ZigZag.
+
+
+\end{abstract}
+
+\renewcommand{\baselinestretch}{1}
+\large
+\normalsize
+
+
+\newpage
+\tableofcontents
+
+\renewcommand{\baselinestretch}{1.24}
+\large
+\normalsize
+
+
+\newpage
+%\pagenumbering{arabic}
+\pagestyle{plain}
+\section{Introduction}
+\label{luku:intro}
+
+%ZigZag-järjestelmä on Ted Nelsonin ideoima vaihtoehto nykyisille 
+%tietojärjestelmille. Perustana oleva ZigZag-avaruus kehitettiin
+%alunperin hypertekstijärjestelmä Xanadun \cite[s. DM 141--148]{cl87} 
+%tietorakenteeksi. Perinteisistä tietomalleista mielenkiintoisella tavalla
+%lainaava ZigZag-järjestelmä näyttäisi kuitenkin tarjoavan
+%uudenlaisen perustan tietojärjestelmien kehittämiselle -- 
+%ohjelmointikielistä aina graafisiin käyttöliittymiin.
+
+ZigZag system is an alternative to the present information systems,
+visioned by Ted Nelson. It
+is based on ZigZag space, a data structure originally developed for
+the hypertext system Xanadu~\cite[pp. DM 141--148]{cl87}. It seems,
+however, that this system could be applied to a wide variety of
+sections in information systems development---from programming
+languages to graphical user interfaces.
+
+%ZigZag-avaruus on ainut järjestelmässä käytössä oleva tietomalli. Kaikki
+%tieto on samassa avaruudessa, jolloin mitä tahansa tietoa voidaan yhdistellä, 
+%toisin kuin perinteisissä järjestelmissä. Viittaukset ovat aina kaksisuuntaisia,
+%jolloin vältetään ''rikkinäiset linkit''. Alustavien arvioiden mukaan rakenne
+%on ihmiselle havainnollinen. Näin ei tarvitse luoda monimutkaisia 
+%käyttöliittymiä.
+
+ZigZag space is the only data structure used in the system. All the
+information is in one space, where any information can be brought
+together, unlike traditional systems. The references are always
+bidirectional, so there can not be ``broken links''. After some
+preliminary studies, it seems the structure is suitable for direct
+usage by people. This means complex user interfaces can be avoided. 
+
+%Perinteisen muistimallin kokonaisvaltainen korvaaminen aiheuttaa turhaa
+%laskentaa yksinkertaisissa tapauksissa, joissa riittäisi helpommin
+%laitteistossa esitettävä rakenne. Viime vuosina laskentakapasiteetin 
+%räjähdysmäinen kasvu ja halpeneminen ovat kuitenkin vähentäneet laskennallisen
+%tehokkuuden merkitystä. Onkin ajankohtaista miettiä, kuinka laskentatehokkuuden
+%kustannuksella voidaan helpottaa ohjelmistokomponenttien uudelleenkäyttöä ja
+%komponenttien välistä yhteistyötä. Matalan tason ohjelmointikielistä on jo
+%luovuttu, ZigZagissa on mahdollista korvata muitakin tehokkuussyistä tehtyjä
+%ratkaisuja. 
+
+Replacing the traditional memory model thoroughly introduces an
+overhead in simple scenarios, when a simplier, hardware native model
+would do. During the previous years, however, the explosion of the
+computing capabilities available and hardware costs coming down have
+decreased the importance of computational efficiency. It is thus time
+to think up ways to use the capacity to increase re-use and
+interoperability in software components. Low level programming
+languages are hardly used these days---in ZigZag some other solutions
+selected in the name of efficiency are reconsidered as well.
+
+%Koska ZigZagista ei ole juurikaan aiempia julkaisuja, tärkeä lähde on 
+%Java"-toteutus GZigZag \cite{gzz2000}. Toisaalla kehitettävää WWW"-toteutusta 
+%\cite{zz4xml2000} ei valitettavasti voitu tutkia sen tämänhetkisen 
+%käyttöjärjestelmäriippuvaisuuden 
+%vuoksi. Tämän tutkielman tavoitteena on kuvailla ZigZag"-järjestelmää 
+%perinteisin käsittein, etsiä yhtymäkohtia alan muuhun tutkimukseen ja tätä 
+%kautta tutkia järjestelmän ominaisuuksia. Lisäksi esitetään mahdollisia 
+%tulevia tutkimuskohteita, joista eräiden perusteella voitaisiin paremmin
+%arvioida, kuinka ZigZagin ideoita voidaan hyödyntää tietotekniikassa.
+
+Because there are few previous publications on ZigZag, an important
+source of information is GZigZag~\cite{gzz2000}, an implementation of
+ZigZag written in Java. There is also a WWW implementation being
+worked on~\cite{zz4xml2000} but unfortunately it couldn't be studied
+because of its operating system dependency. The purpose of this study
+was to describe ZigZag system using traditional terms, to find
+similarities with other research on the field, and to explore the
+properties of the system from the foundings. Also included is possible
+future research subjects, some of which could increase our
+possibilities to asses how the ideas of ZigZag can be taken into
+advantage in computer technology.
+
+%Ensimmäisessä luvussa esitellään järjestelmän perusteet: ZigZag-avaruus sekä
+%sen solut ja kytkökset. Sen jälkeen seuraava avaruuden matemaattinen 
+%määrittely luo pohjaa tuleville tutkimuksille. 
+%Luvussa~\ref{luku:semantiikka} tutkitaan
+%monimutkaisempia rakenteita ja etsitään mallin osille luontaista merkitystä.
+%Luku~\ref{luku:ohjelmointi} käsittelee ZigZag-järjestelmässä toimivien
+%ohjelmien mallia. Luvussa~\ref{luku:erityis} tarkastellaan tarkemmin 
+%järjestelmän erityispiirteitä nykyisiin järjestelmiin verrattuna. 
+
+The first section introduces the foundation of the system: ZigZag
+space and its cells and connections. A mathematical definition
+follows, giving a basis for further studies. In
+section~\ref{sect:semantics}, some more advanced structures are
+studied, and the meanings of the model's primitives are
+discussed. Section~\ref{sect:programming} is on a model of programs
+operating in ZigZag system. In section~\ref{sect:characteristics},
+the characteristics of the system are compared with traditional systems.
+
+\section{The system defined}
+
+%ZigZag-järjestelmässä tietojärjestelmä on jaettu osiin perinteisestä 
+%poikkeavalla tavalla. Kaikki järjestelmän tieto on yhdessä tietorakenteessa,
+%ZigZag-avaruudessa \cite{tut99}, joka muodostuu soluista ja niitä yhdistävästä
+%kytkösverkosta. Sovellusohjelmat on korvattu näkymillä tähän yhtenäiseen
+%avaruuteen \cite{womm98}.
+
+In ZigZag system, the information system is divided into parts in an
+untraditional way. All the information is in a single data structure,
+the ZigZag space~\cite{tut99}, which is composed of cells and a net of
+connections between them. Application programs are replaced by
+specific views to this uniform space~\cite{womm98}. 
+
+%ZigZag-järjestelmän ytimen tehtävänä on tarjota tällainen avaruus järjestelmän
+%muiden osien käyttöön. Koko muu järjestelmä toimii avaruuden ominaisuuksien
+%mukaisesti. Ydin voi olla jonkin olemassaolevan käyttöjärjestelmän
+%alaisuudessa ajettava ohjelma, tai se voi korvata käyttöjärjestelmän. 
+
+The kernel of the system provides the rest of the system with access to a
+space like this. The properties of the space define how the rest of
+the system works. The kernel can be an application program running
+under an existing operating system, or it can be run stand-alone,
+acting as an operating system.
+
+\subsection{ZigZag space}
+
+\subsubsection{Cells}
+
+%Solut sisältävät avaruuden ''atomisen'', jakamattoman, datan. Käytännössä
+%solun sisältö on tavu- tai merkkijono. Koska alkioiden väliset suhteet 
+%kuvataan solutasolla, solu kuvaa tarkastelun kannalta pienimmän
+%merkityksellisen yksikön: sanan, kuvan, luvun, harvemmin merkin.
+%Eri tarkoituksia varten voidaan määritellä sopivat solujen jako- ja
+%yhdistysoperaatiot tarkastelukoon muuttamiseksi. 
+
+The cells contain the atomic data in the space. In practise, cell
+contents are byte or character arrays. As the relations between cells
+are presented on cell level, a cell describes one smallest unit of
+meaningful information: a word, a picture, a number, seldom a
+character. The level of detail can be changed by defining appropriate
+cell division and concatenation operations, as different level of
+detail is needed for specific tasks.
+
+\subsubsection{Dimensions and connections}
+
+%Ulottuvuudet ovat toisistaan riippumattomia kytkösjoukkoja. Kytkös yhdistää
+%kaksi solua toisiinsa, esimerkiksi kuvan otsikkoonsa tai listan alkion 
+%seuraavaan alkioon. Tietyn ulottuvuuden kytkökset muodostavat avaruuden 
+%soluista tietynlaisen joukon rivejä ja renkaita, kuvaten yhden yksikäsitteisen
+%alkeissuhteen: jokaisella kuvalla on vain yksi otsikko ja otsikolla yksi kuva,
+%jokaisella listan alkiolla on vain yksi seuraaja ja yksi edeltäjä. 
+%Ulottuvuuksilla on merkitystä kuvaava nimi, esimerkiksi 
+%\texttt{d.seuraava-kuva}.
+
+A dimension is a group of connections, independent of other
+dimensions. A connection brings together two cells, eg. a picture to
+its caption, or an element in a list to the next element. The
+connections of a dimension build the cells into a group of ranks and
+loops, describing one primary relation: every picture has only one
+caption and every caption only one picture, and every element in a
+list has only one successor and one predecessor. Descriptive names are
+given to the dimensions, like \texttt{d.next-picture}. 
+
+%Jos suhde ei ole yksikäsitteinen, tarvitaan avuksi lisää ulottuvuuksia. Koska
+%työryhmässä on monta jäsentä, täytyy ensin kytkeä työryhmäsolu johonkin 
+%jäsenistä ja sitten muodostaa jäsenistä ryhmä toisella ulottuvuudella.
+
+If the relation is not unequivocal, more than one dimension is needed to
+describe it. As there can be more than one member in a workgroup, the
+group cell must first be connected to a single member, and then the
+group is interconnected along another dimension. 
+
+
+\subsection{Views}
+\label{sect:views}
+%Näkymä esittää jonkin avaruuden osan käyttäjälle sekä tarjoaa mahdollisuuden
+%liikkua avaruudessa ja muuttaa sitä. Näkymät voidaan luokitella \cite{ct2000}
+%karkeasti yleisiin, kaikille avaruuden osille käyttökelpoisiin näkymiin, sekä 
+%erityisnäkymiin, jotka esittävät mielekkäästi jonkin tietynlaisen avaruuden
+%osan.
+
+A view presents a part of the space to the user and provides her with
+the possibility to navigate in the space and edit it. The views can be
+roughly classified \cite{ct2000} into general and specific views. The
+general views are useful for any part of the space, while the specific
+views are designed for a certain structure. 
+
+%Tässä rajoitutaan käsittelemään näkymiä, joissa solujen paikat näytöllä
+%määräytyvät kytkösten perusteella. Voidaan nimittäin luoda myös näkymiä,
+%jotka lukevat sijoittelutietoja tietyistä soluista. Esimerkiksi, jokaiseen
+%esitettävään soluun kytketään kaksi solua, jotka kertovat solun koordinaatit
+%näytölle piirrettäessä. Tämä ei kuitenkaan kuulu perusjärjestelmään -- Ted
+%Nelson kutsuu tällaisia näkymiä nimellä {\em FloatingWorld} \cite{tn2000}.
+
+The scope of this paper is limited to views which derive the placing
+of cells on the screen solely based on the connections. Namely, views
+could also get placing information from certain cell contents. For
+example, every cell to be visualized could be accompanied by two cells
+which contain its coordinates on the screen. This is not part of the
+basic system---Ted Nelson calls this kind of views as
+{\em FloatingWorld}~\cite{tn2000}. 
+
+%GZigZagin useimmat näkymät ovat avaruuden projektioita näyttötasolle, niin
+%että otetaan huomioon vain muutama (<5) ulottuvuus kerrallaan. 
+%Yleiskäyttöisyyttä varten on oletettu, että käyttäjälle riittää tarkastella
+%vain tiettyjä, aiheeseen liittyviä ulottuvuuksia kerrallaan. 
+
+Most views implemented in GZigZag are projections from the space to a
+screen surface, so that only a few (<5) dimensions are considered at a
+time. For this to be universally usable, it is assumed it is enough
+for the user to study only certain, topic-specific dimensions at a time.
+
+
+\subsection{Global information network}
+\label{sect:globality}
+%Järjestelmään ei tarvita erillisiä toimintoja paikallisen avaruuden 
+%ulkopuolisen maailman kanssa kommunikointiin. Kommunikointia varten voidaan
+%lisätä uusi ulottuvuus, joka kytkee eri avaruudet yhteen. Tällöin esimerkiksi
+%sähköpostin lähettäminen tapahtuu kytkemällä viesti vastaanottajan solun
+%viereen.
+
+There is no need for specific interfaces to be able to communicate
+with the world outside of the space. It is satisfactory to add a new
+dimension, which interconnects separate spaces. Thus e-mail could be
+sent by connecting the message next to the recipient's cell. 
+
+%Järjestelmän ytimen täytyy tietysti tällöin tehdä ero paikallisten ja 
+%muiden avaruuden osien välillä. Tätä kaiken käsittelyä avaruuden kautta voi
+%verrata Unix-järjestelmien tapaan esittää oheislaitteet ja 
+%kommunikaatioyhteydet tiedostoina.  
+
+It is on the responsibility of the kernel to handle local and foreign
+parts of the space accordingly. This concept of doing everything in
+the space is analogous to the traditional Unix way of
+representing external devices and communication links in the file system. 
+
+\section{ZigZag space mathematically}
+
+\renewcommand{\P}{\mathcal{P}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\E}{\mathcal{E}}
+
+%ZigZag-avaruutta voidaan tutkia useamman määrittelyn pohjalta. Oleellinen
+%on aksiooma \cite{tut99}, jonka mukaan solun naapurit positiiviseen ja 
+%negatiiviseen suuntaan tiettyä ulottuvuutta pitkin ovat yksikäsitteiset. 
+%Suoraviivaisinta on määritellä avaruus verkon tavoin: 
+
+ZigZag space can be studied based on several definitions. The
+essential is the axiom~\cite{tut99} which states that the positive and
+negative direction neighbours of a cell are unequivocal. The most
+direct way to define the space is like a graph:
+
+\newpage
+
+\begin{defn}
+\label{def:lbldag}
+%ZigZag-avaruus $G=(V,E,D)$, jossa $V$ on solujen joukko, $D$ on ulottuvuuksien
+%joukko ja joukko $E$ on kytkökset kuvaava osajoukko karteesisesta tulosta 
+%$V \times V \times D$, niin että pätee:
+
+ZigZag space $G=(V,E,D)$, where $V$ is the set of cells, $D$ is the
+set of dimensions, and the set $E$ represents the connections as a
+subset of the Cartesian product $V \times V \times D$, and it holds that
+
+\begin{itemize}
+\item[] $\forall(a,b,d),(a,c,d) \in E : b = c $
+\item[] $\forall(b,a,d),(c,a,d) \in E : b = c $
+\end{itemize}
+\end{defn}
+
+%G on suunnattu nimiöity verkko, kun sallitaan useammat kaaret (eri 
+%ulottuvuuksilla) samojen solujen välillä. Jokainen avaruuden solu on verkon
+%solmu ja jokainen kytkös on verkon kaari. Ehdot takaavat naapurisolujen 
+%yksikäsitteisyyden ulottuvuudella.
+
+$G$ is a directed labeled graph, where several edges (on different
+dimensions) are allowed between two cells. Every cell in the space is
+a vertex in the graph, and every connection is an edge. The conditions
+guarantee that neighbours are unequivocal on a dimension.
+
+%Tämän analogian johdosta voimme soveltaa ZigZag-avaruuteen verkkoteorian
+%tuloksia ja algoritmeja (mm. hakualgoritmit). Verkkotarkastelulla on kuitenkin
+%vain vähän sovelluksia, sillä ulottuvuudet ovat ZigZagissa huomattavasti
+%tärkeämpiä kuin mihin tällainen esitystapa johtaa. Erityisesti ulottuuksien
+%osajoukkojen tarkastelu vaikuttaa merkittävältä. Seuraavassa esitetäänkin
+%pelkästään joukko-oppiin pohjautuva määritelmä, jossa lähdetään ulottuvuuden
+%määrittelystä. 
+
+This analogy allows us to apply the results and algorithms (ie. search) of the
+graph theory on ZigZag. Graph representation has only limited number
+of applications, as it hides the vast importance of dimensions in
+ZigZag. Specifically, it seems that studying different subsets of the
+dimensions is significant. Thus a set theoretical definition follows,
+beginning with a definition of a dimension.
+
+\subsection{Cell, dimension, space}
+
+\begin{defn}
+\label{dimension}
+%Olkoon $C$ jokin solujen joukko. Tällöin
+%\textbf{ulottuvuus} $\P$ on joukon $C$ alkioiden välinen binäärinen
+%relaatio (järjestettyjen parien joukko), jolle pätee:
+
+Let $C$ be a set of cells. Then \textbf{dimension} $\P$ is a binary
+relation (a set of ordered pairs) where it holds that
+
+%
+\begin{itemize}
+\item[] $\forall a,b,c \in C:(a,b) \in \P \wedge (a,c) \in \P \;\Rightarrow\; b = c $
+\item[] $\forall a,b,c \in C:(b,a) \in \P \wedge (c,a) \in \P \;\Rightarrow\; b = c $
+\end{itemize}
+\end{defn}
+
+%Relaatio $\P$ kuvaa siis vierekkäiset solut: Jos pari $(a,b)$ kuuluu joukkoon 
+%$\P$, on $a$:n naapuri positiivisessa suunnassa $b$. Ehdot takaavat 
+%naapurisolujen yksikäsitteisyyden.
+
+The relation $\P$ thus represents neighbours: If a pair $(a,b)$
+belongs to the set $\P$, then the neighbour of $a$ in the positive
+direction is $b$. The conditions guarantee that neighbours are
+unequivocal on a dimension.
+
+\begin{defn}
+\label{space}
+%Järjestetty pari $Z=(C,D)$, jossa $C$ ja $D$ ovat joukkoja, on
+%\textbf{ZigZag-avaruus}, joss on olemassa ZigZag-avaruus
+%$Z^*=(C^*,D^*)$, ja pätee:
+
+An ordered pair $Z=(C,D)$, where $C$ and $D$ are sets, is a
+\textbf{ZigZag space}, iff there exists a ZigZag space
+$Z^*=(C^*,D^*)$, and it holds that
+
+%
+%Kaikille \textbf{ZigZag-avaruuksille} $Z=(C,D)$ pätee, että on olemassa
+%ZigZag-avaruus $Z^*=(C^*,D^*)$, jossa $C,D,C^*,D^*$ ovat joukkoja,
+%joille pätee:
+%
+\begin{enumerate}
+\item $C\subseteq C^*$ \\
+      $D\subseteq D^*$
+%\item $C^*$ on solujen joukko \\
+%      $D^*$ on joukko ulottuvuuksia $C^*$:ssä.
+\item $C^*$ is a set of cells \\
+      $D^*$ is a set of dimensions in $C^*$
+\end{enumerate}
+%
+
+%Tällöin $Z^*$ on \textbf{perusavaruus} $Z$:lle. ($Z^*$ on
+%perusavaruus myös itselleen.)
+
+Now $Z^*$ is a \textbf{primary space} for $Z$. ($Z^*$ is also a
+primary space for itself.)
+
+%Jos avaruuksille $Z$ ja $Z'$ pätee, että $C' \subseteq C$
+%ja $D' \subseteq D$, niin $Z'$ on $Z$:n
+%\textbf{aliavaruus}. Vastaavasti $Z$ on $Z'$:n
+%\textbf{yliavaruus}. Merkitään $Z'\subseteq Z$.
+
+If for spaces $Z$ and $Z'$ it holds that $C, \subseteq C$ and $D'
+\subseteq D$, then $Z'$ is a \textbf{subspace} of $Z$. Respectively,
+$Z$ is a \textbf{superspace} of $Z'$. We write $Z'\subseteq Z$.
+\end{defn}
+
+%Eräs mahdollinen tulkinta on, että järjestelmän kaikki tieto on
+%perusavaruudessa, jonka aliavaruuksia kaikki käsiteltävät avaruudet ovat.
+%Toisaalta määritelmä ei estä tapausta, jossa tämä perusavaruus olisi jonkin
+%suuremman avaruuden aliavaruus (katso luku~\ref{luku:globaalius}). 
+
+A possible interpretation is that all the information is in the
+primary space, subspaces of which all the spaces dealt with are. On
+the other hand, it could be possible that this primary space would be
+a subspace of an even larger space (see section~\ref{sect:globality}).
+
+%Avaruus määritellään tällä tavoin perusavaruuden avulla, jotta ulottuvuuksista
+%saadaan järjestelmän laajuisia -- avaruudessa voi olla ulottuvuuksia, jotka
+%sisältävät tietoa myös avaruuden ulkopuolisten, kuitenkin perusavaruuteen
+%kuuluvien, solujen kytkennöistä.
+
+A space is defined in respect to a primary space, because this way
+dimensions can be system-wide---in a space, there can be dimensions
+which hold information also on connections outside of the space, still
+inside the primary space.
+
+\subsection{Rank, distance}
+
+\begin{defn}
+%Ulottuvuuden $\P$ \textbf{etäisyysjoukko} $\D_P$ määritellään:
+The \textbf{distance set} $\D_P$ of a dimension $\P$ is defined as
+%
+\begin{itemize}
+\item[] $\forall\,a\in C:(a,a,0) \in \D_P $
+\item[] $(a,b,n) \in \D_P \Leftrightarrow \exists\;x \in C:
+         (a,x) \in \P \wedge (x,b,n-1) \in \D_P,
+         \;  n\in\mathbbm{Z}_+ $
+\item[] $(a,b,-n) \in \D_P \Leftrightarrow (b,a,n) \in \D_P,
+         \; n\in\mathbbm{Z}_+ $
+\end{itemize}
+\end{defn}
+
+%Tällöin ehto $(a,b,n)\in\D_P$ toteutuu, kun $b$ on $n$:n askeleen
+%päässä positiiviseen suuntaan $a$:sta. Pätee mm. $(b,a,-1)\in\D_P
+%\Leftrightarrow (a,b,1)\in\D_P \Leftrightarrow (a,b)\in\P$. Tämän
+%vuoksi $\D_P$ määrittelee ulottuvuuden samoin kuin $\P$
+%määritelmässä~\ref{ulottuvuus}.
+
+Now the condition $(a,b,n)\in\D_P$ holds when $b$ is $n$ steps away
+from $a$ to the positive direction. For example, it holds that
+$(b,a,-1)\in\D_P \Leftrightarrow (a,b,1)\in\D_P \Leftrightarrow
+(a,b)\in\P$, which means that $\D_P$ defines a dimension equivalently to
+$\P$ in definition~\ref{dimension}.
+
+\begin{defn}
+%\textbf{Jono} solun $a\in C$ ympärillä on yksiulotteinen aliavaruus 
+The \textbf{rank} around a cell $a\in C$ is an unidimensional subspace
+$J=(C',\{\P\})$:
+%
+$$C'=\{b\in C\;|\;\exists\;n\in\mathbbm{Z}: (a,b,n)\in \D_P\}$$
+\end{defn}
+
+%Jonoon kuuluvat ne solut, jotka ovat yhteydessä toisiinsa ulottuvuutta $\P$
+%pitkin. 
+
+Rank consists of the cells which are in connection with each other
+along the dimension $\P$.
+
+\begin{defn}
+%Jonoa kutsutaan \textbf{renkaaksi}, jos
+A rank is called a loop if
+%
+$$\exists\;n\in\mathbbm{Z}_+: (a,a,n)\in\D_P, a \in C'$$
+%
+%Pienintä tällaista lukua $n$ kutsutaan renkaan pituudeksi.
+Smallest such number $n$ is called the length of the loop.
+
+%Jos tällaista lukua $n$ ei ole olemassa, kutsutaan jonoa
+%\textbf{riviksi}. Jos
+
+If there is no such number $n$, the rank is called a \textbf{row}. If
+
+%
+$$\exists\;x,y\in C':\forall\,c\in C': (c,x)\not\in\P \wedge
+  (y,c)\not\in\P $$
+%
+%kutsutaan riviä äärelliseksi (muutoin äärettömäksi). Tällöin rivin
+%pituudelle $n$ pätee
+the row is finite (otherwise infinite). In this case holds
+
+%
+$$(x,y,n)\in\D_P$$
+%
+%$x$:ää ja $y$:tä kutsutaan rivin alku- ja loppusoluiksi.
+where $x$ and $y$ are the head and tail cells of the row.
+\end{defn}
+
+
+
+\section{Semantics of ZigZag space}
+\label{sect:semantics}
+%Kuten matemaattisessa tarkastelussa
+%selvisi, ulottuvuus on yksikäsitteinen binäärinen relaatio
+%(luku~\ref{ulottuvuus}). Näistä alkeisrelaatioista voidaan kuitenkin
+%rakentaa ilmaisuvoimaltaan vahvempia kokonaisuuksia, samaan tapaan kuin
+%relaatiotietokannoissa tehdään.
+A dimension is an unequivocal binary relation, as was found out in the
+mathematical studies (section~\ref{dimension}). These primary
+relations can be used to build semantically stronger systems, as is
+done in relational databases.
+
+\subsection{Circumventing unequivocality}
+\label{sect:unequ}
+%Naapureiden määrän rajoittaminen yhteen suunnassaan on ZigZagin aksiomaattinen
+%piirre. Avaruuden esittämisen helppous verkon yleistapaukseen verrattuna
+%johtuu myös tästä ominaisuudesta. Oleellista onkin, voidaanko rajoitusta
+%tarvittaessa kiertää sopivalla tavalla. Kun halutaan kuvata relaatio solun ja
+%solujoukon välillä, voidaan kytkös tehdä yhteen joukon soluista ja yhdistää
+%loput joukon solut siihen jonona toista ulottuvuutta pitkin.
+
+Limiting the number of neighbours to one in a direction is an
+axiomatic feature of ZigZag. The facility of visualizing the space as
+compared to a general graph is caused by this feature. Thus it is
+essential to study whether the limitation can be circumvented when
+needed, in an appropriate way. A simple example: to present a relation
+between a cell and a set of cells, a connection can be made to one of
+the elements, and then rest of the elements connected to the first one
+as a rank along another dimension. 
+
+%GZigZagissa on muutama erityinen rakenne yksikäsitteisyyden kiertämiseksi.
+%Yksi avaruuden ulottuvuus tulkitaan klooniulottuvuudeksi: sillä olevan
+%jonon jokaisella solulla on sama sisältö. Tarkoitus on, että saman asian
+%esiintyessä useammassa paikassa tai useammassa tietorakennelmassa solun
+%sisältämä tieto päivittyy kaikkiin paikkoihin automaattisesti. Kloonaus
+%ei kuitenkaan ratkaise ongelmaa, jos halutaan viitata useasti {\em soluun}
+%eikä vain sen {\em sisältöön}. Tämä tulee vastaan esimerkiksi, jos solun
+%esittämä tieto on sen kytkennöissä (ks. erityisesti~\ref{luku:hyperkuutio}).
+
+In GZigZag, there are a few special constructs to circumvent
+unequivocality in a clean way. One of the dimensions in the space is
+interpreted as a clone dimension: every cell on a rank on the
+dimension has the same content. It is meant that when some information
+appears several times or in several structures, changes to cell
+contents will automatically propagate to all places. Still, cloning doesn't
+circumvent the problem if several references are to be made to the
+{\em cell}, and not just its content. This is the case, for example, if
+the information of a cell is in its connections (see especially
+section~\ref{sect:hypercube}).
+
+%Toinen GZigZagin erityisesti tulkittava rakenne ovat osoittimet. Koska kytkös
+%on kaksisuuntainen, vaaditaan osoittamiseen monimutkaisempi rakenne, kun 
+%halutaan mahdollistaa samanaikainen osoittaminen useammasta paikasta samaan
+%soluun. Tämä on toteutettu kahdella ulottuvuudella: solu on ensimmäinen alkio
+%jonossa, johon osoittajat liittävät linkiksi toimivan solun. Varsinainen
+%osoittaja on kytketty tähän linkkisoluun toista ulottuvuutta pitkin. 
+%(Myöhemmin osoitusjärjestelmään on liitetty vielä kolmas ulottuvuus, jolla on
+%mahdollistettu minkä tahansa avaruuden solun osoitus -- myös linkkisolun 
+%itsensä.)
+
+Another specially interpreted structure in GZigZag are
+pointers. Because connections are bidirectional, a more sophisticated
+structure is needed when a cell is to be allowed to be pointed to from
+several places at a time. This is implemented as a pair of dimensions:
+a cell is the first one in a line, to which the pointers add a cell
+which represents the linkage. The pointer itself is connected to this
+link cell along the other dimension. (Later, a third dimension has
+been added to the pointing system, to allow pointing to any
+cell---including the link cells.)
+
+
+\subsection{Lists and links}
+
+%ZigZagin kytkösverkko yhdistää kaksi rakennetta, jonot ja linkit. Toisaalta
+%kytkökset muodostavat soluista jonoja, toisaalta jokainen kytkös on 
+%kaksisuuntainen hyperlinkki solusta toiseen. Mallina ZigZag voidaankin
+%nähdä kompromissina perinteisen biteistä koostuvan muistimallin ja
+%{\em nuolimallin} 
+%välillä. Nuolimallissa kaikki tieto on nuolten välisissä suhteissa: nuolen 
+%alku- ja loppupää voivat osoittaa toiseen nuoleen \cite{arrow}. 
+
+The net of connections in ZigZag combines two structures, lists and
+links. On the other hand connections make cells into lists, on the
+other hand every connection is a bidirectional hyperlink from a cell
+to another. As a model ZigZag can thus be seen as a compromise between
+the traditional memory model of an array of bits and the {\em arrow
+model}. In the arrow model, all the information is in the relations
+between the arrows: the head and tail of an arrow can point to another
+arrow~\cite{arrow}.
+
+%LISP-ohjelmointikielessä ja sen murteissa perustietorakenteena oleva {\em pari}
+%on toisenlainen kompromissi näiden ääripäiden välillä. Pari eroaa nuolesta 
+%siten, että se voi viitata toisten parien lisäksi myös jakamattomaan dataan.
+%%Ulottuvuuksien lisäksi ZigZag-avaruuden jonot eroavat LISP:in pareista 
+%muodostettavista listoista myös siten, että jonossa voidaan kulkea aina
+%molempiin suuntiin, kun taas tavallinen lista on linkitetty vain toiseen
+%suuntaan.
+
+A {\em pair} in programming language LISP and its variations is
+another compromise between these extremes. A pair is different from
+an arrow in its ability to reference atomic data in addition to other
+pairs. The lists of ZigZag deviate from lists constructed from the
+pairs in LISP in that they are bidirectional. 
+
+%Rakenne on ennemminkin joukko linkkejä kuin lyhyitä listoja silloin,
+%kun kytköksiä on vähän. Näin etenkin silloin, kun ulottuvuus yhdistää soluun
+%toisen solun määreenä. Useampiulotteista avaruutta tarkasteltaessa myös
+%jono yhtä ulottuvuutta pitkin toimii usein kuin linkkilistana. 
+
+A ZigZag structure is rather a group of links than of short lists when
+there is only a few connections. This is especially the case when a
+dimension connects a cell to another cell which acts as an attribute
+to the first. Considering a multidimensional space, a list along one
+dimension often acts as a list of links, transferring the user to
+different structures in the space. 
+
+\subsection{Hypercube as the set of possible values}
+\label{sect:hypercube}
+%Avaruuden informaatio voidaan jakaa halutulla tavalla solujen sisällöksi ja
+%solujen välisiksi linkeiksi. Tarkastelun rajoittaminen näkymiin, joissa 
+%solujen sijoittelu näytölle tapahtuu pelkästään kytkösten perusteella 
+%(luku~\ref{luku:nakymat}), ei siis millään tavalla rajoita 
+%ilmaisumahdollisuuksia. Solut voidaan esimerkiksi ''ripustaa lukusuoralle''
+%jotain ulottuvuutta pitkin, jolloin linkeillä voidaan esittää määre rajattoman
+%tarkasti. Tarvitaan vain esimerkiksi operaatio, joka kertoo, kuinka monta
+%solua ''lukusuoran'' alkuun on. (Rationaaliluvut saadaan sopimalla lukusuoralle
+%mittakaava.) 
+
+It is possible to share the information in the space between cell
+contents and connections in several ways. Limiting the study to views
+which gain all the placement information from the connections, thus does not
+limit the expressiveness in any way. The cells can for example be
+``hung to the continuum'' along some dimension, so that the
+connections can be used to express an attribute by the precision
+wanted. To find out the value, the number of cells to the beginning of
+the ``continuum'' is calculated. (For decimal numbers, a scale is applied.)
+
+%Paikka diskreetissä jonossa riittääkin siis itse asiassa myös jatkuvan
+%rakenteen esittämiseen. Samalla tavalla voidaan kirjaimet solun sisältönä
+%korvata kytköksillä aakkosiin. Useampiulotteisessa tapauksessa arvojono laajenee
+%mahdolliset arvot kuvaavaksi hyperkuutioksi. Jokaista mahdollista arvoa kuvaa
+%kuution solu -- jos tietyt yhditelmät eivät ole mahdollisia, poistetaan niitä
+%vastaavat solut kuutiosta. 
+
+This means that location in a discrete line is sufficient to represent
+a continuous system. Connections to the alphabets can replace
+characters inside cells. In multidimensional cases the continuum is
+extended into a hypercube. Every possible combination of values is a
+cell in the cube---if some combinations are invalid, the respective
+cells are removed.
+
+%Vastaavanlaista on esitetty aiemmin 
+%moniulotteisten tietokantojen ulottuvuuksien ja tietoalkioiden käsittelyn
+%yhdenmukaistamiseksi \cite{mmd96}. Tällaisen analogian määrittelyn jälkeen
+%voitiin esimerkiksi rajoittaa tarkasteltavaa aikaväliä (ulottuvuus) ja
+%hintaluokkaa (tietoalkio) samalla operaattorilla. 
+
+Equivalent has earlier been suggested to unify the methods of dealing
+with dimensions and values in a database~\cite{mmd96}. After this kind
+of an analogy, it came possible to eg. set constraints both on time scale
+(a dimension) and on price (data) using the same syntax.
+
+%Mitä solujen sisällön täydellinen korvaaminen erilaisilla hyperkuutioilla 
+%sitten merkitsisi ZigZagissa? Ainakin solujen sijainnin selvittämisestä tulisi
+%toteutuksen kannalta merkittävä perusoperaatio. Tämä on tavallaan avaruuden 
+%perusominaisuuksia vastaan, sillä yleisessä tapauksessa avaruuden soluille
+%ei voida antaa koordinaatteja. Myöskään solujen sijaintia toisiinsa nähden  
+%ei voida määritellä triviaalitapauksia lukuunottamatta kuin hyperkuution 
+%kaltaisille täysin kytketyille komponenteille. 
+
+What would it imply if all the cell content data were replaced by
+various hypercubes? For first, finding out the relative place of a
+cell within a hypercube would become a significant operation that
+should be carefully planned. In a way, this is against the fundamental
+properties of ZigZag, as there is no general way of mapping cell
+positions into space coordinates. Even finding out relative positions
+in space is rarely possible, excluding hypercubes.
+
+%Hyperkuutioiden käyttäminen arvojen esittämiseen mahdollistaisi 
+%käyttöliittymäkomponenttien yhdenmukaistamisen avaruudessa liikkumisen ja
+%solujen osoittamisen kanssa. Värin esittäminen RGB-kolmikon numeroina ei
+%ole käyttäjäystävällistä -- hyperkuutiossa värin valinta tehtäisiin kulkemalla
+%värikuutiossa. 
+
+For second, using hypercubes would let user interface components be
+even more unified with the underlying structure. Handling colours as
+RGB triples is not user friendly---in a hypercube choosing colour is
+travelling in a colour cube. 
+
+\subsection{Conceptual Graphs in ZigZag}
+
+%Käsiteverkko \cite{cgs99} on formaali tapa esittää tietoa loogisesti. 
+%Käsiteverkko on kaksijakoinen verkko, jossa kaaret yhdistävät relaatioita
+%kuvaavia solmuja olioita kuvaaviin solmuihin. Tämä on hyvin lähellä
+%ZigZagia: tarvitsee vain korvata jokainen relaatiosolu kaarineen oliot 
+%yhdistävällä kytköksellä ko. relaatiota vastaavalla ulottuvuudella. 
+
+Conceptual graphs are a formal method of representing logical
+information. Conceptual graph is a bipartite graph where the edges
+connect relation vertices to object vertices. This is similar to
+ZigZag: every relation vertex and its edges are simply turned into a
+connection along the dimension respective to the relation.  
+
+%Ennen muunnosta relaatiot on kuitenkin täytynyt hajottaa binäärisiksi, jotta
+%kytköksellä korvaaminen onnistuisi. Naapureiden yksikäsitteisyyden vuoksi 
+%täytyy myös estää tilanteet, joissa sama
+%olio on useammassa samantyyppisessä relaatiossa yhtä aikaa -- helpoiten tämä
+%käy kloonaamalla oliosta solu jokaiselle viittaukselle.  
+
+However, in order to replace relation vertices with connections, the
+relations must first be normalized into binary ones. For the
+neighbours to be unequivocal, it's also not possible for one object
+cell to be in several relations of same type at once. This is easily
+achieved by making a clone cell for each reference.
+
+%Lopputulos on käsiteverkon oliokeskeinen visualisointi. Siinä missä 
+%visualisointi verkkona voi olla hankalaa, ZigZagissa tavalliset näkymät
+%kelpaavat hyvin. Kerralla näytetään tosin vain kolme relaatiota verkon
+%kaikista relaatioista. Tämä voi kuitenkin olla tavoiteltavaakin, jos 
+%käyttäjä haluaa tutkia verkosta jotain tiettyä asiaa. 
+
+The result is an object-centric visualization of a conceptual
+graph. Visualizing a graph can be difficult, whereas in ZigZag the
+ordinary views are enough. The number of visualized dimensions limits
+the number of relations shown at a time, but this might be even convenient
+if the user wants to consentrate on some specific feature in the graph.
+
+%Sisäkkäisten käsiteverkkojen esittämiseksi (toinen verkko on toisessa oliona) 
+%käsiteverkon solmu voi itse asiassa olla toinen verkko. ZigZagiin 
+%siirrettäessä tämä voidaan kuvata toisen verkon tilalla olevalla solulla, johon
+%myös ZigZag-avaruudeksi muutettu verkko on kiinnitetty jotain tiettyä
+%ulottuvuutta pitkin. Käsiteverkoissa viittaukset sisemmästä verkosta ulompaan
+%merkitään katkoviivalla: ne ovat tosia sisemmässä verkossa, mutta eivät 
+%ulommassa verkossa. Verkoista muodostuu hierarkia. 
+
+In the case of nested conceptual graphs (a graph being an object of
+another graph) a node in the graph can actually be another graph. In
+ZigZag we can replace the inner graph with a cell that represents it,
+and attach to it along some dimension a similar translation of the
+inner graph. In conceptual graphs references from inner graphs
+outwards are drawn in dashed lines: they are true in the inner net,
+but not necessarily in the outer one.  
+
+%ZigZagissa samanlaista hierarkiaa ei synny. Jos sisemmästä käsiteavaruudesta
+%viitataan ulompaan kytköksellä, se on molempiin suuntiin olemassa. Merkityksen
+%säilyttämiseksi voidaan kloonata ulomman käsiteavaruuden solusta versio
+%sisemmän käytettäväksi.
+
+Conversion to ZigZag doesn't result in a hierarchy like this. If there
+is a reference from an inner to an outer space, the connection
+exists in both directions. To preserve the semantics, a clone cell can
+be created for the use of the inner space.
+
+%Hierarkiattomuus, tai ZigZagissa pikemminkin hierarkiaan pakottamattomuus,
+%on käyttäjälle helpotus: läheskään kaikkea tietoa ei voi laittaa hierarkiaan,
+%tai vähintäänkin mahdollisia hierarkioita on useampia \cite{ct2000}.
+
+The absence of enforced hierarchies in ZigZag is a relief for the
+user: not all information is hierarchial, and often there would be
+several different hierarchies~\cite{ct2000}. 
+
+
+\section{Programming in ZigZag}
+\label{sect:programming}
+%Ohjelmoijalle ZigZag tarjoaa valmiin tietorakenteen lisäksi käyttöliittymän
+%näkymien muodossa. Ohjelman tiedot ovat suoraan koko järjestelmän käytettävissä,
+%kun ne sijaitsevat avaruudessa. Järjestelmän eri osien välinen suhde on
+%epäselvä, sillä se voitaisiin toteuttaa monellakin tapaa. Laskenta voisi
+%tapahtua erillisissä prosesseissa, jotka lukitsevat avaruuden osia 
+%muunnosoperaatioiden ajaksi. Toisaalta solun joutuminen näkymään, käyttäjän
+%selailun tuloksena, voisi aiheuttaa siihen mahdollisesti liitetyn ohjelmakoodin
+%suorituksen. 
+
+ZigZag provides programmers with a data structure and user interfaces
+in the form of views. As the data of the program is in the space, it's
+automatically retrievable by all the system. The relation between the
+parts of the system is otherwise unclear, as it could be implemented
+in several ways. The computation could be processed in program threads
+which would lock the relevant parts of the space as needed. On the
+other hand, user-originated events could trigger evaluation of space
+observers. 
+
+%Oleelliselta vaikuttava sovellusmalli on erilaisten näkymien tekeminen. Tällä
+%tavalla ohjelmoitaessa ikään kuin viedään Model-View-Controller-paradigma
+%äärimmilleen: Malleja on vain yksi, valmiiksi toteutettu ZigZag-avaruus. 
+%Ohjelmoitavaksi jää näkymä, jonka tehtävä on visualisoida näkymän osoittimen
+%ympärillä olevaa avaruuden osaa. Jos näkymän toiminnot poikkeavat liiaksi
+%tavanomaisista, joudutaan myös luomaan uusia operaatioita avaruuden 
+%käsittelyyn. GZigZagissa on menestyksellä toteutettu erilaisia perusnäkymiä
+%hyvinkin vähällä ohjelmoinnilla. 
+
+An important application programming model seems to be the creation of
+various views. This way the Model-View-Controller paradigm is taken
+into extrems: There is only one model, the implementation of ZigZag
+space. Only the view is then left to be programmed, visualizing the
+space around the cursor. If the operations within the view deviate too
+much from the usual ones, some new operations on the space must also
+be implemented. In GZigZag, many different basic views have been
+implemented succesfully in little programming.
+
+
+\subsection{Dynamic space parts}
+
+%Tavallisten ulottuvuuksien lisäksi voidaan ohjelmoida erityisiä dynaamisia
+%ulottuvuuksia, joiden sisältö lasketaan tarpeen mukaan. Tämä mahdollistaa
+%esimerkiksi äärettömän pituiset rivit sekä solujen sisällön ja kytkösten
+%perusteella muuttuvat ulottuvuudet. Erityisesti äärettömien ulottuvuuksien
+%ollessa kyseessä myös solujen dynaaminen luonti on tärkeää. GZigZagiin
+%on viime aikoina toteutettu dynaamiset avaruuden osat mahdollistava
+%liittymä. 
+
+Adding to the normal dimensions, also specific dynamic dimensions can
+be programmed. The connections on such a dimension are calculated in
+need. This allows eg. infinite lenght ranks and dimensions that react
+to cell content and connection changes. Especially in case of infinite
+dimensions, it's important to create cells dynamically, too. An
+interface allowing such has been lately implemented in GZigZag.
+
+%Dynaamiset avaruuden osat ovat mielenkiintoinen laskennan esitystapa. 
+%Alkulukuja luettelevan algoritmin tulos voi olla äärettömän pitkä rivi,
+%jolla alkuluvut ovat järjestyksessä. Riviä tarkasteltaessa lukuja lasketaan
+%tarpeen mukaan lisää. Toinen esimerkki: ulottuvuudella \texttt{d.etsi-plaa} 
+%positiiviseen suuntaan kulkemalla käyttäjä voisi päästä seuraavaan löydettyyn
+%soluun, jonka sisällössä on sana ''plaa''. 
+
+Dynamic space parts are an interesting way to represent
+computation. The output of an algorithm enumerating prime numbers can
+be an infinite rank containing all the primes. Whenever the user is to
+see the end of the rank, more numbers are calculated. Another example:
+on dimension \texttt{d.find-plaa} going in positive direction gives
+the next search result for ``plaa''.
+
+
+%Dynaaminen solu voidaan muuttaa tavalliseksi soluksi, kun siihen liitetään 
+%staattinen kytkös.
+
+A dynamic cell is converted into an ordinary, persistent one, when
+a static connection is attached to it.
+
+\subsection{Subspace schemes: extending the object-oriented model}
+
+%Ohjelmakoodista tulee monimutkaista, jos siinä täytyy joka kohdassa varautua
+%kaikenlaisiin avaruuksiin. Skeema rajoittaa avaruutta sopivassa määrin. 
+%Jottei käyttäjän mahdollisuuksia rajotettaisi liiaksi, määritellään
+%skeema tietylle aliavaruudelle. Näin voidaan esimerkiksi sanoa, että
+%ulottuvuudet \texttt{d.leveys} ja \texttt{d.syvyys} määrittelevät solusta 
+%\texttt{Juuri} alkaen tietynlaisen puurakenteen. 
+
+Had the program code to be prepared for all kinds of spaces, it would
+be complicated. Schemes can limit configurations of space into
+relevant ones. So as to not limit too much, the scheme only holds in a
+certain subspace. This way it's possible to say, for example, that the
+dimensions \texttt{d.breadth} and \texttt{d.depth} form a tree
+structure, starting in cell \texttt{Root}.
+
+%ZigZag-avaruuden ominaisuuksilla voidaan laajentaa oliomallia 
+%mielenkiintoisesti. Liittämällä skeeman rajoittaman aliavaruuden juurisoluun 
+%viittaukset skeeman
+%operaatioihin saadaan käyttöön abstrakti datatyyppi. Oliomallin 
+%perimyshierarkia seuraa toisaalta aliskeemoihin tehtävistä lisärajoituksista, 
+%toisaalta aliavaruuksissa korvatuista operaatioista.  
+
+The properties of ZigZag space provide an interesting possibility for
+extending the object-oriented model. Schemes can be extended to
+abstract data types by including in the subspace references to
+possible operations. Object oriented inhertitance is implemented in
+subschemes, which can set additional constraints and also replace and add
+operations on the subspace. 
+
+%Oleellinen ero oliomalliin on, että attribuutteja (aliavaruuden soluja) ei
+%voi suojata. Solut ovat edelleen vapaasti käytettävissä muiden rakenteiden
+%osana muilla ulottuvuuksilla.
+
+An essential difference to the object oriented model is that the
+attributes (cells in subspace) can not be protected. The cells are
+still freely usable in other structures, on other dimensions.
+
+
+\section{Special characteristics}
+\label{sect:characteristics}
+
+%ZigZag-järjestelmän erityispiirteet perustuvat Nelsonin näkemykseen
+%tietojärjestelmien suunnittelusta \cite{ct2000}. Moniulotteisuus,
+%hierarkiattomuus (myös moduulittomuus) sekä ''taulukkolaskentamalli'' ovat
+%ne perusteet, joiden pohjalta järjestelmä on alkanut hahmottua. 
+
+The peculiarities of ZigZag system are based on Nelsons view on
+information systems design~\cite{ct2000}. Multidimensionality, absence
+of hierarchies (and modules) plus the ``spreadsheet paradigm'' are the
+foundation for outlining the system. 
+
+%Toteutuksessa \cite{gzz2000} on ilmennyt, että yksinkertaisen perusrakenteen
+%vuoksi järjestelmän perusominaisuudet voidaan kuvata pienellä 
+%ohjelmakoodimäärällä. Myös rajapintojen määrä on jäänyt vähäiseksi, koska
+%avaruuden päälle ei ole rakennettu monimutkaista liittymää vaan se tarjotaan 
+%lähes suoraan käyttäjälle. Tässä mielessä ZigZag on yhdistetty tietokanta ja
+%käyttöliittymä: kaikki on rakenteessa.
+
+In the implementation~\cite{gzz2000} it has been found out that
+because of the simple base structure, the essential properties of the
+system can be described in little program code. Also the number of
+various interfaces is rather small, because the user interacts almost
+directly with the base model. In this sense ZigZag is an integrated
+database and user interface: everything is in the structure. 
+
+\subsection{Multidimensionality and indepence of dimensions}
+
+%Järjestelmät, joissa olisi enemmän kuin kaksi tai kolme ulottuvuutta, eivät
+%ole saavuttaneet suurta suosiota. ZigZagissa ulottuvuuksia on useita --
+%potentiaalisesti rajattomasti -- avaruuden muiden rajoitusten ja haetun
+%semantiikan vuoksi. Erityisesti moniulotteisia tietokantamalleja on esitetty
+%ennenkin. Tällainen malli voidaan esittää tavallisena relaatiokantana, mallin
+%etuna olisi tehokkaampi ilmaisukyky \cite{mmd96} -- ongelmana annetaan hakujen
+%tehokkuuden takaaminen. Toisaalta voidaan olettaa, että jos käyttäjät
+%kokevat moniulotteisuuden hankalaksi, ilmaisun tehokkuus ei hyödytä.
+
+Systems with more than two or three dimensions have not gained wide
+popularity. In ZigZag there are several dimensions---potentially
+infinitely---because multiple dimensions are necessitated by the
+system properties and the intended semantics. However,
+multidimensional databases have already been suggest and
+implemented. The database can be represented as a conventional
+relational base, the advantages being in better
+expressivity~\cite{mmd96}---a problem stated is in guaranteeing
+effective lookups. On the other, if the users find multidimensionality
+difficult, expressivity is not enough. 
+
+%Usein tiedon jakaminen ulottuvuuksille on kuitenkin mielekästä, erityisesti
+%kun lähtötieto on jaettavissa erillistapauksiin useammalla kriteerillä. 
+%Olio-ohjelmointimallin toteutus- ja tyyppihierarkiat ovat esimerkki
+%tällaisesta tapauksesta \cite{mdoo89}. 
+
+There are several cases where splitting information on dimensions is
+sensible, especially when the data can be classified along several
+criteria. Implementation and type hierarchies in the object oriented
+model are a good example of this~\cite{mdoo89}.
+
+%Tunnetuissa moniulotteisissa järjestelmissäkään ulottuvuudet eivät ole
+%toisistaan riippumattomia. Sen sijaan kolmiulotteisessa ympäristössä 
+%olevia ulottuvuuksien välisiä riippumattomuuksia on tutkittu \cite{mud94}. 
+%ZigZagin kytkökset voivatkin toimia ulottuvuuden
+%rivien luojien lisäksi enemmänkin hyperlinkkejä muistuttavina avaruuden
+%tiheästi kytkettyjen komponenttien välisinä sidoksina.
+
+In the other known multidimensional systems the dimensions are not
+independent of each other. However, independence of dimensions has
+been studied in three dimensional environtments~\cite{mud94}. Similar to the
+case in the study, un-Euclidean spaces, the connections in ZigZag can
+work---in addition to forming ranks on dimensions---more like
+hyperlinks, as bonds between components that are densely connected. 
+
+
+\subsection{The ``Spreadsheet paradigm''} 
+
+%ZigZag muistuttaa taulukkolaskentaohjelmia muutenkin kuin soluiltaan.
+%Taulukkolaskennassa käyttäjä saa eteensä tyhjän taulukon, johon hän
+%voi asetella tarvitsemansa tiedot haluamallaan tavalla. Riveille ja 
+%sarakkeille voi laittaa otsikot jos haluaa, muistiinpanoja voi tehdä 
+%minne vain. Kun käyttäjä haluaa koneen käsittelevän tietoja jollain tavalla,
+%hän antaa vain välttämättömät ohjeet rakenteen tulkinnasta: valitsee 
+%laskutoimituksen solut tai vaihtoehtoisesti tekee diagrammiin antamalla 
+%alueen ääriviivat ja kertomalla, onko otsikot valittu alueeseen vai ei. 
+
+Not only the cells in ZigZag remind of spreadsheet programs. In
+spreadsheet, the users are given an empty table on which to enter the
+needed information in the way the want to. They can put headers on
+rows and columns, they can put sidenotes anywhere they want to. When
+they want the computer to process the information some way, they give
+only the necessary instructions for interpreting the structure: select
+the cells for a calculation, or make a diagram by giving the outline of
+a cell area and tell whether the headings are included. 
+
+%ZigZagia voi käyttää samalla tavalla: Luodaan muutama uusi ulottuvuus sopivilla
+%nimillä tai käytetään valmiiksi annettuja ulottuvuuksia. Lisätään rakenteeseen
+%soluja haluttuun muodostelmaan. Muotoa voi muuttaa milloin tahansa, vaikkapa 
+%lisätä uuden ulottuvuuden uudelle mieleen tulleelle tiedolle. GZigZagin
+%tiedonkäsittelyoperaatiot ovat hyvin alkeelliset, mutta näkymät kuvaavat
+%idean: kaikkien näkymien tulee toimia kaikilla rakenteilla, enemmän tai 
+%vähemmän järkevästi. Käyttäjä määrää, minkä muotoinen rakenne on ''oikea''.
+
+ZigZag can be used in same manner: New dimensions could be created, or
+the existing ones used. The cells can be entered in the stucture in
+any formation. The form can be altered in any time, say by adding a
+new dimension to include some new type of information. The operations
+available in GZigZag are yet very primitive, but the idea can be seen
+in the views: every view must work with any structure, more or less
+sensibly. The user decides which structures are ``right''.
+
+%Taulukkolaskenta perustuu kuitenkin yhteen rajoitettuun malliin, 
+%taulukkomuotoon. Sen vuoksi ohjelma osaa piirtää käyttäjän tiedoista 
+%diagrammin (sic!). ZigZagin malli on paljon laajempi -- selvitettäväksi jää, 
+%estääkö tämä taulukkolaskentamallin käytön vai tarjoaako se enemmän sovelluksia
+%tällaiselle ohjelmatyypille. Taulukkolaskentaohjelmillakin tehdään nykyään 
+%kaikenlaista muutakin kuin taulukkolaskentaa, ehkä monikäyttöinen malli
+%ei ole haitaksi. 
+
+Spreadsheeting is based on a restrictive model, the table form. This
+restriction has not been a several problem for the original
+application. The model in ZigZag being a way wider, it is to be found
+out whether this makes the spreadsheet paradigm inconvenient or does
+it widen the scope of applications for this kind of
+software. Spreadsheet programs are used in everything else in addition
+to calculations in tables, and there shouldn't be a problem with a
+versatile model. 
+
+\newpage
+\section{Conclusions}
+
+%Edellä on esitelty eräs näkemys ZigZag-järjestelmän oleellisista 
+%ominaisuuksista, tarkoituksena tarjota lähtökohta tuleville tutkimuksille.
+%Samalla mainittiin verrattavissa olevia tietojenkäsittelyn teorioita ja
+%tutkimuksia, joiden kautta järjestelmään saadaan monenlaisia näkökulmia ja
+%joiden avulla järjestelmää voidaan verrata muuhun alan tutkimukseen. 
+
+Above, a view on the essential features of the ZigZag system was presented, 
+the purpose of which is to give a basis for further studies. Also, some 
+comparable theories and research in computer science were given, as they give
+various views on the subject and let us contrast the system with other research
+on the field.
+
+%Matemaattisessa tarkastelussa löydettiin ZigZag-avaruudelle kaksi 
+%hyödyllistä esitystapaa: suunnattu nimiöity verkko mm. hakualgoritmeja 
+%varten ja joukko-opillinen määrittely erityisesti aliavaruuksien tutkimiseen.
+%Edellinen painottaa kytköksiä, jälkimmäinen ulottuvuuksia. Tulevaisuudessa
+%hyödyllistä olisi löytää tapa tutkia avaruuteen muodostuvia komponentteja ja
+%polkuja, sillä nyt esitetyt menetelmät eivät huomioi, että käytännössä 
+%ulottuvuuksille on annettu merkityksiä.
+
+In mathematical studies, two useful ways to present the ZigZag space were 
+found: a directed labeled graph eg. for search algorithms, and a set 
+theoretical definition especially for studying subspaces. The former 
+concentrates on connections, the latter on dimensions. In future studies it 
+would be beneficial to find methods for studying components and paths in the
+space as the current methods don't take into account that in practise the
+dimensions carry semantical properties.
+
+%ZigZag-rakenteiden suunnittelua pohjustettiin katsauksella tapoihin, joilla
+%avaruuden rajoituksia voidaan kiertää. Toisaalta avoimeksi jäi kysymys 
+%datan jakotavasta kytkösten ja solujen sisällön välillä. Tämän aiheen
+%tutkimus on tärkeää, koska sillä on merkittäviä vaikutuksia rakenteen tulkintaan 
+%(ks. mm. kloonauksen rajoitukset, luku \ref{luku:yks-ka}). Lähtökohdiksi
+%löydettiin nuolijärjestelmä ja moniulotteiset tietokannat.
+
+ZigZag structure design was prepared in a review of ways to circumvent the 
+restrictions in the space. On the other hand the question of balancing data 
+between cell contents and connections was left undecided. Studying this 
+subject is important as it has major implications on the semantics of the 
+structure (see eg. the limits in cloning, ch \ref{sect:unequ}). The arrow 
+system and multidimensional databases were found for starting points.
+
+%ZigZagissa ohjelmointiin ei löydetty yleistä suuntaa. Ohjelmointi onkin jo 
+%mainittu tärkeäksi tutkimusalueeksi \cite{ct2000}. Järjestelmän rajapintojen
+%pieni lukumäärä ja toteutuksen yksinkertaisuus viittaavat siihen, että
+%ZigZag on hyvä alusta erilaisille kokeiluille niin hypertekstille, 
+%käyttöliittymille kuin ohjelmoinnin malleillekin. Järjestelmän 
+%erityispiirteistä erityisesti taulukkolaskentamallin tutkimuksesta voisi
+%olla laajalti hyötyä. 
+
+No general direction was found for programming in ZigZag. Designing programming
+has already been named an important field of study \cite{ct2000}. The small 
+amount of layered interfaces and the simplicity of the implementation suggest
+that ZigZag is a good platform for various experiments in hypertext, 
+user interfaces and programming paradigms. Considering the special 
+characteristics in the system, studying especially the spreadsheet paradigm 
+might lead into widely useful results.
+
+\section*{Acknowledgements}
+\addcontentsline{toc}{section}{Acknowledgements}
+The author would like to thank Ted Nelson and the members of the 
+Hyperstructure research group at University of Jyväskylä consisting of 
+Katariina Ervasti, Antti-Juhani Kaijanaho and Vesa Parkkinen. Special thanks
+to research group leader Tuomas Lukka for my possibility to get to know the 
+ideas of ZigZag and the GZigZag implementation in my summer job within the 
+project in summer 2000.
+  
+
+\newpage
+\begin{thebibliography}{MMM88}
+\addcontentsline{toc}{section}{References}
+
+\bibitem[AGS96]{mmd96}
+Agrawal, R., Gupta, A., Sarawagi, S.,
+Modeling Multidimensional Databases.
+Research Report RJ10014, IBM Research Division, 1996.
+
+\bibitem[Car00]{zz4xml2000}
+Carr, L.,
+Zigzag for XML. WWW software.
+\url{http://www.ecs.soton.ac.uk/~lac/zigzag/}, 2000.
+
+\bibitem[Con]{cgs99}
+Conceptual Graph Standard. Draft proposed American National Standard
+NCITS.T2/98-003. 
+
+\bibitem[Die94]{mud94}
+Dieberger, A.,
+Navigation in Textual Virtual Environments using a City Metaphor.
+Vienna University of Technology,
+\url{http://www.mindspring.com/~juggle5/Writings/Other/Thesis/Thesis.html},
+1994
+
+\bibitem[LuE00]{ct2000}
+Lukka, T., Ervasti, K.,
+GZigZag -- A Platform for Cybertext Experiments.
+\url{http://www.gzigzag.org/ct/ct.html}, 2000.
+
+
+\bibitem[Luk00]{gzz2000}
+Lukka, T. {\em et al.},
+GZigZag. GPL licensed Java software.
+\url{http://www.gzigzag.org}, 2000.
+
+
+\bibitem[Nel87]{cl87}
+Nelson, T.,
+Computer Lib. Second edition.
+Redmond, WA, Tempus Books of Microsoft Press, 1987. 
+
+
+\bibitem[Nel98]{womm98}
+Nelson, T.,
+What's On My Mind.
+A presentation, Wearable Computer Conference, Fairfax VA, May 12-13, 1998.
+\url{http://www.sfc.keio.ac.jp/~ted/zigzag/xybrap.html}
+
+\bibitem[Nel99]{tut99} 
+Nelson, T.,
+a hypertext presenting ZigZag,
+\url{http://www.xanadu.net/zigzag/tutorial/}, 1999.
+
+\bibitem[Nel00]{tn2000}
+Nelson, T.,
+ZigZag Tech Notes, 00.03.26.
+\url{http://www.xanadu.com/zigzag/zzTech.html}, 2000.
+
+\bibitem[Oss89]{mdoo89}
+Ossher, H.,
+Multi-Dimensional Organization and Browsing of Object-Oriented Systems.
+Research Report RC14511, IBM Research Division, 1989.
+
+\bibitem[Ric]{arrow}
+Rice, B.,
+The Arrow System. Draft.
+\url{http://www.tunes.org/papers/Arrow/}, referenced 23.11.2000.
+\end{thebibliography}
+
+\label{loppu}
+
+\newpage
+\pagestyle{empty}
+\end{document}
+
+
+
+
+
+
+\bibitem[CDM79]{crowdenetal79}
+Crowder, H., Dembo, R.S., Mulvey, J.M., 
+On reporting computational experiments with mathematical software. 
+{\em ACM Transactions on Mathematical Software} 5, 2 (1979), 193--203.
+
+\bibitem[DaT90]{dantowsley90}
+Dan, A., Towsley, D., 
+An approximate analysis of the LRU and FIFO buffer replacement schemes. 
+{\em Proc. ACM Conf.\ Measurement and Modeling of Computer Systems}, 
+Boulder, Colorado, USA, May 22--25, 1990, 143--152.
+
+\bibitem[Erk94]{erkio94}
+Erkiö, H.,
+Opinnäytetyön ulkoasun malli.
+Tietojenkäsittelyopin laitos, Tieteellisen kirjoittamisen kurssiin
+liittyvä julkaisematon moniste,
+Helsinki, 1994.
+
+\bibitem[ErM96]{erkiomakela96}
+Erkiö, H., Mäkelä, M.,
+Opinnäytetyön ulkoasun malli.
+Tietojenkäsittelytieteen laitos, Tieteellisen kirjoittamisen kurssiin
+liittyvä julkaisematon moniste,
+Helsinki, 1996.
+
+\bibitem[FHS89]{fogelbergetal89}	
+Fogelberg, P., Herranen, M., Sinikara, K., 
+{\em Tuumasta toimeen, tutkielman tekijän opas.}
+Yliopistopaino, Helsinki, 1989.
+
+\bibitem[Gan89]{gannonetal89}  	
+Gannon, D. et al., 
+Programming environments for parallel algorithms. 
+Teoksessa {\em Parallel and Distributed Algorithms}, 
+toim. M. Cosnard et al.,   
+North-Holland, 1989, 101--108.
+
+\bibitem[Gri87]{grimm87}		
+Grimm, S. S., 
+{\em How to write computer documentation for users.}  
+Van Nostrand Reinhold Co., 
+New York, 1987.
+
+\bibitem[HaP82]{harkinsplung82}	
+Harkins, C., Plung, D. L. (toim.), 
+{\em A guide for writing better technical papers.}
+IEEE Press, 1982.
+
+\bibitem[Jul81]{julkohj81}		
+Julkaisusarjoja ja opinnäytteiden tiivistelmiä koskevat ohjeet ja 
+suositukset.    		
+Helsingin yliopiston kirjastolaitoksen julkaisu A 3, Helsinki, 1981.
+
+\bibitem[Kil00]{kilpelainen00}
+Kilpeläinen, P.,
+WWW-lähteisiin viittaaminen tutkielmatekstissä.
+\url{http://www.cs.helsinki.fi/u/kilpelai/TiKi/wwwlahteet.html},
+19.1.2000.
+
+\bibitem[Smi78a]{smith78a}  
+Smith, A. J., 
+Sequentiality and prefetching in database systems.
+{\em ACM Transactions on Database Systems} 3, 3 (1978), 223--247.
+
+\bibitem[Smi78b]{smith78b}  
+Smith, A. J., 
+Sequential program prefetching in memory hierarchies.
+{\em Computer} 11, 11 (1978), 7--21.
+
+\bibitem[Ver92]{verkamo92}
+Verkamo, A. I.,
+Opinnäytetyön ulkoasun malli.
+Tietojenkäsittelyopin laitos, Tieteellisen kirjoittamisen kurssiin
+liittyvä julkaisematon moniste,
+Helsinki, 1992.
+
+\end{thebibliography}
+
+\label{loppu}
+
+\newpage
+\pagestyle{empty}
+\end{document}
